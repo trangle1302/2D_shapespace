@@ -11,14 +11,16 @@ import skimage
 import imageio
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import pandas as pd
 from scipy import ndimage as ndi
 import gzip
 from descartes import PolygonPatch
-from utils import read_from_json, geojson_to_masks, image_roll, shift_center_mass, resize_pad
-from skimage.segmentation import clear_border
+from utils import read_from_json, geojson_to_masks, image_roll, shift_center_mass, resize_pad, watershed_lab, watershed_lab2
 import pywt
+import requests
+from requests.auth import HTTPBasicAuth
+import io
+from PIL import Image
 
 def plot_complete_mask(json_path):
     mask = read_from_json(json_path)
@@ -36,41 +38,73 @@ def plot_complete_mask(json_path):
     
     #img = imageio.imread('C:/Users/trang.le/Desktop/tmp.png')
     #plt.imshow(img)
+def get_cell_nuclei_masks(image_id, cell_json):
+    mask_dict = geojson_to_masks(cell_json, mask_types=["labels"]) 
+    cell_mask = mask_dict['labels']
     
-def get_single_cell_mask(json_path):    
-    mask_dict = geojson_to_masks(json_path, mask_types=["labels"]) 
-    labels = mask_dict['labels']
-    for region in skimage.measure.regionprops(labels):
-        region_label = region.label
+    ab, plate, well, sample = image_id.split('_')
+    url = f'{base_url}/{plate}/{plate}_{well}_{sample}_blue.tif.gz'
+    r = requests.get(url, auth=HTTPBasicAuth('trang', 'H3dgeh0g1302'))
+    f = io.BytesIO(r.content)
+    tf = gzip.open(f).read()
+    img = imageio.imread(tf, 'tiff')
+    nuclei_mask, _ = watershed_lab(img, marker = None, rm_border = True)
+    
+    marker = np.zeros_like(nuclei_mask)
+    marker[nuclei_mask > 0] = nuclei_mask[nuclei_mask > 0] + 1 #foreground
+    cell_mask2 = watershed_lab2(cell_mask, marker = marker)
+    
+    return cell_mask2, nuclei_mask
+    
+    
+def get_single_cell_mask(cell_mask, nuclei_mask, save_path):    
+    for region_c, region_n in zip(skimage.measure.regionprops(cell_mask),skimage.measure.regionprops(nuclei_mask)):
         # draw rectangle around segmented cell and
         # apply a binary mask to the selected region, to eliminate signals from surrounding cell
-        minr, minc, maxr, maxc = region.bbox
-        # get mask
-        mask = labels[minr:maxr,minc:maxc].astype(np.uint8)
-        mask[mask != region.label] = 0
-        mask[mask == region.label] = 1
-        mask_resized = resize_pad(mask, ratio=0.5, size=256)
-        centroid = np.round(skimage.measure.centroid(mask_resized))
+        minr, minc, maxr, maxc = region_c.bbox
+        # get mask 
+        mask = cell_mask[minr:maxr,minc:maxc].astype(np.uint8)
+        mask[mask != region_c.label] = 0
+        mask[mask == region_c.label] = 1
         
+        mask_n = nuclei_mask[minr:maxr,minc:maxc].astype(np.uint8)
+        mask_n[mask_n != region_n.label] = 0
+        mask_n[mask_n == region_n.label] = 1
+
+        plt.figure(figsize = (10,10))
+        plt.imshow(mask)
+        plt.imshow(mask_n, alpha=0.5)
+        
+        
+        # align cell to the 1st major axis  
+        theta=region_n.orientation*180/np.pi #radiant to degree conversion
+        mask = ndi.rotate(mask, 90-theta)
+        mask_n = ndi.rotate(mask_n, 90-theta)
+            
+        #centroid_n = np.round(skimage.measure.centroid(mask_n))
         # allign the centroid
-        mask_centered = image_roll(mask_resized, centroid)
+        #mask = image_roll(mask, centroid_n)
+        #mask_n = image_roll(mask_n, centroid_n)
         # center to the center of mass of the nucleus
         # fig = shift_center_mass(mask)
         
-        # align cell to the 1st major axis  
-        theta=region.orientation*180/np.pi #radiant to degree conversion
-        mask_alligned = ndi.rotate(mask_centered, 90-theta)
-            
-        name = "%s_cell%s.%s" % (json_path.split('/')[-2],region_label, "png")
-        name = name.replace("/", "_")
+        plt.figure(figsize = (10,10))
+        plt.imshow(mask)
+        plt.imshow(mask_n, alpha=0.5)
+        plt.axis("off")
+        plt.tight_layout()
+        plt.savefig(f'{save_path}{region_c.label}.jpg')
         
-        fig, ax = plt.subplots(1,4,figsize=(10,30))
-        ax[0].imshow(mask)
-        ax[1].imshow(mask_resized)
-        ax[2].imshow(mask_centered)
-        ax[3].imshow(mask_alligned)
-        plt.show()
+        data = np.stack((mask,mask_n))
+        np.save(f'{save_path}{region_c.label}.npy', data)
+        """
+        data = np.expand_dims(data, axis=1)
+        data = np.repeat(data, 10, axis=1)
+        data = np.swapaxes(data, 2,3) #channel,z,h,w
+        np.save(f'{save_path}{region_c.label}.npy', data)
+        """
         
+        '''
         # Haar wavelet transformation, cD=Approximation coef, cA=Detail coef
         cA, cD = pywt.dwt(mask_alligned, 'haar')
         # reconstruction signal
@@ -82,9 +116,15 @@ def get_single_cell_mask(json_path):
         #savepath = os.path.join(args.imgOutput, name)
         #skimage.io.imsave(savepath, fig)
         
-        np.fft.fft(mask_alligned, n=None, axis=-1, norm=None)
+        # 1d fourier transform on all x coordinates and y cooridnates -> coeff
+        # fourier expansion on the x(t) and y(t) -> coefficients
+        
+        sp = np.fft.fft(mask_alligned)
+        freq = np.fft.fftfreq(mask_alligned.shape[-1])
+        plt.plot(freq, sp.real, freq, sp.imag)
         breakme
-
+        '''
+        
 def wavelet(x, max_lev = 3, label_levels=3):
     shape = x.shape
     #max_lev = 3       # how many levels of decomposition to draw
@@ -122,21 +162,25 @@ def wavelet(x, max_lev = 3, label_levels=3):
     plt.tight_layout()
     plt.show()
 #%% Test
-import numpy as np
-import pywt
-from matplotlib import pyplot as plt
 from pywt._doc_utils import wavedec2_keys, draw_2d_wp_basis     
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from aicsshparam import shtools, shparam
 from skimage.morphology import ball, cube, octahedron
+import glob
 np.random.seed(42) # for reproducibility
 
-json_path = "C:/Users/trang.le/Desktop/annotation-tool/HPA-Challenge-2020-all/segmentation/10093_1772_F9_7/annotation_all_ulrika.json"
-
-
+base_dir = "C:/Users/trang.le/Desktop/annotation-tool"
+base_url = "https://if.proteinatlas.org"
+save_dir = "C:/Users/trang.le/Desktop/2D_shape_space/U2OS"
+#json_path = base_dir + "/HPA-Challenge-2020-all/segmentation/10093_1772_F9_7/annotation_all_ulrika.json"
+df = pd.read_csv(base_dir + "/final_labels_allversions.csv")
+df = df[df.atlas_name == 'U-2 OS']
+imlist = list(set(df.image_id))
+for img_id in imlist:
+    json_path = max(glob.glob(f'{base_dir}/HPA-Challenge-2020-all/segmentation/{img_id}/annotation_*'), key=os.path.getctime)
+    cell_mask, nuclei_mask = get_cell_nuclei_masks(img_id, json_path)
+    save_path = f'{save_dir}/{img_id}_'
+    get_single_cell_mask(cell_mask, nuclei_mask, save_path)
 
 wavelet(mask_alligned)
 #%%

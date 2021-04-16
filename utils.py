@@ -13,7 +13,13 @@ from scipy import ndimage as ndi
 from geojson import FeatureCollection, dump
 import annotationUtils
 import skimage
-
+from skimage.filters import threshold_otsu, gaussian, sobel
+from skimage.measure import regionprops 
+from skimage.feature import peak_local_max
+from skimage.morphology import watershed, closing, square
+from skimage.segmentation import clear_border
+from scipy import ndimage as ndi
+from PIL import Image
 
 def find(dirpath, prefix=None, suffix=None, recursive=True, full_path=True):
     """Function to find recursively all files with specific prefix and suffix in a directory
@@ -42,6 +48,65 @@ def read_from_json(json_file_path):
     with io.open(json_file_path, "r", encoding="utf-8-sig") as myfile:
         data = json.load(myfile)
     return data
+
+
+def watershed_lab(image, marker = None, rm_border = False):
+    """Segmentation function
+    Watershed algorithm to segment the 2d image based on foreground and background seed 
+    and use edges (sobel) as elevation map
+    return labeled nuclei
+    """
+    # determine markers for watershed if not specified
+    if marker is None:
+        marker = np.full_like(image,0)
+        marker[image ==0] = 1 #background
+        marker[image > threshold_otsu(image)] = 2 #foreground nuclei
+
+    # use sobel to detect edge, then smooth with gaussian filter
+    elevation_map = gaussian(sobel(image),sigma=2)
+    
+    #segmentation with watershed algorithms
+    segmentation = watershed(elevation_map, marker)
+    segmentation = ndi.binary_fill_holes(segmentation - 1)
+    labeled_obj, num = ndi.label(segmentation)
+    
+    if rm_border is True:
+        # remove bordered objects, now moved to later steps of segmentation pipeline
+        bw = closing(labeled_obj > 0, square(3))
+        cleared = clear_border(bw)
+        labeled_obj, num = ndi.label(cleared)
+    
+    # remove too small or too large object 
+    output = np.zeros(labeled_obj.shape)
+    for region in regionprops(labeled_obj):
+        if region.area >= 20000:# <= thres_high:
+            # if the component has a volume within the two thresholds,
+            # set the output image to 1 for every pixel of the component
+            output[labeled_obj == region.label] = 1
+                
+    labeled_obj, num = ndi.label(output)
+                
+    return labeled_obj, num
+
+
+def watershed_lab2(image, marker = None):
+    """Watershed segmentation with topological distance 
+    and keep the relative ratio of the cells to each other
+    return labeled cell body, each has 1 nuclei
+    """
+    distance = ndi.distance_transform_edt(image) #if the cells are sparse
+    #distance = ndi.distance_transform_edt(marker) #if the cells are crowded
+    distance = clear_border(distance, buffer_size=50)
+    # determine markers for watershed if not specified
+    if marker is None:
+        local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((3, 3)),
+                            labels=image)
+        marker = ndi.label(local_maxi)[0]
+
+    #segmentation with watershed algorithms
+    segmentation = watershed(-distance, marker, mask = image)
+                
+    return segmentation
 
 def find_border(labels, buffer_size=0, bgval=0, in_place=False):
     """Find indices of objects connected to the label image border.
@@ -266,3 +331,117 @@ def curvelet_transform(x, num_bands, num_angles = 8, all_curvelets = True, as_co
     result = ct.fwd(x)
     del ct
     return result
+
+class ComplexPCA:
+    def __init__(self, n_components):
+        self.n_components = n_components
+        self.u = self.s = self.components_ = None
+        self.mean_ = None
+
+    @property
+    def explained_variance_ratio_(self):
+        return self.s/sum(self.s)
+
+    @property
+    def explained_variance_(self):
+        return self.s
+    
+    def fit(self, matrix, use_gpu=False):
+        n_samples, n_features = matrix.shape
+        self.mean_ = matrix.mean(axis=0)
+        if use_gpu:
+            import tensorflow as tf  # torch doesn't handle complex values.
+            tensor = tf.convert_to_tensor(matrix)
+            u, s, vh = tf.linalg.svd(tensor, full_matrices=False)  # full=False ==> num_pc = min(N, M)
+            # It would be faster if the SVD was truncated to only n_components instead of min(M, N)
+        else:
+            _, s, vh = np.linalg.svd(matrix, full_matrices=False)  # full=False ==> num_pc = min(N, M)
+            # It would be faster if the SVD was truncated to only n_components instead of min(M, N)
+        self.components_ = vh  # already conjugated.
+        # Leave those components as rows of matrix so that it is compatible with Sklearn PCA.
+        self.s = s #(s ** 2) / (n_samples-1)
+        
+    def transform(self, matrix):
+        data = matrix - self.mean_
+        result = data @ self.components_.T
+        return result
+
+    def inverse_transform(self, matrix):
+        result = matrix @ np.conj(self.components_)
+        return self.mean_ + result
+
+def normalize_complex_arr(a):
+    # Normalize complex array from 0+0j to 1+1*J
+    a_oo = a - a.real.min() - 1j*a.imag.min() # origin offsetted
+    return a_oo/np.abs(a_oo).max()
+
+def find_centroid(vertexes):
+     _x_list = [vertex [0] for vertex in vertexes]
+     _y_list = [vertex [1] for vertex in vertexes]
+     _len = len(vertexes)
+     _x = sum(_x_list) / _len
+     _y = sum(_y_list) / _len
+     return(_x, _y)
+     
+class ComplexScaler():
+    def __init__(self):
+        self.mean_ = None        
+        self.std_ = None
+    
+    def fit(self, matrix, axis=0):
+        self.mean_ = matrix.mean(axis=axis)
+        self.std_ = matrix.std(axis=axis)
+        matrix = np.asmatrix(matrix)
+        # matrix has shape of (n_sample, n_coeff)
+        std = []
+        for col in matrix.T:
+            real = [x.real for x in col]
+            imag = [x.imag for x in col]
+            std +=  [complex(np.std(real),np.std(imag))]
+        self.std_ = std
+    
+    def transform(self, matrix):
+        data = matrix - self.mean_
+        result = data /self.std_
+        return result
+    
+    def inverse_transform(self, matrix):
+        result = matrix * self.std_
+        return self.mean_ + result
+
+
+class ComplexNormalizer():
+    def __init__(self):
+        self.max_ = None
+    
+    def fit(self, matrix, axis=0):
+        # matrix has shape of (n_sample, n_coeff)
+        max_r = []
+        max_i = []
+        for pc in range(matrix.shape[1]):
+            col = matrix[pc]
+            real = [abs(x.real) for x in col]
+            imag = [abs(x.imag) for x in col]
+            max_r += [np.max(real)]
+            max_i += [np.max(imag)]
+        self.max_r_ = max_r
+        self.max_i_ = max_i
+    
+    def transform(self, matrix):
+        # matrix has shape of (n_sample, n_coeff)
+        for pc in range(matrix.shape[1]):
+            col = matrix[pc]
+            real = [x.real for x in col]
+            imag = [x.imag for x in col]
+            matrix[pc] = [complex(r/self.max_r_[pc], i/self.max_i_[pc]) for r, i in zip(real, imag)]
+        result = matrix
+        return result
+    
+    def inverse_transform(self, matrix):
+        for pc in range(matrix.shape[1]):
+            col = matrix[pc]            
+            real = [x.real for x in col]
+            imag = [x.imag for x in col]
+            matrix[pc] = [complex(r*self.max_r_[pc], i*self.max_i_[pc]) for r, i in zip(real, imag)]
+        result = matrix
+        return + result
