@@ -9,6 +9,7 @@ import os
 import io
 import json
 import numpy as np
+import math
 from scipy import ndimage as ndi
 from geojson import FeatureCollection, dump
 import annotationUtils
@@ -20,6 +21,7 @@ from skimage.morphology import watershed, closing, square
 from skimage.segmentation import clear_border
 from scipy import ndimage as ndi
 from PIL import Image
+from scipy.interpolate import interp1d
 
 def find(dirpath, prefix=None, suffix=None, recursive=True, full_path=True):
     """Function to find recursively all files with specific prefix and suffix in a directory
@@ -382,6 +384,17 @@ def find_centroid(vertexes):
      _x = sum(_x_list) / _len
      _y = sum(_y_list) / _len
      return(_x, _y)
+
+
+def equidistance(x,y, n_points=256):
+    distance = np.cumsum(np.sqrt(np.ediff1d(x, to_begin=0)**2 + np.ediff1d(y, to_begin=0)**2))
+    distance = distance/distance[-1]
+    
+    fx, fy = interp1d( distance, x,fill_value="extrapolate"), interp1d( distance, y, fill_value="extrapolate")
+    
+    alpha = np.linspace(0, 1, n_points)
+    x_regular, y_regular = fx(alpha), fy(alpha)
+    return x_regular, y_regular
      
 class ComplexScaler():
     def __init__(self):
