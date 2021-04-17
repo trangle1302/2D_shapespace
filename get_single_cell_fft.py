@@ -6,39 +6,24 @@ from skimage.measure import find_contours
 import matplotlib.pyplot as plt
 import cmath
 
-def fourier_coeffs(shape_coords, n=8):
+def fourier_coeffs(shape_coords, n=64):
     coords = shape_coords
     
     x = np.array([p[0] for p in coords])
     y = np.array([p[1] for p in coords])
     
-    fft_x = np.fft.fft(x)
-    fft_y = np.fft.fft(y)
+    x_, y_ = equidistance(x,y, n_points=n)
+    fft_x = np.fft.fft(x_)
+    fft_y = np.fft.fft(y_)
     
+    coeffs = [fft_x] + [fft_y]
     
-    # keep n largest coefs, set the rest to 0
-    coeffs = [] 
-    pos = []
-    pos += [len(fft_x)]
-    for fft in [fft_x,fft_y]:
-        #indices = np.argsort(fft)
-        indices = np.argsort(abs(fft)) #indx from smallest to largest abs(coeffs)
-        fft[indices[:-n]] = 0
-        coeffs += [fft[indices[-n:]]]
-        # position: [indices of n, indices of n]
-        pos += [indices[-n:]]
+    ix_ = np.fft.ifft(fft_x)
+    iy_ = np.fft.ifft(fft_y)
     
-    fft_x = np.zeros_like(x, 'complex128')
-    fft_x[pos[1]] = coeffs[0]
-    fft_y = np.zeros_like(y, 'complex128')
-    fft_y[pos[2]] = coeffs[1]    
-    
-    ix = np.fft.ifft(fft_x)
-    iy = np.fft.ifft(fft_y)
-    
+    ix, iy = equidistance(ix_,iy_,len(coords))
     '''
     fig, ax = plt.subplots(1,3, figsize=(12,4))
-    #ax[0].imshow(shape)
     ax[0].plot(x,y)
     ax[0].axis('scaled')
     ax[1].plot(x, label = "x coord")
@@ -49,7 +34,8 @@ def fourier_coeffs(shape_coords, n=8):
     plt.tight_layout()
     '''
     error = (np.average(abs(x-ix)) + np.average(abs(y-iy)))/2
-    return coeffs, pos, error.real
+    
+    return coeffs, error
 
 def lowpassfilter(signal, thresh = 0.7, wavelet="db4"):
     thresh = thresh*np.nanmax(signal)
@@ -128,7 +114,6 @@ def calculate_feature_importance(pca, df_trans):
 
 def get_coefs_df(imlist, n_coef=32):
     fourier = pd.DataFrame()
-    pos_df = pd.DataFrame()
     names = []
     error_n = []
     error_c = []
@@ -139,35 +124,34 @@ def get_coefs_df(imlist, n_coef=32):
             nuclei_coords = find_contours(nuclei)
             centroid = find_centroid(nuclei_coords[0])
             nuclei_coords = nuclei_coords[0] - centroid           
-            fcoef_n, pos_n, e_n = fourier_coeffs(nuclei_coords, n=n_coef) 
+            fcoef_n, e_n = fourier_coeffs(nuclei_coords, n=n_coef) 
             
             cell = data[0,:,:]
             cell_coords = find_contours(cell)
             cell_coords = cell_coords[0] - centroid
-            fcoef_c, pos_c, e_c = fourier_coeffs(cell_coords, n=n_coef)
+            fcoef_c, e_c = fourier_coeffs(cell_coords, n=n_coef)
             
             error_c += [e_c]
             error_n += [e_n]
             fourier = fourier.append([np.concatenate([fcoef_c,fcoef_n]).ravel().tolist()], ignore_index=True)
-            pos_df = pos_df.append([np.concatenate([pos_c,pos_n]).ravel().tolist()], ignore_index=True)
             names += [im] 
         except:
+            print("Oops!", sys.exc_info()[0], "occurred.")
+            print(im)
             continue
     print(f'Get coefficients for {len(names)}/{len(imlist)} cells')
     print(f'Reconstruction error for nucleus: {np.average(error_n)}')    
     print(f'Reconstruction error for cell: {np.average(error_c)}')
-    return fourier, pos_df, names
+    return fourier, names
 
-
-d = "C:/Users/trang.le/Desktop/2D_shape_space/U2OS"
-imlist = glob.glob(d+"/*.npy")
+import pathlib
+d = pathlib.Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS")
+imlist = [i for i in d.glob('*.npy')]
 fourier_df = dict()
-positions_df = dict()
 names_df = dict()
-for n_coef in [8,16,32]:
-    df_, pos_, names_ = get_coefs_df(imlist, n_coef=n_coef)
+for n_coef in [32, 64]:
+    df_, names_ = get_coefs_df(imlist, n_coef=n_coef)
     fourier_df[f'fft_{n_coef}'] = df_
-    positions_df[f'fft_{n_coef}'] = pos_
     names_df[f'fft_{n_coef}'] = names_
 
 #df_6 = fourier
@@ -176,6 +160,7 @@ for n_coef in [8,16,32]:
 #df_32 = fourier
 # PCA
 from sklearn.decomposition import PCA
+n_coef=32
 df = fourier_df['fft_32'].copy()
 #sc = ComplexScaler()
 #sc = ComplexNormalizer()
@@ -194,31 +179,112 @@ df_scaled_inv = pca.inverse_transform(df_trans)
 #df_inv= sc.inverse_transform(df_scaled_inv)
 df_inv = df_scaled_inv
 
-for (_, row), (i, pos) in zip(df_inv.iterrows(), positions_df['fft_32'].iterrows()):
+for i, row in df_inv.iterrows():
+    if i < 40:
+        continue
     fcoef_c = row[0:n_coef*2]
     fcoef_n = row[n_coef*2:]
     fig, ax = plt.subplots(1,2)
-    ax[0].imshow(plt.imread(names_df['fft_32'][i].replace('npy','jpg')))
-    for fcoef, k in zip([fcoef_c, fcoef_n], [0,3]):
-        fft_x_ = np.zeros((pos[k],), 'complex128')
-        fft_x_[pos[k+1]] = fcoef[0:n_coef]
-        
-        fft_y_ = np.zeros((pos[k],), 'complex128')
-        fft_y_[pos[k+2]] = fcoef[n_coef:]
-        ix_ = np.fft.ifft(fft_x_)
-        iy_ = np.fft.ifft(fft_y_)
+    ax[0].imshow(plt.imread(names_df['fft_32'][i].with_suffix('.jpg')))
+    for fcoef in [fcoef_c, fcoef_n]:
+        ix_ = np.fft.ifft(fcoef[0:n_coef])
+        iy_ = np.fft.ifft(fcoef[n_coef:])
         ax[1].plot(ix_,iy_)
         ax[1].axis('scaled')
-    if i > 40:
+    if i > 200:
         breakme
+
+def inverse_fft(fft_x,fft_y):
+    ix = np.fft.ifft(fft_x)
+    iy = np.fft.ifft(fft_y)
+    return ix, iy
+
+class PlotShapeModes():
+    def __init__(self, pca, features_transform, n_coef):
+        self.pca = pca
+        self.matrix = features_transform
+        self.n = n_coef
+        self.midpoints = None
+        self.std = None
+        
+        mean = self.matrix.mean(axis=0)
+        self.midpoints = mean
+        std = []
+        for c in self.matrix:
+            col = self.matrix[c]
+            real = [x.real for x in col]
+            imag = [x.imag for x in col]
+            std +=  [complex(np.std(real),np.std(imag))]
+        self.std = pd.Series(std, index = mean.index)
+        self.equipoints = None
+        self.get_equipoints()
     
-def plot_shapemode(matrix_of_features_transform):
-    mean = matrix_of_features_transform.mean(axis=0)
-df_trans = pd.DataFrame(data=matrix_of_features_transform)
-df_trans.columns=pc_names
-df_trans[list(set(pc_names) - set(pc_keep))] = 0 #NOPE!!!
-    shape = pc_components
-    df_scaled_inv = pca.inverse_transform(df_trans)
+    def plot_pc_dist(self, pc_name):
+        cnums = self.matrix[pc_name]
+        X = [x.real for x in cnums]
+        Y = [x.imag for x in cnums]
+        midpoint = self.midpoints[pc_name]
+        '''
+        p_std = []
+        std_ = self.std[pc_name]
+        for k in [-2,-1.5,-1,-0.5,0.5,1,1.5,2]:
+            p_std += [midpoint + k*std_]
+        '''    
+        
+        plt.scatter(X,Y, color='blue', alpha = 0.1)
+        plt.scatter(midpoint.real,midpoint.imag,
+                    label="star", marker="*", color='red')
+        for p in self.equipoints[pc_name]:
+            plt.scatter(p.real,p.imag,
+                    label="star", marker="*", color='orange')
+        plt.xlabel('real axis')
+        plt.ylabel('imaginary axis')
+        plt.title(pc_name)
+        plt.show()
+        
+    def plot_avg_cell(self):
+        fcoef = self.pca.inverse_transform(self.midpoints)
+        fcoef_c = fcoef[0:n_coef*2]
+        fcoef_n = fcoef[n_coef*2:]
+        ix_n, iy_n = inverse_fft(fcoef_n[0:n_coef], fcoef_n[n_coef:])
+        ix_c, iy_c = inverse_fft(fcoef_c[0:n_coef], fcoef_c[n_coef:])
+        plt.title('Avg cell')
+        plt.plot(ix_n,iy_n)
+        plt.plot(ix_c,iy_c)
+        plt.axis('scaled')
+
+    def get_equipoints(self):
+        points = dict()
+        for c in self.matrix:
+            col = self.matrix[c]
+            real = [x.real for x in col]
+            imag = [x.imag for x in col]
+            r_, i_ = equidistance(real, imag, 9)
+            points[c] = [complex(r,i) for r,i in zip(r_,i_)]
+        self.equipoints = points
+    
+    def plot_shape_variation(self, pc_name):
+        fig, ax = plt.subplots(1,9, figsize=(15,4))
+        for i, p in enumerate(self.equipoints[pc_name]):        
+            cell_coef = self.midpoints
+            cell_coef[pc_name] = p 
+            fcoef = self.pca.inverse_transform(cell_coef)
+            fcoef_c = fcoef[0:n_coef*2]
+            fcoef_n = fcoef[n_coef*2:]
+            ix_n, iy_n = inverse_fft(fcoef_n[0:n_coef], fcoef_n[n_coef:])
+            ix_c, iy_c = inverse_fft(fcoef_c[0:n_coef], fcoef_c[n_coef:])
+            #ax[i].title(f'Cell at {}std')
+            ax[i].plot(ix_n.real,iy_n.real)
+            ax[i].plot(ix_c.real,iy_c.real)
+            ax[i].axis('scaled')
+        plt.show()
+    
+pm = PlotShapeModes(pca, matrix_of_features_transform, 64)
+for pc in pc_keep:
+    pm.plot_pc_dist(pc)
+    pm.plot_shape_variation(pc)
+    
     
 ## Allign the cells to the shortest distance from the nucleus to the cells down for eg
-def assign_shape
+def assign_shape:
+    
