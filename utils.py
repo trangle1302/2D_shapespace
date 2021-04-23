@@ -12,7 +12,7 @@ import numpy as np
 import math
 from scipy import ndimage as ndi
 from geojson import FeatureCollection, dump
-import annotationUtils
+#import annotationUtils
 import skimage
 from skimage.filters import threshold_otsu, gaussian, sobel
 from skimage.measure import regionprops
@@ -188,6 +188,18 @@ def shift_center_mass(image):
 
     return Shift
 
+def interpolate_(data, centroid_n):
+    cell = Polygon()
+    isIntersection = poly1.intersection(Line(p1, Point(3, 2)))
+    return image
+
+def find_min(coords, centroid):
+    dis = []
+    for k in range(len(coords)):
+        dis += math.hypot(coords[k][0] - centroid[0], coords[k][1] - centroid[1])
+    p_shortest = [np.argmin(dis)]
+    #angle = 
+    return p_shortest
 
 def resize_pad(image, ratio=0.25, size=256):
     """Function to resize and pad segmented image, keeping the aspect ratio
@@ -424,10 +436,9 @@ def equidistance(x, y, n_points=256):
     )
     distance = distance / distance[-1]
 
-    fx, fy = interp1d(distance, x, fill_value="extrapolate"), interp1d(
-        distance, y, fill_value="extrapolate"
-    )
-
+    fx = interp1d(distance, x, kind='cubic', fill_value="extrapolate")
+    fy = interp1d(distance, y, kind='cubic', fill_value="extrapolate")
+    
     alpha = np.linspace(0, 1, n_points)
     x_regular, y_regular = fx(alpha), fy(alpha)
     return x_regular, y_regular
@@ -463,7 +474,9 @@ class ComplexScaler:
 class ComplexNormalizer:
     def __init__(self):
         self.max_ = None
-
+        self.n_coef = None
+    
+    '''
     def fit(self, matrix, axis=0):
         # matrix has shape of (n_sample, n_coeff)
         max_r = []
@@ -476,28 +489,66 @@ class ComplexNormalizer:
             max_i += [np.max(imag)]
         self.max_r_ = max_r
         self.max_i_ = max_i
-
-    def transform(self, matrix):
+    '''
+    def fit(self, matrix, axis=0):
+        n = matrix.shape[1]//2
+        self.n_coef = n
         # matrix has shape of (n_sample, n_coeff)
-        for pc in range(matrix.shape[1]):
-            col = matrix[pc]
-            real = [x.real for x in col]
-            imag = [x.imag for x in col]
-            matrix[pc] = [
-                complex(r / self.max_r_[pc], i / self.max_i_[pc])
-                for r, i in zip(real, imag)
-            ]
+        self.max_ = [x.real for x in abs(matrix).max(axis=0)[0:n]]
+        '''
+        max_r = []
+        max_i = []
+        for k in range(n):
+            col = matrix[n+k] # max of nucleus
+            real = [abs(x.real) for x in col]
+            imag = [abs(x.imag) for x in col]
+            max_r += [np.max(real)]
+            max_i += [np.max(imag)]
+        self.max_r_ = max_r
+        self.max_i_ = max_i
+        '''
+        
+    def transform(self, matrix):
+        try:
+            n = matrix.shape[1]//2
+        except:
+            n = len(matrix)//2
+        #assert self.n_coef == n
+        # matrix has shape of (n_sample, n_coeff)
+        for k in range(n):
+            for pc in [k, n+k]:
+                col = matrix[pc].copy()/self.max_[k]
+                matrix[pc] = col
+                '''
+                real = [x.real for x in col]
+                imag = [x.imag for x in col]
+                matrix[pc] = [
+                    complex(r / self.max_r_[k], i / self.max_i_[k])
+                    for r, i in zip(real, imag)
+                ]
+                '''
+                
         result = matrix
         return result
 
     def inverse_transform(self, matrix):
-        for pc in range(matrix.shape[1]):
-            col = matrix[pc]
-            real = [x.real for x in col]
-            imag = [x.imag for x in col]
-            matrix[pc] = [
-                complex(r * self.max_r_[pc], i * self.max_i_[pc])
-                for r, i in zip(real, imag)
-            ]
+        try:
+            n = matrix.shape[1]//2
+        except:
+            n = len(matrix)//2
+        #assert self.n_coef == n
+        
+        for k in range(n):
+            for pc in [k, n+k]:
+                col = matrix[pc].copy()*self.max_[k]
+                matrix[pc] = col
+                '''
+                real = [x.real for x in col]
+                imag = [x.imag for x in col]
+                matrix[pc] = [
+                    complex(r * self.max_r_[k], i * self.max_i_[k])
+                    for r, i in zip(real, imag)
+                ]
+                '''
         result = matrix
-        return +result
+        return result
