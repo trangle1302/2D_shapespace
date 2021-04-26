@@ -45,7 +45,7 @@ def main(argv):
     #
     coneActor = vtk.vtkActor()
     coneActor.SetMapper(coneMapper)
-    coneActor.GetProperty().SetColor(colors.GetColor3d('MistyRose'))
+    coneActor.GetProperty().SetColor(colors.GetColor3d("MistyRose"))
 
     #
     # Create the Renderer and assign actors to it. A renderer is like a
@@ -55,13 +55,13 @@ def main(argv):
     #
     ren1 = vtk.vtkRenderer()
     ren1.AddActor(coneActor)
-    ren1.SetBackground(colors.GetColor3d('MidnightBlue'))
-    
+    ren1.SetBackground(colors.GetColor3d("MidnightBlue"))
+
     ren1.SetViewport(0.0, 0.0, 0.5, 1.0)
 
     ren2 = vtk.vtkRenderer()
     ren2.AddActor(coneActor)
-    ren2.SetBackground(colors.GetColor3d('DodgerBlue'))
+    ren2.SetBackground(colors.GetColor3d("DodgerBlue"))
     ren2.SetViewport(0.5, 0.0, 1.0, 1.0)
     # Finally we create the render window which will show up on the screen.
     # We put our renderer into the render window using AddRenderer. We also
@@ -71,14 +71,14 @@ def main(argv):
     renWin.AddRenderer(ren1)
     renWin.AddRenderer(ren2)
     renWin.SetSize(600, 300)
-    renWin.SetWindowName('Tutorial_Step1')
-    
+    renWin.SetWindowName("Tutorial_Step1")
+
     #
     # Make one view 90 degrees from other.
     #
     ren1.ResetCamera()
     ren1.GetActiveCamera().Azimuth(90)
-    
+
     #
     # Now we loop over 360 degrees and render the cone each time.
     #
@@ -88,7 +88,6 @@ def main(argv):
         # Rotate the active camera by one degree.
         ren1.GetActiveCamera().Azimuth(1)
         ren2.GetActiveCamera().Azimuth(1)
-
 
 
 class vtkMyCallback(object):
@@ -101,10 +100,10 @@ class vtkMyCallback(object):
 
     def __call__(self, caller, ev):
         position = self.renderer.GetActiveCamera().GetPosition()
-        print('({:5.2f}, {:5.2f}, {:5.2f})'.format(*position))
+        print("({:5.2f}, {:5.2f}, {:5.2f})".format(*position))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     main(sys.argv)
