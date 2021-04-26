@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar 11 08:05:09 2021
-
-@author: trang.le
-"""
-
 import os
 import io
 import json
@@ -12,7 +5,7 @@ import numpy as np
 import math
 from scipy import ndimage as ndi
 from geojson import FeatureCollection, dump
-#import annotationUtils
+import utils.annotationUtils
 import skimage
 from skimage.filters import threshold_otsu, gaussian, sobel
 from skimage.measure import regionprops
@@ -370,50 +363,13 @@ def curvelet_transform(
     del ct
     return result
 
-
-class ComplexPCA:
-    def __init__(self, n_components):
-        self.n_components = n_components
-        self.u = self.s = self.components_ = None
-        self.mean_ = None
-
-    @property
-    def explained_variance_ratio_(self):
-        return self.s / sum(self.s)
-
-    @property
-    def explained_variance_(self):
-        return self.s
-
-    def fit(self, matrix, use_gpu=False):
-        n_samples, n_features = matrix.shape
-        self.mean_ = matrix.mean(axis=0)
-        if use_gpu:
-            import tensorflow as tf  # torch doesn't handle complex values.
-
-            tensor = tf.convert_to_tensor(matrix)
-            u, s, vh = tf.linalg.svd(
-                tensor, full_matrices=False
-            )  # full=False ==> num_pc = min(N, M)
-            # It would be faster if the SVD was truncated to only n_components instead of min(M, N)
-        else:
-            _, s, vh = np.linalg.svd(
-                matrix, full_matrices=False
-            )  # full=False ==> num_pc = min(N, M)
-            # It would be faster if the SVD was truncated to only n_components instead of min(M, N)
-        self.components_ = vh  # already conjugated.
-        # Leave those components as rows of matrix so that it is compatible with Sklearn PCA.
-        self.s = s  # (s ** 2) / (n_samples-1)
-
-    def transform(self, matrix):
-        data = matrix - self.mean_
-        result = data @ self.components_.T
-        return result
-
-    def inverse_transform(self, matrix):
-        result = matrix @ np.conj(self.components_)
-        return self.mean_ + result
-
+def flip_signs(A, B):
+    """
+    utility function for resolving the sign ambiguity in SVD
+    http://stats.stackexchange.com/q/34396/115202
+    """
+    signs = np.sign(A) * np.sign(B)
+    return A, B * signs
 
 def normalize_complex_arr(a):
     # Normalize complex array from 0+0j to 1+1*J
@@ -444,111 +400,14 @@ def equidistance(x, y, n_points=256):
     return x_regular, y_regular
 
 
-class ComplexScaler:
-    def __init__(self):
-        self.mean_ = None
-        self.std_ = None
+def P2R(radii, angles):
+    """ Function to handle complex numbers
+    turn magnitude and angle to complex number
+    """
+    return radii * np.exp(1j*angles)
 
-    def fit(self, matrix, axis=0):
-        self.mean_ = matrix.mean(axis=axis)
-        self.std_ = matrix.std(axis=axis)
-        matrix = np.asmatrix(matrix)
-        # matrix has shape of (n_sample, n_coeff)
-        std = []
-        for col in matrix.T:
-            real = [x.real for x in col]
-            imag = [x.imag for x in col]
-            std += [complex(np.std(real), np.std(imag))]
-        self.std_ = std
-
-    def transform(self, matrix):
-        data = matrix - self.mean_
-        result = data / self.std_
-        return result
-
-    def inverse_transform(self, matrix):
-        result = matrix * self.std_
-        return self.mean_ + result
-
-
-class ComplexNormalizer:
-    def __init__(self):
-        self.max_ = None
-        self.n_coef = None
-    
-    '''
-    def fit(self, matrix, axis=0):
-        # matrix has shape of (n_sample, n_coeff)
-        max_r = []
-        max_i = []
-        for pc in range(matrix.shape[1]):
-            col = matrix[pc]
-            real = [abs(x.real) for x in col]
-            imag = [abs(x.imag) for x in col]
-            max_r += [np.max(real)]
-            max_i += [np.max(imag)]
-        self.max_r_ = max_r
-        self.max_i_ = max_i
-    '''
-    def fit(self, matrix, axis=0):
-        n = matrix.shape[1]//2
-        self.n_coef = n
-        # matrix has shape of (n_sample, n_coeff)
-        self.max_ = [x.real for x in abs(matrix).max(axis=0)[0:n]]
-        '''
-        max_r = []
-        max_i = []
-        for k in range(n):
-            col = matrix[n+k] # max of nucleus
-            real = [abs(x.real) for x in col]
-            imag = [abs(x.imag) for x in col]
-            max_r += [np.max(real)]
-            max_i += [np.max(imag)]
-        self.max_r_ = max_r
-        self.max_i_ = max_i
-        '''
-        
-    def transform(self, matrix):
-        try:
-            n = matrix.shape[1]//2
-        except:
-            n = len(matrix)//2
-        #assert self.n_coef == n
-        # matrix has shape of (n_sample, n_coeff)
-        for k in range(n):
-            for pc in [k, n+k]:
-                col = matrix[pc].copy()/self.max_[k]
-                matrix[pc] = col
-                '''
-                real = [x.real for x in col]
-                imag = [x.imag for x in col]
-                matrix[pc] = [
-                    complex(r / self.max_r_[k], i / self.max_i_[k])
-                    for r, i in zip(real, imag)
-                ]
-                '''
-                
-        result = matrix
-        return result
-
-    def inverse_transform(self, matrix):
-        try:
-            n = matrix.shape[1]//2
-        except:
-            n = len(matrix)//2
-        #assert self.n_coef == n
-        
-        for k in range(n):
-            for pc in [k, n+k]:
-                col = matrix[pc].copy()*self.max_[k]
-                matrix[pc] = col
-                '''
-                real = [x.real for x in col]
-                imag = [x.imag for x in col]
-                matrix[pc] = [
-                    complex(r * self.max_r_[k], i * self.max_i_[k])
-                    for r, i in zip(real, imag)
-                ]
-                '''
-        result = matrix
-        return result
+def R2P(x):
+    """ Function to handle complex numbers
+    turn complex number x to magnitude and angle 
+    """
+    return abs(x), np.angle(x)
