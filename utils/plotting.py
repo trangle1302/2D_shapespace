@@ -16,17 +16,23 @@ class PlotShapeModes:
         self.midpoints = None
         self.std = None
 
-        mean = self.matrix.median(axis=0)
-        self.midpoints = mean
-        
+        #mean = self.matrix.median(axis=0)
+
+        mean = []
         std = []
         for c in self.matrix:
             col = self.matrix[c]
-            real = [x.real for x in col]
-            imag = [abs(x.imag) for x in col]
-            imag = np.percentile(imag, 50)
+            real_ = [x.real for x in col]
+            p = np.percentile(real_,[10,90])
+            real = [r for r in real_ if p[0] <= r <= p[1]]
+            
+            imag_ = [x.imag for x in col]
+            p = np.percentile(imag_,[10,90])
+            imag = [i for i in imag_ if p[0] <= i <= p[1]]
             std += [complex(np.std(real), np.std(imag))]
-        self.std = pd.Series(std, index=mean.index)
+            mean += [complex(np.mean(real), np.mean(imag))]
+        self.midpoints = pd.Series(mean, index=self.matrix.columns)
+        self.std = pd.Series(std, index=self.matrix.columns)
         
         #self.std = self.matrix.std()
         self.equipoints = None
@@ -120,7 +126,7 @@ class PlotShapeModes:
             X = np.array(real).reshape((-1, 1))
             Y = np.array(imag)
             reg = LinearRegression().fit(X, Y)
-            p_r = [midpoint.real + k*std_.real for k in np.arange(-1.5,1.5,0.3)]
+            p_r = [midpoint.real + k*std_.real for k in np.arange(-2.5,2.5,0.5)]
             p_r = np.array(p_r).reshape((-1, 1))
             p_i = reg.predict(p_r)
             points[c] = [complex(p_r[k], p_i[k]) for k in range(len(p_r))]
@@ -172,8 +178,9 @@ class PlotShapeModes:
             cell.set_data(ix_c.real, iy_c.real)
             
         fig, ax = plt.subplots()  
-        nu, = plt.plot([], [], 'b')  
-        cell, = plt.plot([], [], 'm')  
+        fig.suptitle(pc_name)
+        nu, = plt.plot([], [], 'b',lw=3)  
+        cell, = plt.plot([], [], 'm',lw=3)  
         ani = FuncAnimation(fig, update, self.lmpoints[pc_name]+self.lmpoints['PC1'][::-1], init_func=init)
         writer = PillowWriter(fps=5)  
         ani.save(f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/shapevar_{pc_name}.gif", writer=writer) 
