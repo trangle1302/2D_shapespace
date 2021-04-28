@@ -390,10 +390,11 @@ def equidistance(x, y, n_points=256):
     distance = np.cumsum(
         np.sqrt(np.ediff1d(x, to_begin=0) ** 2 + np.ediff1d(y, to_begin=0) ** 2)
     )
+    
     distance = distance / distance[-1]
 
-    fx = interp1d(distance, x, kind='cubic', fill_value="extrapolate")
-    fy = interp1d(distance, y, kind='cubic', fill_value="extrapolate")
+    fx = interp1d(distance, x)
+    fy = interp1d(distance, y)
     
     alpha = np.linspace(0, 1, n_points)
     x_regular, y_regular = fx(alpha), fy(alpha)
