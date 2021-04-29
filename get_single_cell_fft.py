@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
 from skimage.measure import find_contours
-from scipy.ndimage import center_of_mass
-#from utils import *
+from scipy.ndimage import center_of_mass, rotate
+
+# from utils import *
 from utils import plotting, helpers, dimreduction, coefs
 import matplotlib.pyplot as plt
 import sys
@@ -19,34 +20,60 @@ def get_coefs_df(imlist, n_coef=32):
         try:
             nuclei = data[1, :, :]
             cell = data[0, :, :]
-            centroid = np.rint(center_of_mass(nuclei)).astype('uint16')
+            centroid_n = np.rint(center_of_mass(nuclei))
+            centroid_c = np.rint(center_of_mass(cell))
+            """
+            fig, ax = plt.subplots(1,2, figsize=(8,4))
+            ax[0].imshow(nuclei, alpha=0.5)
+            ax[0].imshow(cell, alpha=0.5)
+            ax[0].plot([centroid_c[1],centroid_n[1]],[centroid_c[0],centroid_n[0]], c ='r')
+            ax[0].plot([centroid_c[1]+50,centroid_c[1]],[centroid_c[0],centroid_c[0]], c ='b')
+           """
+            cn = [centroid_n[0] - centroid_c[0], centroid_n[1] - centroid_c[1]]
+            c0 = [centroid_c[0] - centroid_c[0], centroid_c[1] + 50 - centroid_c[1]]
+            theta = helpers.angle_between(cn, c0)
+            if cn[0] < 0:
+                theta = 360 - theta
+            nuclei = rotate(nuclei, theta)
+            cell = rotate(cell, theta)
 
-            if cell[:,:centroid[1]].sum() < cell[:,centroid[1]:].sum():
-                cell = np.fliplr(cell)
-                nuclei = np.fliplr(nuclei)
-            
-            if cell[:centroid[0],:].sum() < cell[centroid[0]:,:].sum():
-                cell = np.flipud(cell)
-                nuclei = np.flipud(nuclei)         
-            
-            centroid = center_of_mass(nuclei)
-            nuclei_coords_ = find_contours(nuclei,0.2)            
+            """
+            centroid_n = np.rint(center_of_mass(nuclei))
+            centroid_c = np.rint(center_of_mass(cell))
+            ax[1].imshow(nuclei, alpha=0.5)
+            ax[1].imshow(cell, alpha=0.5)
+            ax[1].plot([centroid_c[1],centroid_n[1]],[centroid_c[0],centroid_n[0]], c ='r')
+            ax[1].scatter(centroid_c[1],centroid_c[0])
+            ax[1].set_title(f'rotate by {np.round(theta,2)}°')
+            """
+
+            centroid = center_of_mass(cell)
+            nuclei_coords_ = find_contours(nuclei, 0.2)
             nuclei_coords_ = nuclei_coords_[0] - centroid
-            
+
             cell_coords_ = find_contours(cell)
             cell_coords_ = cell_coords_[0] - centroid
 
-            if min(nuclei_coords_[:,0])>0 or min(nuclei_coords_[:,1])>0 or min(cell_coords_[:,0])>0 or min(cell_coords_[:,1])>0:
-                print(f'Contour failed {im}')
+            if (
+                min(nuclei_coords_[:, 0]) > 0
+                or min(nuclei_coords_[:, 1]) > 0
+                or min(cell_coords_[:, 0]) > 0
+                or min(cell_coords_[:, 1]) > 0
+            ):
+                print(f"Contour failed {im}")
                 continue
-            elif max(nuclei_coords_[:,0])<0 or max(nuclei_coords_[:,1])<0 or max(cell_coords_[:,0])<0 or max(cell_coords_[:,1])<0:
-                print(f'Contour failed {im}')
+            elif (
+                max(nuclei_coords_[:, 0]) < 0
+                or max(nuclei_coords_[:, 1]) < 0
+                or max(cell_coords_[:, 0]) < 0
+                or max(cell_coords_[:, 1]) < 0
+            ):
+                print(f"Contour failed {im}")
                 continue
-            
-            
+
             cell_coords = cell_coords_.copy()
             nuclei_coords = nuclei_coords_.copy()
-            '''
+            """
             if sum(cell_coords[:,0]) < 0: #simple flipping, not correct for very concaved cells
                 #print(f'flip:{im}')
                 nuclei_coords[:,0] = 0-nuclei_coords[:,0]
@@ -67,7 +94,7 @@ def get_coefs_df(imlist, n_coef=32):
             ax[2].plot(cell_coords[:,0],cell_coords[:,1])
             ax[2].axis('scaled')
             plt.show()
-            '''
+            """
             fcoef_n, e_n = coefs.fourier_coeffs(nuclei_coords, n=n_coef)
             fcoef_c, e_c = coefs.fourier_coeffs(cell_coords, n=n_coef)
 
@@ -91,17 +118,19 @@ d = pathlib.Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS")
 imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
 names_df = dict()
-for n_coef in [256, 512]:
+for n_coef in [64]:  # , 128, 256]:
     df_, names_ = get_coefs_df(imlist, n_coef=n_coef)
     fourier_df[f"fft_{n_coef}"] = df_
     names_df[f"fft_{n_coef}"] = names_
     df_.index = names_
-    df_.to_csv(f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/fft_fftshift_vhflip_{n_coef}.csv")
+    df_.to_csv(
+        f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/fft_fftshift_vhflip_{n_coef}.csv"
+    )
 
-n_coef = 256
-#df = pd.read_csv(f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/fft_vhflip_{n_coef}.csv", index_col=0)
-df = fourier_df["fft_256"].copy()
-'''
+n_coef = 65
+# df = pd.read_csv(f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/fft_vhflip_{n_coef}.csv", index_col=0)
+df = fourier_df["fft_64"].copy()
+"""
 magnitude = []
 angle = []
 for c in df:
@@ -113,67 +142,96 @@ sc = StandardScaler()
 sc.fit(np.column_stack(magnitude))
 magnitudes = sc.transform(np.column_stack(magnitude))
 df_ = np.hstack([magnitudes,np.column_stack(angle)])
-'''
-df_=df#[:,:2*n_coef]
+
+sc_cell_x = dimreduction.ComplexScaler()
+sc_cell_x.fit(df.loc[:,:n_coef-1])
+
+sc_cell_y = dimreduction.ComplexScaler()
+sc_cell_y.fit(df.loc[:,n_coef:2*n_coef-1])
+
+sc_nu_x = dimreduction.ComplexScaler()
+sc_nu_x.fit(df.loc[:,2*n_coef:3*n_coef-1])
+sc_nu_y = dimreduction.ComplexScaler()
+sc_nu_y.fit(df.loc[:,3*n_coef:])
+
+df_= pd.concat([sc_cell_x.transform(df.loc[:,:n_coef-1]),
+           sc_cell_y.transform(df.loc[:,n_coef:2*n_coef-1]),
+           sc_nu_x.transform(df.loc[:,2*n_coef:3*n_coef-1]),
+           sc_nu_y.transform(df.loc[:,3*n_coef:])], axis=1)
+"""
+sc = dimreduction.ComplexScaler()
+sc.fit(df)
+
+sc = dimreduction.LogScaler()
+df_ = sc.transform(df)
+
 pca = dimreduction.ComplexPCA(n_components=df_.shape[1])
 pca.fit(df_)
 plotting.display_scree_plot(pca)
 
 matrix_of_features_transform = pca.transform(df_)
 pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.explained_variance_ratio_))]
-#matrix_of_features_transform.columns = pc_names
-pc_keep = [f"PC{c}" for c in range(1, 1 + 12)]
+# matrix_of_features_transform.columns = pc_names
+pc_keep = [f"PC{c}" for c in range(1, 1 + 8)]
 df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
 df_trans.columns = pc_names
 df_trans[list(set(pc_names) - set(pc_keep))] = 0
 df_scaled_inv = pca.inverse_transform(df_trans)
-#df_inv= sc.inverse_transform(df_scaled_inv)
+df_inv = sc.inverse_transform(df_scaled_inv)
 
-df_inv = df_scaled_inv  #np.exp(df_scaled_inv)
+# df_inv = df_scaled_inv  #np.exp(df_scaled_inv)
 
-i=0
+i = 0
 for link, row in df_inv.iterrows():
-    i = i +1
+    i = i + 1
     if i < 150:
-       continue
+        continue
     fcoef_c = row[0 : n_coef * 2]
     fcoef_n = row[n_coef * 2 :]
-    fig, ax = plt.subplots(1, 2)
+    fig, ax = plt.subplots(1, 3)
     ax[0].imshow(plt.imread(link.with_suffix(".jpg")))
+    ori_fft = df.iloc[i - 1]
+    for fcoef in [ori_fft[0 : n_coef * 2], ori_fft[n_coef * 2 :]]:
+        ix__, iy__ = coefs.inverse_fft(fcoef[0:n_coef], fcoef[n_coef:])
+        ax[1].plot(ix__, iy__)
+        ax[1].axis("scaled")
     for fcoef in [fcoef_c, fcoef_n]:
         ix_, iy_ = coefs.inverse_fft(fcoef[0:n_coef], fcoef[n_coef:])
-        ax[1].plot(ix_, iy_)
-        ax[1].axis("scaled")
+        ax[2].plot(ix_, iy_)
+        ax[2].axis("scaled")
     if i > 160:
         breakme
 
 
-
 # avg cell
-tmp = df_trans.median(axis=0)
-#tmp = df_trans.iloc[10]
+tmp = df_trans.mean(axis=0)
+# tmp = df_trans.iloc[10]
 tmp_ = pca.inverse_transform(tmp)
-fcoef_c = tmp_[0:n_coef*2]
-fcoef_n = tmp_[n_coef*2:]
+tmp_ = sc.inverse_transform(tmp_)
+fcoef_c = tmp_[0 : n_coef * 2]
+fcoef_n = tmp_[n_coef * 2 :]
 ix_n, iy_n = coefs.inverse_fft(fcoef_n[0:n_coef], fcoef_n[n_coef:])
 ix_c, iy_c = coefs.inverse_fft(fcoef_c[0:n_coef], fcoef_c[n_coef:])
 
-#ix_n, iy_n = inverse_fft(tmp_[0:n_coef], tmp_[2*n_coef:3*n_coef])
-#ix_c, iy_c = inverse_fft(tmp_[n_coef:2*n_coef], tmp_[3*n_coef:])
+# ix_n, iy_n = coefs.inverse_fft(tmp_[0:n_coef], tmp_[2*n_coef:3*n_coef])
+# ix_c, iy_c = coefs.inverse_fft(tmp_[n_coef:2*n_coef], tmp_[3*n_coef:])
+# xv, yv = np.meshgrid(ix_n, iy_n, sparse=True)
 
-#ix_n, iy_n = equidistance(ix_n.real, iy_n.real, n_coef*10)
-#ix_c, iy_c = equidistance(ix_c.real, iy_c.real, n_coef*10)
-plt.plot(ix_n, iy_n)    
+# ix_n, iy_n = helpers.equidistance(np.append(ix_n.real, ix_n.real[0]), np.append(iy_n.real, iy_n.real[0]), 10)
+# ix_c, iy_c = helpers.equidistance(ix_c.real, iy_c.real,1000)
+# ix_c, iy_c = helpers.equidistance(ix_c.real, iy_c.real,n_coef)
+plt.plot(ix_n, iy_n)
 plt.plot(ix_c, iy_c)
-plt.axis('scaled')
+plt.axis("scaled")
 
-pm = plotting.PlotShapeModes(pca, df_trans, n_coef, pc_keep, scaler = None)
+pm = plotting.PlotShapeModes(pca, df_trans, n_coef, pc_keep, scaler=sc)
 for pc in pc_keep:
-    pm.plot_shape_variation_gif(pc)
+    # pm.plot_shape_variation_gif(pc)
     pm.plot_pc_dist(pc)
     pm.plot_pc_hist(pc)
     pm.plot_shape_variation(pc)
 
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+
 # https://stats.stackexchange.com/questions/134282/relationship-between-svd-and-pca-how-to-use-svd-to-perform-pca

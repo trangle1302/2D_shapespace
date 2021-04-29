@@ -4,10 +4,11 @@ import matplotlib.pyplot as plt
 from utils.helpers import equidistance
 from utils.coefs import inverse_fft
 from sklearn.linear_model import LinearRegression
-from matplotlib.animation import FuncAnimation, PillowWriter  
+from matplotlib.animation import FuncAnimation, PillowWriter
+
 
 class PlotShapeModes:
-    def __init__(self, pca, features_transform, n_coef, pc_keep,scaler= None):
+    def __init__(self, pca, features_transform, n_coef, pc_keep, scaler=None):
         self.pca = pca
         self.sc = scaler
         self.matrix = features_transform
@@ -16,33 +17,32 @@ class PlotShapeModes:
         self.midpoints = None
         self.std = None
 
-        #mean = self.matrix.median(axis=0)
+        # mean = self.matrix.median(axis=0)
 
         mean = []
         std = []
         for c in self.matrix:
             col = self.matrix[c]
             real_ = [x.real for x in col]
-            p = np.percentile(real_,[10,90])
+            p = np.percentile(real_, [10, 90])
             real = [r for r in real_ if p[0] <= r <= p[1]]
-            
+
             imag_ = [x.imag for x in col]
-            p = np.percentile(imag_,[10,90])
+            p = np.percentile(imag_, [10, 90])
             imag = [i for i in imag_ if p[0] <= i <= p[1]]
             std += [complex(np.std(real), np.std(imag))]
             mean += [complex(np.mean(real), np.mean(imag))]
         self.midpoints = pd.Series(mean, index=self.matrix.columns)
         self.std = pd.Series(std, index=self.matrix.columns)
-        
-        #self.std = self.matrix.std()
+
+        # self.std = self.matrix.std()
         self.equipoints = None
-        #self.get_equipoints()
+        # self.get_equipoints()
         self.stdpoints = None
-        #self.get_z()
+        # self.get_z()
         self.lmpoints = None
         self.get_lm()
 
-    
     def plot_pc_dist(self, pc_name):
         cnums = self.matrix[pc_name]
         X = [x.real for x in cnums]
@@ -52,29 +52,28 @@ class PlotShapeModes:
         plt.scatter(X, Y, color="blue", alpha=0.1)
         plt.scatter(midpoint.real, midpoint.imag, label="star", marker="*", color="red")
         for p in self.lmpoints[pc_name]:
-        #for p in self.stdpoints[pc_name]:
-        #for p in self.equipoints[pc_name]:
+            # for p in self.stdpoints[pc_name]:
+            # for p in self.equipoints[pc_name]:
             plt.scatter(p.real, p.imag, label="star", marker="*", color="orange")
-        
+
         plt.xlabel("real axis")
         plt.ylabel("imaginary axis")
         plt.title(pc_name)
         plt.show()
-    
-    
+
     def plot_pc_hist(self, pc_name):
         cnums = self.matrix[pc_name]
         X = [x.real for x in cnums]
 
         plt.hist(X, color="blue", alpha=0.1)
         for p in self.lmpoints[pc_name]:
-        #for p in self.stdpoints[pc_name]:
+            # for p in self.stdpoints[pc_name]:
             plt.scatter(p.real, 100, label="star", marker="*", color="orange")
-        plt.ylabel("density")        
+        plt.ylabel("density")
         plt.xlabel("real axis")
         plt.title(pc_name)
         plt.show()
-        
+
     def plot_avg_cell(self):
         midpoint = self.midpoints.copy()
         fcoef = self.pca.inverse_transform(midpoint)
@@ -82,17 +81,16 @@ class PlotShapeModes:
             fcoef = self.sc.inverse_transform(fcoef)
         fcoef_c = fcoef[0 : self.n * 2]
         fcoef_n = fcoef[self.n * 2 :]
-        ix_n, iy_n = inverse_fft(fcoef_n[0:self.n], fcoef_n[self.n:])
-        ix_c, iy_c = inverse_fft(fcoef_c[0:self.n], fcoef_c[self.n:])
-        
-        ix_n, iy_n = equidistance(ix_n.real, iy_n.real, self.n*10)
-        ix_c, iy_c = equidistance(ix_c.real, iy_c.real, self.n*10)
+        ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
+        ix_c, iy_c = inverse_fft(fcoef_c[0 : self.n], fcoef_c[self.n :])
+
+        ix_n, iy_n = equidistance(ix_n.real, iy_n.real, self.n * 10)
+        ix_c, iy_c = equidistance(ix_c.real, iy_c.real, self.n * 10)
         plt.title("Avg cell")
         plt.plot(ix_n, iy_n)
         plt.plot(ix_c, iy_c)
         plt.axis("scaled")
-    
-    
+
     def get_equipoints(self):
         points = dict()
         for c in self.pc_keep:
@@ -102,19 +100,18 @@ class PlotShapeModes:
             r_, i_ = equidistance(real, imag, 9)
             points[c] = [complex(r, i) for r, i in zip(r_, i_)]
         self.equipoints = points
-    
-    
+
     def get_z(self):
         points = dict()
         for c in self.pc_keep:
             midpoint = self.midpoints[c].copy()
             std_ = self.std[c].copy()
             p_std = []
-            for k in [-2,-1.5,-1,-0.5,0,0.5,1,1.5,2]:
-                p_std += [midpoint + k*std_]
+            for k in [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2]:
+                p_std += [midpoint + k * std_]
             points[c] = p_std
         self.stdpoints = points
-    
+
     def get_lm(self):
         points = dict()
         for c in self.pc_keep:
@@ -126,7 +123,7 @@ class PlotShapeModes:
             X = np.array(real).reshape((-1, 1))
             Y = np.array(imag)
             reg = LinearRegression().fit(X, Y)
-            p_r = [midpoint.real + k*std_.real for k in np.arange(-2.5,2.5,0.5)]
+            p_r = [midpoint.real + k * std_.real for k in np.arange(-2.5, 2.5, 0.5)]
             p_r = np.array(p_r).reshape((-1, 1))
             p_i = reg.predict(p_r)
             points[c] = [complex(p_r[k], p_i[k]) for k in range(len(p_r))]
@@ -134,56 +131,63 @@ class PlotShapeModes:
 
     def plot_shape_variation(self, pc_name):
         fig, ax = plt.subplots(1, len(self.lmpoints[pc_name]), figsize=(15, 4))
-        #for i, p in enumerate(self.stdpoints[pc_name]):
-        #for i, p in enumerate(self.equipoints[pc_name]):
+        # for i, p in enumerate(self.stdpoints[pc_name]):
+        # for i, p in enumerate(self.equipoints[pc_name]):
         for i, p in enumerate(self.lmpoints[pc_name]):
             cell_coef = self.midpoints.copy()
             cell_coef[pc_name] = p
-            fcoef = self.pca.inverse_transform(cell_coef)        
+            fcoef = self.pca.inverse_transform(cell_coef)
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]
-            ix_n, iy_n = inverse_fft(fcoef_n[0:self.n], fcoef_n[self.n:])
-            ix_c, iy_c = inverse_fft(fcoef_c[0:self.n], fcoef_c[self.n:])
-            
-            #ix_n, iy_n = inverse_fft(fcoef[0:self.n], fcoef[2*self.n:3*self.n])
-            #ix_c, iy_c = inverse_fft(fcoef[self.n:2*self.n], fcoef[3*self.n:])
+            ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
+            ix_c, iy_c = inverse_fft(fcoef_c[0 : self.n], fcoef_c[self.n :])
+
+            # ix_n, iy_n = inverse_fft(fcoef[0:self.n], fcoef[2*self.n:3*self.n])
+            # ix_c, iy_c = inverse_fft(fcoef[self.n:2*self.n], fcoef[3*self.n:])
 
             # ax[i].title(f'Cell at {}std')
             ax[i].plot(ix_n.real, iy_n.real)
             ax[i].plot(ix_c.real, iy_c.real)
             ax[i].axis("scaled")
         plt.show()
-    
+
     def plot_shape_variation_gif(self, pc_name):
-        def init():  
-            ''' Local function to init space in animated plots
-            '''
-            ax.set_xlim(-400, 400)  
+        def init():
+            """Local function to init space in animated plots"""
+            ax.set_xlim(-400, 400)
             ax.set_ylim(-400, 400)
-        
-        def update(p): 
+
+        def update(p):
             cell_coef = self.midpoints.copy()
             cell_coef[pc_name] = p
-            fcoef = self.pca.inverse_transform(cell_coef)        
+            fcoef = self.pca.inverse_transform(cell_coef)
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]
-            ix_n, iy_n = inverse_fft(fcoef_n[0:self.n], fcoef_n[self.n:])
-            ix_c, iy_c = inverse_fft(fcoef_c[0:self.n], fcoef_c[self.n:])
-            
-            nu.set_data(ix_n.real, iy_n.real)  
+            ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
+            ix_c, iy_c = inverse_fft(fcoef_c[0 : self.n], fcoef_c[self.n :])
+
+            nu.set_data(ix_n.real, iy_n.real)
             cell.set_data(ix_c.real, iy_c.real)
-            
-        fig, ax = plt.subplots()  
+
+        fig, ax = plt.subplots()
         fig.suptitle(pc_name)
-        nu, = plt.plot([], [], 'b',lw=3)  
-        cell, = plt.plot([], [], 'm',lw=3)  
-        ani = FuncAnimation(fig, update, self.lmpoints[pc_name]+self.lmpoints['PC1'][::-1], init_func=init)
-        writer = PillowWriter(fps=5)  
-        ani.save(f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/shapevar_{pc_name}.gif", writer=writer) 
+        (nu,) = plt.plot([], [], "b", lw=3)
+        (cell,) = plt.plot([], [], "m", lw=3)
+        ani = FuncAnimation(
+            fig,
+            update,
+            self.lmpoints[pc_name] + self.lmpoints["PC1"][::-1],
+            init_func=init,
+        )
+        writer = PillowWriter(fps=5)
+        ani.save(
+            f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/shapevar_{pc_name}.gif",
+            writer=writer,
+        )
 
 
 def display_scree_plot(pca):
