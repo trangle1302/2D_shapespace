@@ -181,18 +181,21 @@ def shift_center_mass(image):
 
     return Shift
 
+
 def interpolate_(data, centroid_n):
     cell = Polygon()
     isIntersection = poly1.intersection(Line(p1, Point(3, 2)))
     return image
+
 
 def find_min(coords, centroid):
     dis = []
     for k in range(len(coords)):
         dis += math.hypot(coords[k][0] - centroid[0], coords[k][1] - centroid[1])
     p_shortest = [np.argmin(dis)]
-    #angle = 
+    # angle =
     return p_shortest
+
 
 def resize_pad(image, ratio=0.25, size=256):
     """Function to resize and pad segmented image, keeping the aspect ratio
@@ -363,6 +366,7 @@ def curvelet_transform(
     del ct
     return result
 
+
 def flip_signs(A, B):
     """
     utility function for resolving the sign ambiguity in SVD
@@ -370,6 +374,7 @@ def flip_signs(A, B):
     """
     signs = np.sign(A) * np.sign(B)
     return A, B * signs
+
 
 def normalize_complex_arr(a):
     # Normalize complex array from 0+0j to 1+1*J
@@ -390,25 +395,47 @@ def equidistance(x, y, n_points=256):
     distance = np.cumsum(
         np.sqrt(np.ediff1d(x, to_begin=0) ** 2 + np.ediff1d(y, to_begin=0) ** 2)
     )
-    
+
     distance = distance / distance[-1]
 
     fx = interp1d(distance, x)
     fy = interp1d(distance, y)
-    
+
     alpha = np.linspace(0, 1, n_points)
     x_regular, y_regular = fx(alpha), fy(alpha)
     return x_regular, y_regular
 
 
 def P2R(radii, angles):
-    """ Function to handle complex numbers
+    """Function to handle complex numbers
     turn magnitude and angle to complex number
     """
-    return radii * np.exp(1j*angles)
+    return radii * np.exp(1j * angles)
+
 
 def R2P(x):
-    """ Function to handle complex numbers
-    turn complex number x to magnitude and angle 
+    """Function to handle complex numbers
+    turn complex number x to magnitude and angle
     """
     return abs(x), np.angle(x)
+
+
+def unit_vector(vector):
+    """Returns the unit vector of the vector."""
+    return vector / np.linalg.norm(vector)
+
+
+def angle_between(v1, v2):
+    """Returns the angle in radians between vectors 'v1' and 'v2'::
+
+    >>> angle_between((1, 0, 0), (0, 1, 0))
+    1.5707963267948966
+    >>> angle_between((1, 0, 0), (1, 0, 0))
+    0.0
+    >>> angle_between((1, 0, 0), (-1, 0, 0))
+    3.141592653589793
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    angle = np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+    return np.degrees(angle)
