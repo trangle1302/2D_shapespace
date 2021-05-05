@@ -4,12 +4,15 @@ from utils.helpers import equidistance
 import matplotlib.pyplot as plt
 
 
-def forward_fft(x, y, n=64):
+def forward_fft(x, y, n=64, hamming=True):
     """Fuction to convert coordinates to fft coefs
     n: number of fft coefficients to keep for x and y
     Returns fft_x and fft_y with len of n+1 (DC component and n fft coefs)
     """
     assert len(x) == len(y)
+    if hamming:
+        x = x * np.hamming(len(x))
+        y = y * np.hamming(len(y))
     fft_x = np.fft.fft(x)
     fft_y = np.fft.fft(y)
 
@@ -19,7 +22,7 @@ def forward_fft(x, y, n=64):
     return fft_x[: n + 1], fft_y[: n + 1]
 
 
-def inverse_fft(fft_x, fft_y, n=None):
+def inverse_fft(fft_x, fft_y, n=None, hamming=True):
     """Fuction to convert fft coefficients back to coordinates
     n: number of data points
     """
@@ -37,25 +40,32 @@ def inverse_fft(fft_x, fft_y, n=None):
     ix = np.fft.ifft(fft_x)
     iy = np.fft.ifft(fft_y)
 
+    if hamming:
+        ix = ix / np.hamming(len(ix))
+        iy = iy / np.hamming(len(iy))
+
     return ix, iy
 
 
-def fourier_coeffs(shape_coords, n=64):
+def fourier_coeffs(shape_coords, n=64, hamming=True):
     coords = shape_coords
 
     x = np.array([p[0] for p in coords])
     y = np.array([p[1] for p in coords])
     # repeating xx times
-    start = np.random.randint(len(coords))
-    x_ = np.concatenate((x, x, x, x, x, x, x))[start : start + 6 * len(coords)]
-    y_ = np.concatenate((y, y, y, y, y, y, y))[start : start + 6 * len(coords)]
-    x_, y_ = equidistance(x_, y_, n_points=n * 2 + 1)
+    start = len(coords) // 2  # np.random.randint(len(coords))
+    x_ = np.concatenate((x, x))[start : start + len(coords)]
+    y_ = np.concatenate((y, y))[start : start + len(coords)]
+
+    x_, y_ = equidistance(x, y, n_points=n * 2 + 1)
+
     fft_x, fft_y = forward_fft(x_, y_, n=n)  # returns len(fft_x)=len(fft_y)=n+1
 
     coeffs = [fft_x] + [fft_y]
 
     ix_, iy_ = inverse_fft(fft_x, fft_y)
     ix, iy = equidistance(ix_.real, iy_.real, len(coords))
+
     """
     fig, ax = plt.subplots(1,4, figsize=(12,4))
     ax[0].plot(x,y)
