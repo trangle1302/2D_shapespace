@@ -17,8 +17,9 @@ class PlotShapeModes:
         self.midpoints = None
         self.std = None
 
-        # mean = self.matrix.median(axis=0)
-
+        mean = self.matrix.median(axis=0)
+        self.midpoints = mean
+        """
         mean = []
         std = []
         for c in self.matrix:
@@ -34,14 +35,14 @@ class PlotShapeModes:
             mean += [complex(np.mean(real), np.mean(imag))]
         self.midpoints = pd.Series(mean, index=self.matrix.columns)
         self.std = pd.Series(std, index=self.matrix.columns)
-
-        # self.std = self.matrix.std()
+        """
+        self.std = self.matrix.std()
         self.equipoints = None
         # self.get_equipoints()
         self.stdpoints = None
-        # self.get_z()
+        self.get_z()
         self.lmpoints = None
-        self.get_lm()
+        # self.get_lm()
 
     def plot_pc_dist(self, pc_name):
         cnums = self.matrix[pc_name]
@@ -51,8 +52,8 @@ class PlotShapeModes:
 
         plt.scatter(X, Y, color="blue", alpha=0.1)
         plt.scatter(midpoint.real, midpoint.imag, label="star", marker="*", color="red")
-        for p in self.lmpoints[pc_name]:
-            # for p in self.stdpoints[pc_name]:
+        # for p in self.lmpoints[pc_name]:
+        for p in self.stdpoints[pc_name]:
             # for p in self.equipoints[pc_name]:
             plt.scatter(p.real, p.imag, label="star", marker="*", color="orange")
 
@@ -66,8 +67,8 @@ class PlotShapeModes:
         X = [x.real for x in cnums]
 
         plt.hist(X, color="blue", alpha=0.1)
-        for p in self.lmpoints[pc_name]:
-            # for p in self.stdpoints[pc_name]:
+        # for p in self.lmpoints[pc_name]:
+        for p in self.stdpoints[pc_name]:
             plt.scatter(p.real, 100, label="star", marker="*", color="orange")
         plt.ylabel("density")
         plt.xlabel("real axis")
@@ -79,6 +80,9 @@ class PlotShapeModes:
         fcoef = self.pca.inverse_transform(midpoint)
         if self.sc != None:
             fcoef = self.sc.inverse_transform(fcoef)
+        real = fcoef[: len(fcoef) // 2]
+        imag = fcoef[len(fcoef) // 2 :]
+        fcoef = [complex(r, i) for r, i in zip(real, imag)]
         fcoef_c = fcoef[0 : self.n * 2]
         fcoef_n = fcoef[self.n * 2 :]
         ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
@@ -130,15 +134,19 @@ class PlotShapeModes:
         self.lmpoints = points
 
     def plot_shape_variation(self, pc_name):
-        fig, ax = plt.subplots(1, len(self.lmpoints[pc_name]), figsize=(15, 4))
-        # for i, p in enumerate(self.stdpoints[pc_name]):
-        # for i, p in enumerate(self.equipoints[pc_name]):
-        for i, p in enumerate(self.lmpoints[pc_name]):
+        fig, ax = plt.subplots(1, len(self.stdpoints[pc_name]), figsize=(15, 4))
+        for i, p in enumerate(self.stdpoints[pc_name]):
+            # for i, p in enumerate(self.equipoints[pc_name]):
+            # for i, p in enumerate(self.lmpoints[pc_name]):
             cell_coef = self.midpoints.copy()
             cell_coef[pc_name] = p
             fcoef = self.pca.inverse_transform(cell_coef)
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
+
+            real = fcoef[: len(fcoef) // 2]
+            imag = fcoef[len(fcoef) // 2 :]
+            fcoef = [complex(r, i) for r, i in zip(real, imag)]
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]
             ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
@@ -156,8 +164,8 @@ class PlotShapeModes:
     def plot_shape_variation_gif(self, pc_name):
         def init():
             """Local function to init space in animated plots"""
-            ax.set_xlim(-400, 400)
-            ax.set_ylim(-400, 400)
+            ax.set_xlim(-600, 600)
+            ax.set_ylim(-600, 600)
 
         def update(p):
             cell_coef = self.midpoints.copy()
@@ -165,6 +173,10 @@ class PlotShapeModes:
             fcoef = self.pca.inverse_transform(cell_coef)
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
+
+            real = fcoef[: len(fcoef) // 2]
+            imag = fcoef[len(fcoef) // 2 :]
+            fcoef = [complex(r, i) for r, i in zip(real, imag)]
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]
             ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
@@ -180,7 +192,8 @@ class PlotShapeModes:
         ani = FuncAnimation(
             fig,
             update,
-            self.lmpoints[pc_name] + self.lmpoints["PC1"][::-1],
+            # self.lmpoints[pc_name] + self.lmpoints["PC1"][::-1],
+            self.stdpoints[pc_name] + self.stdpoints["PC1"][::-1],
             init_func=init,
         )
         writer = PillowWriter(fps=5)
