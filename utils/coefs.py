@@ -10,6 +10,11 @@ def forward_fft(x, y, n=64, hamming=True):
     Returns fft_x and fft_y with len of n+1 (DC component and n fft coefs)
     """
     assert len(x) == len(y)
+
+    # repeating xx times
+    start = len(x) // 3  # np.random.randint(len(coords))
+    x = np.concatenate((x, x, x, x, x, x, x, x, x, x, x))[start : start + 10 * len(x)]
+    y = np.concatenate((y, y, y, y, y, y, y, y, y, y, y))[start : start + 10 * len(y)]
     if hamming:
         x = x * np.hamming(len(x))
         y = y * np.hamming(len(y))
@@ -22,20 +27,21 @@ def forward_fft(x, y, n=64, hamming=True):
     return fft_x[: n + 1], fft_y[: n + 1]
 
 
-def inverse_fft(fft_x, fft_y, n=None, hamming=True):
+def inverse_fft(fft_x, fft_y, hamming=True, n=None):
     """Fuction to convert fft coefficients back to coordinates
     n: number of data points
     """
+    n = len(fft_x)
     assert len(fft_x) == len(fft_y)
     if n is None:
         fft_x = np.concatenate((fft_x, np.conjugate(fft_x[1:][::-1])))
         fft_y = np.concatenate((fft_y, np.conjugate(fft_y[1:][::-1])))
     else:
         fft_x = np.concatenate(
-            (fft_x, np.zeros((2 * n)), np.conjugate(fft_x[1:][::-1]))
+            (fft_x, np.zeros((20 * n)), np.conjugate(fft_x[1:][::-1]))
         )
         fft_y = np.concatenate(
-            (fft_y, np.zeros((2 * n)), np.conjugate(fft_y[1:][::-1]))
+            (fft_y, np.zeros((20 * n)), np.conjugate(fft_y[1:][::-1]))
         )
     ix = np.fft.ifft(fft_x)
     iy = np.fft.ifft(fft_y)
@@ -43,29 +49,29 @@ def inverse_fft(fft_x, fft_y, n=None, hamming=True):
     if hamming:
         ix = ix / np.hamming(len(ix))
         iy = iy / np.hamming(len(iy))
+    # start = len(ix) // 3
+    # ix = np.concatenate((ix, ix))[len(ix)-start : 2*len(ix) - start]
+    # iy = np.concatenate((iy, iy))[len(iy)-start : 2*len(iy) - start]
+    len_x = len(ix)
+    ix, iy = equidistance(ix.real, iy.real, len_x * 10)
 
-    return ix, iy
+    return ix[len_x * 4 - 1 : len_x * 5 :], iy[len_x * 4 - 1 : len_x * 5 :]
 
 
-def fourier_coeffs(shape_coords, n=64, hamming=True):
+def fourier_coeffs(shape_coords, n=64):
     coords = shape_coords
 
     x = np.array([p[0] for p in coords])
     y = np.array([p[1] for p in coords])
-    # repeating xx times
-    start = len(coords) // 2  # np.random.randint(len(coords))
-    x_ = np.concatenate((x, x))[start : start + len(coords)]
-    y_ = np.concatenate((y, y))[start : start + len(coords)]
 
-    x_, y_ = equidistance(x, y, n_points=n * 2 + 1)
+    x_, y_ = equidistance(x, y, n_points=n * 2)
 
     fft_x, fft_y = forward_fft(x_, y_, n=n)  # returns len(fft_x)=len(fft_y)=n+1
 
     coeffs = [fft_x] + [fft_y]
 
-    ix_, iy_ = inverse_fft(fft_x, fft_y)
-    ix, iy = equidistance(ix_.real, iy_.real, len(coords))
-
+    ix_, iy_ = inverse_fft(fft_x, fft_y, n=n)
+    ix, iy = equidistance(ix_, iy_, len(coords))
     """
     fig, ax = plt.subplots(1,4, figsize=(12,4))
     ax[0].plot(x,y)
@@ -73,9 +79,9 @@ def fourier_coeffs(shape_coords, n=64, hamming=True):
     ax[1].plot(x, label = "x coord")
     ax[1].plot(y, label = "y coord")
     ax[1].legend()
-    ax[2].plot(x_, label = "x coord")
-    ax[2].plot(y_, label = "y coord")
-    ax[3].plot(ix.real,iy.real)
+    ax[2].plot(np.concatenate((x_,x_,x_))[len(x_)//3 :  len(x_)//3 + 2*len(y_)], label = "x coord")
+    ax[2].plot(np.concatenate((y_,y_)), label = "y coord")
+    ax[3].plot(ix,iy)
     ax[3].axis('scaled')
     plt.tight_layout()
     """

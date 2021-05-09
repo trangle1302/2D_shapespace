@@ -18,11 +18,12 @@ class PlotShapeModes:
         self.std = None
 
         mean = self.matrix.median(axis=0)
-        self.midpoints = mean
-        """
+        # self.midpoints = mean
+
         mean = []
         std = []
         for c in self.matrix:
+            """
             col = self.matrix[c]
             real_ = [x.real for x in col]
             p = np.percentile(real_, [10, 90])
@@ -33,9 +34,15 @@ class PlotShapeModes:
             imag = [i for i in imag_ if p[0] <= i <= p[1]]
             std += [complex(np.std(real), np.std(imag))]
             mean += [complex(np.mean(real), np.mean(imag))]
+            """
+            col = self.matrix[c]
+            p = np.percentile(col, [5, 95])
+            col = [x for x in col if p[0] <= x <= p[1]]
+            std += [np.std(col)]
+            mean += [np.mean(col)]
         self.midpoints = pd.Series(mean, index=self.matrix.columns)
         self.std = pd.Series(std, index=self.matrix.columns)
-        """
+
         self.std = self.matrix.std()
         self.equipoints = None
         # self.get_equipoints()
@@ -111,7 +118,7 @@ class PlotShapeModes:
             midpoint = self.midpoints[c].copy()
             std_ = self.std[c].copy()
             p_std = []
-            for k in [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2]:
+            for k in np.arange(-1.5, 1.5, 0.3):
                 p_std += [midpoint + k * std_]
             points[c] = p_std
         self.stdpoints = points
@@ -187,13 +194,13 @@ class PlotShapeModes:
 
         fig, ax = plt.subplots()
         fig.suptitle(pc_name)
-        (nu,) = plt.plot([], [], "b", lw=3)
-        (cell,) = plt.plot([], [], "m", lw=3)
+        (nu,) = plt.plot([], [], "b", lw=2)
+        (cell,) = plt.plot([], [], "m", lw=2)
         ani = FuncAnimation(
             fig,
             update,
-            # self.lmpoints[pc_name] + self.lmpoints["PC1"][::-1],
-            self.stdpoints[pc_name] + self.stdpoints["PC1"][::-1],
+            # self.lmpoints[pc_name] + self.lmpoints[pc_name][::-1],
+            self.stdpoints[pc_name] + self.stdpoints[pc_name][::-1],
             init_func=init,
         )
         writer = PillowWriter(fps=5)
