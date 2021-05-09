@@ -203,6 +203,7 @@ class PlotShapeModes:
             self.stdpoints[pc_name] + self.stdpoints[pc_name][::-1],
             init_func=init,
         )
+        ax.axis("scaled")
         writer = PillowWriter(fps=5)
         ani.save(
             f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/shapevar_{pc_name}.gif",

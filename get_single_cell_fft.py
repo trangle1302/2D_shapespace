@@ -9,18 +9,23 @@ import pathlib
 
 from sklearn.decomposition import PCA
 
+
 def align_cell_nuclei_centroids(data, plot=False):
     nuclei = data[1, :, :]
     cell = data[0, :, :]
-    
+
     centroid_n = np.rint(center_of_mass(nuclei))
     centroid_c = np.rint(center_of_mass(cell))
     if plot:
-        fig, ax = plt.subplots(1,2, figsize=(8,4))
+        fig, ax = plt.subplots(1, 2, figsize=(8, 4))
         ax[0].imshow(nuclei, alpha=0.5)
         ax[0].imshow(cell, alpha=0.5)
-        ax[0].plot([centroid_c[1],centroid_n[1]],[centroid_c[0],centroid_n[0]], c ='r')
-        ax[0].plot([centroid_c[1]+50,centroid_c[1]],[centroid_c[0],centroid_c[0]], c ='b')
+        ax[0].plot(
+            [centroid_c[1], centroid_n[1]], [centroid_c[0], centroid_n[0]], c="r"
+        )
+        ax[0].plot(
+            [centroid_c[1] + 50, centroid_c[1]], [centroid_c[0], centroid_c[0]], c="b"
+        )
 
     cn = [centroid_n[0] - centroid_c[0], centroid_n[1] - centroid_c[1]]
     c0 = [centroid_c[0] - centroid_c[0], centroid_c[1] + 50 - centroid_c[1]]
@@ -29,32 +34,36 @@ def align_cell_nuclei_centroids(data, plot=False):
         theta = 360 - theta
     nuclei = rotate(nuclei, theta)
     cell = rotate(cell, theta)
-    
+
     if plot:
         centroid_n = np.rint(center_of_mass(nuclei))
         centroid_c = np.rint(center_of_mass(cell))
         ax[1].imshow(nuclei, alpha=0.5)
         ax[1].imshow(cell, alpha=0.5)
-        ax[1].plot([centroid_c[1],centroid_n[1]],[centroid_c[0],centroid_n[0]], c ='r')
-        ax[1].scatter(centroid_c[1],centroid_c[0])
-        ax[1].set_title(f'rotate by {np.round(theta,2)}°')
-        
+        ax[1].plot(
+            [centroid_c[1], centroid_n[1]], [centroid_c[0], centroid_n[0]], c="r"
+        )
+        ax[1].scatter(centroid_c[1], centroid_c[0])
+        ax[1].set_title(f"rotate by {np.round(theta,2)}°")
+
     return nuclei, cell
+
 
 def align_cell_major_axis(data, plot=True):
     nuclei = data[1, :, :]
     cell = data[0, :, :]
     region = regionprops(cell)[0]
-    theta=region.orientation*180/np.pi #radiant to degree conversion
-    cell_ = rotate(cell, 90-theta)
-    nuclei_ = rotate(nuclei, 90-theta)
+    theta = region.orientation * 180 / np.pi  # radiant to degree conversion
+    cell_ = rotate(cell, 90 - theta)
+    nuclei_ = rotate(nuclei, 90 - theta)
     if plot:
-        fig, ax = plt.subplots(1,2, figsize=(8,4))
+        fig, ax = plt.subplots(1, 2, figsize=(8, 4))
         ax[0].imshow(nuclei, alpha=0.5)
         ax[0].imshow(cell, alpha=0.5)
         ax[1].imshow(nuclei_, alpha=0.5)
         ax[1].imshow(cell_, alpha=0.5)
     return nuclei_, cell_
+
 
 def get_coefs_df(imlist, n_coef=32, plot=False):
     fourier = pd.DataFrame()
@@ -64,10 +73,10 @@ def get_coefs_df(imlist, n_coef=32, plot=False):
     for im in imlist:
         data = np.load(im)
         try:
-            #nuclei, cell = align_cell_nuclei_centroids(data, plot=True)
-            nuclei, cell = align_cell_major_axis(data, plot=False)
+            nuclei, cell = align_cell_nuclei_centroids(data, plot=False)
+            # nuclei, cell = align_cell_major_axis(data, plot=False)
 
-            centroid = center_of_mass(cell)
+            centroid = center_of_mass(nuclei)
             nuclei_coords_ = find_contours(nuclei)
             nuclei_coords_ = nuclei_coords_[0] - centroid
 
@@ -84,17 +93,17 @@ def get_coefs_df(imlist, n_coef=32, plot=False):
             cell_coords = cell_coords_.copy()
             nuclei_coords = nuclei_coords_.copy()
             if plot:
-                fig, ax = plt.subplots(1,3, figsize=(8,4))
+                fig, ax = plt.subplots(1, 3, figsize=(8, 4))
                 ax[0].imshow(nuclei, alpha=0.5)
                 ax[0].imshow(cell, alpha=0.5)
-                ax[1].plot(nuclei_coords_[:,0],nuclei_coords_[:,1])
-                ax[1].plot(cell_coords_[:,0],cell_coords_[:,1])
-                ax[1].axis('scaled')
-                ax[2].plot(nuclei_coords[:,0],nuclei_coords[:,1])
-                ax[2].plot(cell_coords[:,0],cell_coords[:,1])
-                ax[2].axis('scaled')
+                ax[1].plot(nuclei_coords_[:, 0], nuclei_coords_[:, 1])
+                ax[1].plot(cell_coords_[:, 0], cell_coords_[:, 1])
+                ax[1].axis("scaled")
+                ax[2].plot(nuclei_coords[:, 0], nuclei_coords[:, 1])
+                ax[2].plot(cell_coords[:, 0], cell_coords[:, 1])
+                ax[2].axis("scaled")
                 plt.show()
-            
+
             fcoef_n, e_n = coefs.fourier_coeffs(nuclei_coords, n=n_coef)
             fcoef_c, e_c = coefs.fourier_coeffs(cell_coords, n=n_coef)
 
@@ -117,24 +126,22 @@ def get_coefs_df(imlist, n_coef=32, plot=False):
 d = pathlib.Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS")
 imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
-names_df = dict()
-for n_coef in [128,256]:
-    df_, names_ = get_coefs_df(imlist, n_coef=n_coef)
-    fourier_df[f"fft_cellmajoraxis_{n_coef}"] = df_
-    names_df[f"fft_cellmajoraxis_{n_coef}"] = names_
+for n_coef in [64]:
+    df_, names_ = get_coefs_df(imlist, n_coef)
+    fourier_df[f"fft_cell_nuclei_centroids_centernuclei_{n_coef}"] = df_
     df_.index = names_
     df_.to_csv(
         f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/fft_fftshift_vhflip_{n_coef}.csv"
     )
 
-n_coef = 257
-df = fourier_df["fft_hamm_10_shift_256"].copy()
-'''
+n_coef = 64
+df = fourier_df["fft_cell_nuclei_centroids_centernuclei_64"].copy()
+"""
 df_ = df
 pca = dimreduction.ComplexPCA(n_components=df_.shape[1])
 pca.fit(df_)
 plotting.display_scree_plot(pca)
-'''
+"""
 
 df_ = pd.concat(
     [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)], axis=1
@@ -145,7 +152,7 @@ plotting.display_scree_plot(pca2)
 
 matrix_of_features_transform = pca2.transform(df_)
 pc_names = [f"PC{c}" for c in range(1, 1 + len(pca2.explained_variance_ratio_))]
-pc_keep = [f"PC{c}" for c in range(1, 1 + 7)]
+pc_keep = [f"PC{c}" for c in range(1, 1 + 6)]
 df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
 df_trans.columns = pc_names
 df_trans.index = df.index
@@ -182,39 +189,6 @@ for link, row in df_inv.iterrows():
     if i > 110:
         breakme
 
-
-# avg cell
-tmp = df_trans.median(axis=0)
-tmp_ = pca2.inverse_transform(tmp)
-# tmp_ = sc.inverse_transform(tmp_)
-real = tmp_[: len(tmp_) // 2]
-imag = tmp_[len(tmp_) // 2 :]
-tmp_ = [complex(r, i) for r, i in zip(real, imag)]
-fcoef_c = tmp_[0 : n_coef * 2]
-fcoef_n = tmp_[n_coef * 2 :]
-ix_n, iy_n = coefs.inverse_fft(fcoef_n[:n_coef], fcoef_n[n_coef:],n=n_coef)
-ix_c, iy_c = coefs.inverse_fft(fcoef_c[:n_coef], fcoef_c[n_coef:],n=n_coef)
-
-fft_x = np.concatenate((fcoef_c[:n_coef], np.conjugate(fcoef_c[:n_coef][1:][::-1])))
-fft_y = np.concatenate((fcoef_c[n_coef:], np.conjugate(fcoef_c[n_coef:][1:][::-1])))
-
-fft_x = np.concatenate((fcoef_c[:n_coef], np.zeros((16 * n_coef)), np.conjugate(fcoef_c[:n_coef][1:][::-1]))
-        )
-fft_y = np.concatenate((fcoef_c[n_coef:], np.zeros((16 * n_coef)), np.conjugate(fcoef_c[n_coef:][1:][::-1]))
-        )
-        
-ix = np.fft.ifft(fft_x)
-iy = np.fft.ifft(fft_y)
-
-ix = ix / np.hamming(len(ix))
-iy = iy / np.hamming(len(iy))
-
-ix_n, iy_n = coefs.equidistance(ix_n.real,iy_n.real, n_coef*5)
-ix_c, iy_c = coefs.equidistance(ix_c.real,iy_c.real, n_coef*5)
-
-plt.plot(ix_n, iy_n)
-plt.plot(ix_c, iy_c)
-plt.axis("scaled")
 
 pm = plotting.PlotShapeModes(pca2, df_trans, n_coef, pc_keep, scaler=None)
 for pc in pc_keep:
