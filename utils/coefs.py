@@ -12,9 +12,9 @@ def forward_fft(x, y, n=64, hamming=True):
     assert len(x) == len(y)
 
     # repeating xx times
-    start = len(x) // 3  # np.random.randint(len(coords))
+    start = len(x) // 2  # np.random.randint(len(x)) #
     x = np.concatenate((x, x, x, x, x, x, x, x, x, x, x))[start : start + 10 * len(x)]
-    y = np.concatenate((y, y, y, y, y, y, y, y, y, y))  # [start : start + 10 * len(y)]
+    y = np.concatenate((y, y, y, y, y, y, y, y, y, y, y))[start : start + 10 * len(y)]
     if hamming:
         x = x * np.hamming(len(x))
         y = y * np.hamming(len(y))
@@ -40,14 +40,16 @@ def inverse_fft(fft_x, fft_y, hamming=True):
         fft_x = np.concatenate(
             (
                 fft_x,
-                np.zeros((18 * n + 1), dtype="complex128"),
+                np.zeros((10 * 100 - 2 * n + 1), dtype="complex128"),
+                # np.zeros((18 * n + 1), dtype="complex128"),
                 np.conjugate(fft_x[1:][::-1]),
             )
         )
         fft_y = np.concatenate(
             (
                 fft_y,
-                np.zeros((18 * n + 1), dtype="complex128"),
+                np.zeros((10 * 100 - 2 * n + 1), dtype="complex128"),
+                # np.zeros((18 * n + 1), dtype="complex128"),
                 np.conjugate(fft_y[1:][::-1]),
             )
         )
@@ -58,11 +60,16 @@ def inverse_fft(fft_x, fft_y, hamming=True):
         ix = ix / np.hamming(len(ix))
         iy = iy / np.hamming(len(iy))
 
-    start = (n - 1) * 2 // 3
-    ix = ix[4 * n + 2 * n - start : 4 * n + 4 * n - start]  # Take the middle part of ix
-    iy = iy[4 * n : 4 * n + 2 * n]  # Take the middle part of iy
-
-    return np.append(ix, ix[0]), np.append(iy, iy[0])
+    start = n // 2
+    ix = ix[2 * n + 2 * n - start : 2 * n + 4 * n - start]  # Take the middle part of ix
+    iy = iy[
+        2 * n + 2 * n - start : 2 * n + 4 * n - start
+    ]  # iy[2 * n :2 * n + 2*n]  # Take the middle part of iy
+    """
+    ix = ix[2 * n :2 * n + 100]
+    iy = iy[2 * n :2 * n + 100]
+    """
+    return ix, iy  # np.append(ix, ix[0]), np.append(iy, iy[0])
 
 
 def fourier_coeffs(shape_coords, n=64):
@@ -71,14 +78,14 @@ def fourier_coeffs(shape_coords, n=64):
     x = np.array([p[0] for p in coords])
     y = np.array([p[1] for p in coords])
 
-    x_, y_ = equidistance(x, y, n_points=n * 2)
+    x_, y_ = equidistance(x, y, n_points=100)
 
     fft_x, fft_y = forward_fft(x_, y_, n=n)  # returns len(fft_x)=len(fft_y)=n
 
     coeffs = [fft_x] + [fft_y]
 
     ix_, iy_ = inverse_fft(fft_x, fft_y)
-    ix, iy = equidistance(ix_, iy_, len(coords))
+    ix, iy = equidistance(ix_.real, iy_.real, len(coords))
     """
     fig, ax = plt.subplots(1,4, figsize=(12,4))
     ax[0].plot(x,y)

@@ -76,7 +76,7 @@ def get_coefs_df(imlist, n_coef=32, plot=False):
             nuclei, cell = align_cell_nuclei_centroids(data, plot=False)
             # nuclei, cell = align_cell_major_axis(data, plot=False)
 
-            centroid = center_of_mass(nuclei)
+            centroid = center_of_mass(cell)
             nuclei_coords_ = find_contours(nuclei)
             nuclei_coords_ = nuclei_coords_[0] - centroid
 
@@ -126,52 +126,55 @@ def get_coefs_df(imlist, n_coef=32, plot=False):
 d = pathlib.Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS")
 imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
-for n_coef in [64]:
+for n_coef in [64, 256]:
     df_, names_ = get_coefs_df(imlist, n_coef)
-    fourier_df[f"fft_cell_nuclei_centroids_centernuclei_{n_coef}"] = df_
+    fourier_df[f"fft_cell_nuclei_centroids_half_{n_coef}"] = df_
     df_.index = names_
     df_.to_csv(
         f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/fft_fftshift_vhflip_{n_coef}.csv"
     )
 
-n_coef = 64
-df = fourier_df["fft_cell_nuclei_centroids_centernuclei_64"].copy()
-"""
-df_ = df
-pca = dimreduction.ComplexPCA(n_components=df_.shape[1])
-pca.fit(df_)
-plotting.display_scree_plot(pca)
-"""
+n_coef = 256
+use_complex = False
+df = fourier_df["fft_cell_nuclei_centroids_rand_256"].copy()
+if use_complex:
+    df_ = pd.concat(
+        [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)], axis=1
+    )
+    pca2 = PCA()
+    pca2.fit(df_)
+    plotting.display_scree_plot(pca2)
+else:
+    df_ = df
+    pca = dimreduction.ComplexPCA(n_components=df_.shape[1])
+    pca.fit(df_)
+    plotting.display_scree_plot(pca)
 
-df_ = pd.concat(
-    [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)], axis=1
-)
-pca2 = PCA()
-pca2.fit(df_)
-plotting.display_scree_plot(pca2)
-
-matrix_of_features_transform = pca2.transform(df_)
-pc_names = [f"PC{c}" for c in range(1, 1 + len(pca2.explained_variance_ratio_))]
-pc_keep = [f"PC{c}" for c in range(1, 1 + 6)]
+matrix_of_features_transform = pca.transform(df_)
+pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.explained_variance_ratio_))]
+pc_keep = [f"PC{c}" for c in range(1, 1 + 19)]
 df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
 df_trans.columns = pc_names
 df_trans.index = df.index
 df_trans[list(set(pc_names) - set(pc_keep))] = 0
-df_sep_inv = pca2.inverse_transform(df_trans)
-# df_inv = sc.inverse_transform(df_scaled_inv)
+if use_complex:
+    df_sep_inv = pca.inverse_transform(df_trans)
+    # df_inv = sc.inverse_transform(df_scaled_inv)
 
-real = df_sep_inv[:, : n_coef * 4]
-imag = df_sep_inv[:, n_coef * 4 :]
-cdf = []
-for s in range(len(real)):
-    cdf.append([complex(r, i) for r, i in zip(real[s], imag[s])])
-df_inv = pd.DataFrame(np.matrix(cdf), index=df.index)
-# df_inv = df_scaled_inv
+    real = df_sep_inv[:, : n_coef * 4]
+    imag = df_sep_inv[:, n_coef * 4 :]
+    cdf = []
+    for s in range(len(real)):
+        cdf.append([complex(r, i) for r, i in zip(real[s], imag[s])])
+    df_inv = pd.DataFrame(np.matrix(cdf), index=df.index)
+    # df_inv = df_scaled_inv
+else:
+    df_inv = pca.inverse_transform(df_trans)
 
 i = 0
 for link, row in df_inv.iterrows():
     i = i + 1
-    if i < 100:
+    if i < 200:
         continue
     fcoef_c = row[0 : n_coef * 2]
     fcoef_n = row[n_coef * 2 :]
@@ -186,11 +189,41 @@ for link, row in df_inv.iterrows():
         ix_, iy_ = coefs.inverse_fft(fcoef[:n_coef], fcoef[n_coef:])
         ax[2].plot(ix_, iy_)
         ax[2].axis("scaled")
-    if i > 110:
+    if i > 210:
         breakme
 
+midpoints = df_trans.mean()
+fcoef = pca.inverse_transform(midpoints)
+if use_complex:
+    real = fcoef[: len(fcoef) // 2]
+    imag = fcoef[len(fcoef) // 2 :]
+    fcoef = [complex(r, i) for r, i in zip(real, imag)]
 
-pm = plotting.PlotShapeModes(pca2, df_trans, n_coef, pc_keep, scaler=None)
+
+midpoints = []
+for c in df_trans:
+    col = df_trans[c]
+    real_ = [x.real for x in col]
+    real = [-abs(x) for x in real_]
+
+    imag_ = [x.imag for x in col]
+    imag = imag_  # [abs(x) for x in imag_]
+    # std += [complex(np.std(real), np.std(imag))]
+    midpoints += [complex(np.mean(real), np.mean(imag))]
+
+fcoef = pca.inverse_transform(midpoints)
+
+# fcoef = df_inv.mean()
+fcoef_c = fcoef[0 : n_coef * 2]
+fcoef_n = fcoef[n_coef * 2 :]
+ix_n, iy_n = coefs.inverse_fft(fcoef_n[0:n_coef], fcoef_n[n_coef:])
+ix_c, iy_c = coefs.inverse_fft(fcoef_c[0:n_coef], fcoef_c[n_coef:])
+plt.plot(ix_n, iy_n)
+plt.plot(ix_c, iy_c)
+plt.axis("scaled")
+
+pm = plotting.PlotShapeModes(pca, df_trans, n_coef, pc_keep, scaler=None)
+pm.plot_avg_cell()
 for pc in pc_keep:
     pm.plot_shape_variation_gif(pc)
     pm.plot_pc_dist(pc)
@@ -199,3 +232,6 @@ for pc in pc_keep:
 
 
 # https://stats.stackexchange.com/questions/134282/relationship-between-svd-and-pca-how-to-use-svd-to-perform-pca
+# for each cell, do random start x100 and average the fft.
+# Move back to complex numbers
+# add beginning and end signals (10points eg) so the x, y is not periodic anymore

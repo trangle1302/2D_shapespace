@@ -8,31 +8,35 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 
 
 class PlotShapeModes:
-    def __init__(self, pca, features_transform, n_coef, pc_keep, scaler=None):
+    def __init__(
+        self, pca, features_transform, n_coef, pc_keep, scaler=None, complex_type=True
+    ):
         self.pca = pca
         self.sc = scaler
         self.matrix = features_transform
         self.n = n_coef
         self.pc_keep = pc_keep
+        self.complex = complex_type
         self.midpoints = None
         self.std = None
 
-        mean = self.matrix.median(axis=0)
+        # mean = abs(self.matrix).mean(axis=0)
         # self.midpoints = mean
+        self.std = self.matrix.std()
 
         mean = []
         std = []
         for c in self.matrix:
-            """
+
             col = self.matrix[c]
             real_ = [x.real for x in col]
-            p = np.percentile(real_, [10, 90])
+            p = np.percentile(real_, [5, 95])
             real = [r for r in real_ if p[0] <= r <= p[1]]
 
             imag_ = [x.imag for x in col]
-            p = np.percentile(imag_, [10, 90])
+            p = np.percentile(imag_, [5, 95])
             imag = [i for i in imag_ if p[0] <= i <= p[1]]
-            std += [complex(np.std(real), np.std(imag))]
+            # std += [complex(np.std(real), np.std(imag))]
             mean += [complex(np.mean(real), np.mean(imag))]
             """
             col = self.matrix[c]
@@ -40,10 +44,10 @@ class PlotShapeModes:
             col = [x for x in col if p[0] <= x <= p[1]]
             std += [np.std(col)]
             mean += [np.mean(col)]
+            """
         self.midpoints = pd.Series(mean, index=self.matrix.columns)
-        self.std = pd.Series(std, index=self.matrix.columns)
+        # self.std = pd.Series(std, index=self.matrix.columns)
 
-        self.std = self.matrix.std()
         self.equipoints = None
         # self.get_equipoints()
         self.stdpoints = None
@@ -87,9 +91,10 @@ class PlotShapeModes:
         fcoef = self.pca.inverse_transform(midpoint)
         if self.sc != None:
             fcoef = self.sc.inverse_transform(fcoef)
-        real = fcoef[: len(fcoef) // 2]
-        imag = fcoef[len(fcoef) // 2 :]
-        fcoef = [complex(r, i) for r, i in zip(real, imag)]
+        if self.complex:
+            real = fcoef[: len(fcoef) // 2]
+            imag = fcoef[len(fcoef) // 2 :]
+            fcoef = [complex(r, i) for r, i in zip(real, imag)]
         fcoef_c = fcoef[0 : self.n * 2]
         fcoef_n = fcoef[self.n * 2 :]
         ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
@@ -150,10 +155,10 @@ class PlotShapeModes:
             fcoef = self.pca.inverse_transform(cell_coef)
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
-
-            real = fcoef[: len(fcoef) // 2]
-            imag = fcoef[len(fcoef) // 2 :]
-            fcoef = [complex(r, i) for r, i in zip(real, imag)]
+            if self.complex:
+                real = fcoef[: len(fcoef) // 2]
+                imag = fcoef[len(fcoef) // 2 :]
+                fcoef = [complex(r, i) for r, i in zip(real, imag)]
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]
             ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
@@ -180,10 +185,10 @@ class PlotShapeModes:
             fcoef = self.pca.inverse_transform(cell_coef)
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
-
-            real = fcoef[: len(fcoef) // 2]
-            imag = fcoef[len(fcoef) // 2 :]
-            fcoef = [complex(r, i) for r, i in zip(real, imag)]
+            if self.complex:
+                real = fcoef[: len(fcoef) // 2]
+                imag = fcoef[len(fcoef) // 2 :]
+                fcoef = [complex(r, i) for r, i in zip(real, imag)]
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]
             ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
