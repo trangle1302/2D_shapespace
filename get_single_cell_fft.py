@@ -126,24 +126,24 @@ def get_coefs_df(imlist, n_coef=32, plot=False):
 d = pathlib.Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS")
 imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
-for n_coef in [64, 256]:
+for n_coef in [256, 512]:
     df_, names_ = get_coefs_df(imlist, n_coef)
-    fourier_df[f"fft_cell_nuclei_centroids_half_{n_coef}"] = df_
+    fourier_df[f"fft_cell_nuclei_centroids_10rep_shiftthirdx_{n_coef}"] = df_
     df_.index = names_
     df_.to_csv(
         f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/fft_fftshift_vhflip_{n_coef}.csv"
     )
 
 n_coef = 256
-use_complex = False
-df = fourier_df["fft_cell_nuclei_centroids_rand_256"].copy()
-if use_complex:
+use_complex = True
+df = fourier_df["fft_cell_nuclei_centroids_10rep_shiftthirdx_256"].copy()
+if not use_complex:
     df_ = pd.concat(
         [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)], axis=1
     )
-    pca2 = PCA()
-    pca2.fit(df_)
-    plotting.display_scree_plot(pca2)
+    pca = PCA()
+    pca.fit(df_)
+    plotting.display_scree_plot(pca)
 else:
     df_ = df
     pca = dimreduction.ComplexPCA(n_components=df_.shape[1])
@@ -151,13 +151,14 @@ else:
     plotting.display_scree_plot(pca)
 
 matrix_of_features_transform = pca.transform(df_)
-pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.explained_variance_ratio_))]
-pc_keep = [f"PC{c}" for c in range(1, 1 + 19)]
+pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.principle_axis_))]
+pc_keep = [f"PC{c}" for c in range(1, 1 + 13)]
 df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
 df_trans.columns = pc_names
 df_trans.index = df.index
 df_trans[list(set(pc_names) - set(pc_keep))] = 0
-if use_complex:
+
+if not use_complex:
     df_sep_inv = pca.inverse_transform(df_trans)
     # df_inv = sc.inverse_transform(df_scaled_inv)
 
@@ -194,11 +195,6 @@ for link, row in df_inv.iterrows():
 
 midpoints = df_trans.mean()
 fcoef = pca.inverse_transform(midpoints)
-if use_complex:
-    real = fcoef[: len(fcoef) // 2]
-    imag = fcoef[len(fcoef) // 2 :]
-    fcoef = [complex(r, i) for r, i in zip(real, imag)]
-
 
 midpoints = []
 for c in df_trans:
@@ -210,8 +206,13 @@ for c in df_trans:
     imag = imag_  # [abs(x) for x in imag_]
     # std += [complex(np.std(real), np.std(imag))]
     midpoints += [complex(np.mean(real), np.mean(imag))]
-
+# midpoints = df_trans.mean()
 fcoef = pca.inverse_transform(midpoints)
+
+if not use_complex:
+    real = fcoef[: len(fcoef) // 2]
+    imag = fcoef[len(fcoef) // 2 :]
+    fcoef = [complex(r, i) for r, i in zip(real, imag)]
 
 # fcoef = df_inv.mean()
 fcoef_c = fcoef[0 : n_coef * 2]
@@ -222,7 +223,9 @@ plt.plot(ix_n, iy_n)
 plt.plot(ix_c, iy_c)
 plt.axis("scaled")
 
-pm = plotting.PlotShapeModes(pca, df_trans, n_coef, pc_keep, scaler=None)
+pm = plotting.PlotShapeModes(
+    pca, df_trans, n_coef, pc_keep, scaler=None, complex_type=use_complex
+)
 pm.plot_avg_cell()
 for pc in pc_keep:
     pm.plot_shape_variation_gif(pc)
