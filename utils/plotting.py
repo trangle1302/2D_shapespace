@@ -25,17 +25,19 @@ class PlotShapeModes:
         self.std = self.matrix.std()
 
         mean = []
-        std = []
+        # std = []
         for c in self.matrix:
 
             col = self.matrix[c]
             real_ = [x.real for x in col]
-            p = np.percentile(real_, [5, 95])
-            real = [r for r in real_ if p[0] <= r <= p[1]]
+            real = real_  # [-abs(x) for x in real_]
+            # p = np.percentile(real_, [5, 95])
+            # real = [-abs(r) for r in real_ if p[0] <= r <= p[1]]
 
             imag_ = [x.imag for x in col]
-            p = np.percentile(imag_, [5, 95])
-            imag = [i for i in imag_ if p[0] <= i <= p[1]]
+            imag = imag_  # [-abs(x) for x in imag_]
+            # p = np.percentile(imag_, [5, 95])
+            # imag = [i for i in imag_ if p[0] <= i <= p[1]]
             # std += [complex(np.std(real), np.std(imag))]
             mean += [complex(np.mean(real), np.mean(imag))]
             """
@@ -89,12 +91,12 @@ class PlotShapeModes:
     def plot_avg_cell(self):
         midpoint = self.midpoints.copy()
         fcoef = self.pca.inverse_transform(midpoint)
-        if self.sc != None:
-            fcoef = self.sc.inverse_transform(fcoef)
-        if self.complex:
+        if not self.complex:
             real = fcoef[: len(fcoef) // 2]
             imag = fcoef[len(fcoef) // 2 :]
             fcoef = [complex(r, i) for r, i in zip(real, imag)]
+        if self.sc != None:
+            fcoef = self.sc.inverse_transform(fcoef)
         fcoef_c = fcoef[0 : self.n * 2]
         fcoef_n = fcoef[self.n * 2 :]
         ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
@@ -155,7 +157,7 @@ class PlotShapeModes:
             fcoef = self.pca.inverse_transform(cell_coef)
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
-            if self.complex:
+            if not self.complex:
                 real = fcoef[: len(fcoef) // 2]
                 imag = fcoef[len(fcoef) // 2 :]
                 fcoef = [complex(r, i) for r, i in zip(real, imag)]
@@ -185,7 +187,7 @@ class PlotShapeModes:
             fcoef = self.pca.inverse_transform(cell_coef)
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
-            if self.complex:
+            if not self.complex:
                 real = fcoef[: len(fcoef) // 2]
                 imag = fcoef[len(fcoef) // 2 :]
                 fcoef = [complex(r, i) for r, i in zip(real, imag)]
