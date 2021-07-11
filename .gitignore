@@ -55,3 +55,7 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Folder(s)
+U2OS
+tmp

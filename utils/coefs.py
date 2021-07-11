@@ -147,6 +147,8 @@ def wavelet_coefs(shape, n=64):
 
     coeffs = [cAx] + [cAy]
 
+    ix_, iy_ = inverse_wavelet(cAx, cAy)
+
     ix, iy = equidistance(ix_, iy_, len(coords))
 
     """
