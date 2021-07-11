@@ -128,13 +128,13 @@ imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
 for n_coef in [64, 128]:
     df_, names_ = get_coefs_df(imlist, n_coef, func=get_coef_fun)
-    fourier_df[f"wavelet_{n_coef}"] = df_
+    fourier_df[f"wavelet_randstart_{n_coef}"] = df_
     df_.index = names_
 
-n_coef = 64
+n_coef = 128
 df = fourier_df[f"wavelet_{n_coef}"].copy()
+use_complex = True
 if get_coef_fun == coefs.fourier_coeffs:
-    use_complex = True
     if not use_complex:
         df_ = pd.concat(
             [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)], axis=1
@@ -155,13 +155,13 @@ elif get_coef_fun == coefs.wavelet_coefs:
 
 matrix_of_features_transform = pca.transform(df_)
 pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
-pc_keep = [f"PC{c}" for c in range(1, 1 + 7)]
+pc_keep = [f"PC{c}" for c in range(1, 1 + 12)]
 df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
 df_trans.columns = pc_names
 df_trans.index = df.index
 df_trans[list(set(pc_names) - set(pc_keep))] = 0
 
-if not use_complex:
+if get_coef_fun == coefs.fourier_coeffs and not use_complex:
     df_sep_inv = pca.inverse_transform(df_trans)
     # df_inv = sc.inverse_transform(df_scaled_inv)
 
@@ -200,7 +200,7 @@ for link, row in df_inv.iterrows():
 
 midpoints = df_trans.mean()
 fcoef = pca.inverse_transform(midpoints)
-if use_complex:
+if get_coef_fun == coefs.fourier_coeffs and use_complex:
     midpoints = []
     for c in df_trans:
         col = df_trans[c]
@@ -229,7 +229,13 @@ plt.plot(ix_c, iy_c)
 plt.axis("scaled")
 
 pm = plotting.PlotShapeModes(
-    pca, df_trans, n_coef, pc_keep, scaler=None, complex_type=use_complex
+    pca,
+    df_trans,
+    n_coef,
+    pc_keep,
+    scaler=None,
+    complex_type=use_complex,
+    inverse_func=inverse_func,
 )
 pm.plot_avg_cell()
 for pc in pc_keep:

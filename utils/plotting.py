@@ -2,14 +2,21 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.helpers import equidistance
-from utils.coefs import inverse_fft
+from utils import coefs
 from sklearn.linear_model import LinearRegression
 from matplotlib.animation import FuncAnimation, PillowWriter
 
 
 class PlotShapeModes:
     def __init__(
-        self, pca, features_transform, n_coef, pc_keep, scaler=None, complex_type=True
+        self,
+        pca,
+        features_transform,
+        n_coef,
+        pc_keep,
+        scaler=None,
+        complex_type=True,
+        inverse_func=None,
     ):
         self.pca = pca
         self.sc = scaler
@@ -17,6 +24,8 @@ class PlotShapeModes:
         self.n = n_coef
         self.pc_keep = pc_keep
         self.complex = complex_type
+        self.inverse_func = inverse_func
+
         self.midpoints = None
         self.std = None
 
@@ -99,8 +108,8 @@ class PlotShapeModes:
             fcoef = self.sc.inverse_transform(fcoef)
         fcoef_c = fcoef[0 : self.n * 2]
         fcoef_n = fcoef[self.n * 2 :]
-        ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
-        ix_c, iy_c = inverse_fft(fcoef_c[0 : self.n], fcoef_c[self.n :])
+        ix_n, iy_n = self.inverse_fun(fcoef_n[0 : self.n], fcoef_n[self.n :])
+        ix_c, iy_c = self.inverse_fun(fcoef_c[0 : self.n], fcoef_c[self.n :])
 
         ix_n, iy_n = equidistance(ix_n.real, iy_n.real, self.n * 10)
         ix_c, iy_c = equidistance(ix_c.real, iy_c.real, self.n * 10)
@@ -163,11 +172,11 @@ class PlotShapeModes:
                 fcoef = [complex(r, i) for r, i in zip(real, imag)]
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]
-            ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
-            ix_c, iy_c = inverse_fft(fcoef_c[0 : self.n], fcoef_c[self.n :])
+            ix_n, iy_n = self.inverse_fun(fcoef_n[0 : self.n], fcoef_n[self.n :])
+            ix_c, iy_c = self.inverse_fun(fcoef_c[0 : self.n], fcoef_c[self.n :])
 
-            # ix_n, iy_n = inverse_fft(fcoef[0:self.n], fcoef[2*self.n:3*self.n])
-            # ix_c, iy_c = inverse_fft(fcoef[self.n:2*self.n], fcoef[3*self.n:])
+            # ix_n, iy_n = self.inverse_fun(fcoef[0:self.n], fcoef[2*self.n:3*self.n])
+            # ix_c, iy_c = self.inverse_fun(fcoef[self.n:2*self.n], fcoef[3*self.n:])
 
             # ax[i].title(f'Cell at {}std')
             ax[i].plot(ix_n.real, iy_n.real)
@@ -193,8 +202,8 @@ class PlotShapeModes:
                 fcoef = [complex(r, i) for r, i in zip(real, imag)]
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]
-            ix_n, iy_n = inverse_fft(fcoef_n[0 : self.n], fcoef_n[self.n :])
-            ix_c, iy_c = inverse_fft(fcoef_c[0 : self.n], fcoef_c[self.n :])
+            ix_n, iy_n = self.inverse_fun(fcoef_n[0 : self.n], fcoef_n[self.n :])
+            ix_c, iy_c = self.inverse_fun(fcoef_c[0 : self.n], fcoef_c[self.n :])
 
             nu.set_data(ix_n.real, iy_n.real)
             cell.set_data(ix_c.real, iy_c.real)

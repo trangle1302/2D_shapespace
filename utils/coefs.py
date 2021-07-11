@@ -138,8 +138,12 @@ def inverse_wavelet(cAx, cAy, wavelet_type="db5"):
 def wavelet_coefs(shape, n=64):
     coords = shape
 
+    start = np.random.randint(len(coords))
+
     x = np.array([p[0] for p in coords])
+    x = np.concatenate(np.repeat([x], 2, axis=0))[start : start + len(x)]
     y = np.array([p[1] for p in coords])
+    y = np.concatenate(np.repeat([y], 2, axis=0))[start : start + len(y)]
 
     x_, y_ = equidistance(x, y, n_points=2 * n)
 
