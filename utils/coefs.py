@@ -121,22 +121,34 @@ def lowpassfilter(signal, thresh=0.7, wavelet="db4"):
     return reconstructed_signal
 
 
-def wavelet_coefs(shape, wavelet_type="db5"):
-    coords = find_contours(shape)
-
-    x = np.array([p[0] for p in coords[0]])
-    y = np.array([p[1] for p in coords[0]])
-
+def forward_wavelet(x, y, wavelet_type="db5"):
     cAx, cDx = pywt.dwt(x, wavelet_type)
     cAy, cDy = pywt.dwt(y, wavelet_type)
-
     # cAx = pywt.threshold(cAx, np.std(cAx)/2, mode='soft')
     # cAy = pywt.threshold(cAy, np.std(cAy)/2, mode='soft')
+    return cAx, cAy
 
-    ix = pywt.idwt(None, cDx, wavelet_type)
-    iy = pywt.idwt(None, cDy, wavelet_type)
 
-    coeffs = []
+def inverse_wavelet(cAx, cAy, wavelet_type="db5"):
+    ix_ = pywt.idwt(cAx, None, wavelet_type)
+    iy_ = pywt.idwt(cAy, None, wavelet_type)
+    return ix_, iy_
+
+
+def wavelet_coefs(shape, n=64):
+    coords = shape
+
+    x = np.array([p[0] for p in coords])
+    y = np.array([p[1] for p in coords])
+
+    x_, y_ = equidistance(x, y, n_points=2 * n)
+
+    cAx, cAy = forward_wavelet(x_, y_)
+
+    coeffs = [cAx] + [cAy]
+
+    ix, iy = equidistance(ix_, iy_, len(coords))
+
     """
     fig, ax = plt.subplots(1,3, figsize=(12,4))
     #ax[0].imshow(shape)
@@ -150,4 +162,4 @@ def wavelet_coefs(shape, wavelet_type="db5"):
     plt.tight_layout()
     """
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
-    return coeffs, error.real
+    return coeffs, error
