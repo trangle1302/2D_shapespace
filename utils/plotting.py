@@ -16,7 +16,7 @@ class PlotShapeModes:
         pc_keep,
         scaler=None,
         complex_type=True,
-        inverse_func=None,
+        inverse_func=coefs.inverse_wavelet,
     ):
         self.pca = pca
         self.sc = scaler
@@ -25,14 +25,15 @@ class PlotShapeModes:
         self.pc_keep = pc_keep
         self.complex = complex_type
         self.inverse_func = inverse_func
-
         self.midpoints = None
         self.std = None
 
-        # mean = abs(self.matrix).mean(axis=0)
-        # self.midpoints = mean
-        self.std = self.matrix.std()
 
+        mean = self.matrix.clip(0, None).mean()
+        # mean = abs(self.matrix).mean(axis=0)
+        self.midpoints = mean
+        self.std = self.matrix.std()
+        """
         mean = []
         # std = []
         for c in self.matrix:
@@ -49,16 +50,16 @@ class PlotShapeModes:
             # imag = [i for i in imag_ if p[0] <= i <= p[1]]
             # std += [complex(np.std(real), np.std(imag))]
             mean += [complex(np.mean(real), np.mean(imag))]
-            """
+            '''
             col = self.matrix[c]
             p = np.percentile(col, [5, 95])
             col = [x for x in col if p[0] <= x <= p[1]]
             std += [np.std(col)]
             mean += [np.mean(col)]
-            """
+            '''
         self.midpoints = pd.Series(mean, index=self.matrix.columns)
         # self.std = pd.Series(std, index=self.matrix.columns)
-
+        """
         self.equipoints = None
         # self.get_equipoints()
         self.stdpoints = None
@@ -108,8 +109,8 @@ class PlotShapeModes:
             fcoef = self.sc.inverse_transform(fcoef)
         fcoef_c = fcoef[0 : self.n * 2]
         fcoef_n = fcoef[self.n * 2 :]
-        ix_n, iy_n = self.inverse_fun(fcoef_n[0 : self.n], fcoef_n[self.n :])
-        ix_c, iy_c = self.inverse_fun(fcoef_c[0 : self.n], fcoef_c[self.n :])
+        ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
+        ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
 
         ix_n, iy_n = equidistance(ix_n.real, iy_n.real, self.n * 10)
         ix_c, iy_c = equidistance(ix_c.real, iy_c.real, self.n * 10)
@@ -172,8 +173,8 @@ class PlotShapeModes:
                 fcoef = [complex(r, i) for r, i in zip(real, imag)]
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]
-            ix_n, iy_n = self.inverse_fun(fcoef_n[0 : self.n], fcoef_n[self.n :])
-            ix_c, iy_c = self.inverse_fun(fcoef_c[0 : self.n], fcoef_c[self.n :])
+            ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
+            ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
 
             # ix_n, iy_n = self.inverse_fun(fcoef[0:self.n], fcoef[2*self.n:3*self.n])
             # ix_c, iy_c = self.inverse_fun(fcoef[self.n:2*self.n], fcoef[3*self.n:])
@@ -202,8 +203,8 @@ class PlotShapeModes:
                 fcoef = [complex(r, i) for r, i in zip(real, imag)]
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]
-            ix_n, iy_n = self.inverse_fun(fcoef_n[0 : self.n], fcoef_n[self.n :])
-            ix_c, iy_c = self.inverse_fun(fcoef_c[0 : self.n], fcoef_c[self.n :])
+            ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
+            ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
 
             nu.set_data(ix_n.real, iy_n.real)
             cell.set_data(ix_c.real, iy_c.real)
