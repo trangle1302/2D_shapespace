@@ -95,7 +95,7 @@ def fourier_coeffs(shape_coords, n=64):
 
     ix_, iy_ = inverse_fft(fft_x, fft_y)
     ix, iy = equidistance(ix_.real, iy_.real, len(coords))
-
+    """
     fig, ax = plt.subplots(1, 4, figsize=(12, 4))
     ax[0].plot(x, y)
     ax[0].axis("scaled")
@@ -107,7 +107,7 @@ def fourier_coeffs(shape_coords, n=64):
     ax[3].plot(ix, iy)
     ax[3].axis("scaled")
     plt.tight_layout()
-
+    """
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
 
     return coeffs, error
@@ -130,8 +130,8 @@ def forward_wavelet(x, y, wavelet_type="db5"):
 
 
 def inverse_wavelet(cAx, cAy, wavelet_type="db5"):
-    ix_ = pywt.idwt(cAx, None, wavelet_type)
-    iy_ = pywt.idwt(cAy, None, wavelet_type)
+    ix_ = pywt.idwt(cAx, None, wavelet_type, "smooth")
+    iy_ = pywt.idwt(cAy, None, wavelet_type, "smooth")
     return ix_, iy_
 
 
