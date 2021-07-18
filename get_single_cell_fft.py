@@ -72,8 +72,8 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
     for im in imlist:
         data = np.load(im)
         try:
-            nuclei, cell = align_cell_nuclei_centroids(data, plot=False)
-            # nuclei, cell = align_cell_major_axis(data, plot=False)
+            #nuclei, cell = align_cell_nuclei_centroids(data, plot=True)
+            nuclei, cell = align_cell_major_axis(data, plot=False)
 
             centroid = center_of_mass(cell)
             nuclei_coords_ = find_contours(nuclei)
@@ -100,6 +100,7 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
                 ax[1].axis("scaled")
                 ax[2].plot(nuclei_coords[:, 0], nuclei_coords[:, 1])
                 ax[2].plot(cell_coords[:, 0], cell_coords[:, 1])
+                ax[2].scatter(cell_coords[0, 0], cell_coords[0, 1], color='r')
                 ax[2].axis("scaled")
                 plt.show()
 
@@ -132,7 +133,7 @@ for n_coef in [64, 128]:
     df_.index = names_
 
 n_coef = 128
-df = fourier_df[f"wavelet_{n_coef}"].copy()
+df = fourier_df[f"wavelet_randstart_{n_coef}"].copy()
 use_complex = True
 if get_coef_fun == coefs.fourier_coeffs:
     if not use_complex:
@@ -198,8 +199,11 @@ for link, row in df_inv.iterrows():
     if i > 70:
         breakme
 
-midpoints = df_trans.mean()
+midpoints = df_trans.clip(0, None).mean()
+midpoints = df_trans.clip(None, 0).mean()
+
 fcoef = pca.inverse_transform(midpoints)
+
 if get_coef_fun == coefs.fourier_coeffs and use_complex:
     midpoints = []
     for c in df_trans:
@@ -212,7 +216,7 @@ if get_coef_fun == coefs.fourier_coeffs and use_complex:
         # std += [complex(np.std(real), np.std(imag))]
         midpoints += [complex(np.mean(real), np.mean(imag))]
     # midpoints = df_trans.mean()
-fcoef = pca.inverse_transform(midpoints)
+    fcoef = pca.inverse_transform(midpoints)
 
 if not use_complex:
     real = fcoef[: len(fcoef) // 2]
