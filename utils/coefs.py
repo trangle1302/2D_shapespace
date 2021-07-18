@@ -141,9 +141,9 @@ def wavelet_coefs(shape, n=64):
     start = np.random.randint(len(coords))
 
     x = np.array([p[0] for p in coords])
-    x = np.concatenate(np.repeat([x], 2, axis=0))[start : start + len(x)]
+    #x = np.concatenate(np.repeat([x], 2, axis=0))[start : start + len(x)]
     y = np.array([p[1] for p in coords])
-    y = np.concatenate(np.repeat([y], 2, axis=0))[start : start + len(y)]
+    #y = np.concatenate(np.repeat([y], 2, axis=0))[start : start + len(y)]
 
     x_, y_ = equidistance(x, y, n_points=2 * n)
 
@@ -155,17 +155,19 @@ def wavelet_coefs(shape, n=64):
 
     ix, iy = equidistance(ix_, iy_, len(coords))
 
-    """
+    
     fig, ax = plt.subplots(1,3, figsize=(12,4))
     #ax[0].imshow(shape)
     ax[0].plot(x,y)
+    ax[0].scatter(x[0], y[0], color='r')
     ax[0].axis('scaled')
     ax[1].plot(x, label = "x coord")
     ax[1].plot(y, label = "y coord")
     ax[1].legend()
     ax[2].plot(ix,iy)
+    ax[2].scatter(ix[0], iy[0], color='r')
     ax[2].axis('scaled')
     plt.tight_layout()
-    """
+    
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
     return coeffs, error
