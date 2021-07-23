@@ -72,7 +72,7 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
     for im in imlist:
         data = np.load(im)
         try:
-            #nuclei, cell = align_cell_nuclei_centroids(data, plot=True)
+            # nuclei, cell = align_cell_nuclei_centroids(data, plot=True)
             nuclei, cell = align_cell_major_axis(data, plot=False)
 
             centroid = center_of_mass(cell)
@@ -100,7 +100,7 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
                 ax[1].axis("scaled")
                 ax[2].plot(nuclei_coords[:, 0], nuclei_coords[:, 1])
                 ax[2].plot(cell_coords[:, 0], cell_coords[:, 1])
-                ax[2].scatter(cell_coords[0, 0], cell_coords[0, 1], color='r')
+                ax[2].scatter(cell_coords[0, 0], cell_coords[0, 1], color="r")
                 ax[2].axis("scaled")
                 plt.show()
 
@@ -123,18 +123,18 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
     return coef_df, names
 
 
-get_coef_fun = coefs.wavelet_coefs  # coefs.fourier_coeffs
+get_coef_fun = coefs.fourier_coeffs  # coefs.wavelet_coefs  #
 d = pathlib.Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS")
 imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
-for n_coef in [64, 128]:
+for n_coef in [128]:
     df_, names_ = get_coefs_df(imlist, n_coef, func=get_coef_fun)
-    fourier_df[f"wavelet_randstart_{n_coef}"] = df_
+    fourier_df[f"fourier_10rep_{n_coef}"] = df_
     df_.index = names_
 
 n_coef = 128
-df = fourier_df[f"wavelet_randstart_{n_coef}"].copy()
-use_complex = True
+df = fourier_df[f"fourier_10rep_{n_coef}"].copy()
+use_complex = False
 if get_coef_fun == coefs.fourier_coeffs:
     if not use_complex:
         df_ = pd.concat(
@@ -156,7 +156,7 @@ elif get_coef_fun == coefs.wavelet_coefs:
 
 matrix_of_features_transform = pca.transform(df_)
 pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
-pc_keep = [f"PC{c}" for c in range(1, 1 + 12)]
+pc_keep = [f"PC{c}" for c in range(1, 1 + 6)]
 df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
 df_trans.columns = pc_names
 df_trans.index = df.index
@@ -177,7 +177,7 @@ else:
     df_inv = pd.DataFrame(pca.inverse_transform(df_trans), index=df.index)
 
 n_coef = df.shape[1] // 4
-inverse_func = coefs.inverse_wavelet
+inverse_func = coefs.inverse_fft  # coefs.inverse_wavelet
 i = 0
 for link, row in df_inv.iterrows():
     i = i + 1
@@ -190,10 +190,12 @@ for link, row in df_inv.iterrows():
     ori_fft = df.iloc[i - 1]
     for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]:
         ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
+        ax[1].scatter(ix__[0], iy__[0], color="r")
         ax[1].plot(ix__, iy__)
         ax[1].axis("scaled")
     for fcoef in [fcoef_c, fcoef_n]:
         ix_, iy_ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
+        ax[2].scatter(ix_[0], iy_[0], color="r")
         ax[2].plot(ix_, iy_)
         ax[2].axis("scaled")
     if i > 70:
@@ -202,6 +204,7 @@ for link, row in df_inv.iterrows():
 midpoints = df_trans.clip(0, None).mean()
 midpoints = df_trans.clip(None, 0).mean()
 
+midpoints = df_trans.mean()
 fcoef = pca.inverse_transform(midpoints)
 
 if get_coef_fun == coefs.fourier_coeffs and use_complex:
