@@ -12,7 +12,7 @@ def forward_fft(x, y, n=64, hamming=True):
     assert len(x) == len(y)
 
     start = len(x) // 3
-    x = np.concatenate(np.repeat([x], 11, axis=0))[start : start + 10 * len(x)]
+    x = np.concatenate(np.repeat([x], 10, axis=0))  # [start : start + 10 * len(x)]
     y = np.concatenate(np.repeat([y], 10, axis=0))
     """
     # repeating xx times
@@ -74,11 +74,13 @@ def inverse_fft(fft_x, fft_y, hamming=True):
         """
         ix = ix[4 * n : 4 * n + 2 * n]
         iy = iy[4 * n : 4 * n + 2 * n]
-
+    """
     return (
         np.concatenate((ix, ix))[len(ix) - len(ix) // 3 : 2 * len(ix) - len(ix) // 3],
         iy,
     )  # np.append(ix, ix[0]), np.append(iy, iy[0])
+    """
+    return ix, iy
 
 
 def fourier_coeffs(shape_coords, n=64):
@@ -141,9 +143,9 @@ def wavelet_coefs(shape, n=64):
     start = np.random.randint(len(coords))
 
     x = np.array([p[0] for p in coords])
-    #x = np.concatenate(np.repeat([x], 2, axis=0))[start : start + len(x)]
+    # x = np.concatenate(np.repeat([x], 2, axis=0))[start : start + len(x)]
     y = np.array([p[1] for p in coords])
-    #y = np.concatenate(np.repeat([y], 2, axis=0))[start : start + len(y)]
+    # y = np.concatenate(np.repeat([y], 2, axis=0))[start : start + len(y)]
 
     x_, y_ = equidistance(x, y, n_points=2 * n)
 
@@ -155,7 +157,7 @@ def wavelet_coefs(shape, n=64):
 
     ix, iy = equidistance(ix_, iy_, len(coords))
 
-    
+    """
     fig, ax = plt.subplots(1,3, figsize=(12,4))
     #ax[0].imshow(shape)
     ax[0].plot(x,y)
@@ -168,6 +170,6 @@ def wavelet_coefs(shape, n=64):
     ax[2].scatter(ix[0], iy[0], color='r')
     ax[2].axis('scaled')
     plt.tight_layout()
-    
+    """
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
     return coeffs, error
