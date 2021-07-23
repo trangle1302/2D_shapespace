@@ -28,7 +28,6 @@ class PlotShapeModes:
         self.midpoints = None
         self.std = None
 
-
         mean = self.matrix.clip(0, None).mean()
         # mean = abs(self.matrix).mean(axis=0)
         self.midpoints = mean
