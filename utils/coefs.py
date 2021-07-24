@@ -88,7 +88,11 @@ def fourier_coeffs(shape_coords, n=64):
 
     x = np.array([p[0] for p in coords])
     y = np.array([p[1] for p in coords])
-
+    # aligning start point of contour
+    start = np.argmax(y)
+    x = np.concatenate((x,x))[start : start+ len(coords)]
+    y = np.concatenate((y,y))[start : start+ len(coords)]
+    
     x_, y_ = equidistance(x, y, n_points=2 * n)
 
     fft_x, fft_y = forward_fft(x_, y_, n=n)  # returns len(fft_x)=len(fft_y)=n
@@ -103,10 +107,12 @@ def fourier_coeffs(shape_coords, n=64):
     ax[0].axis("scaled")
     ax[1].plot(x, label="x coord")
     ax[1].plot(y, label="y coord")
+    ax[1].scatter(x[0], y[0])
     ax[1].legend()
     # ax[2].plot(np.concatenate((x_,x_,x_))[len(x_)//3 :  len(x_)//3 + 2*len(y_)], label = "x coord")
     # ax[2].plot(np.concatenate((y_,y_)), label = "y coord")
     ax[3].plot(ix, iy)
+    ax[3].scatter(ix[0], iy[0])
     ax[3].axis("scaled")
     plt.tight_layout()
     """
