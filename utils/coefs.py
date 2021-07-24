@@ -1,6 +1,6 @@
 import numpy as np
 import pywt
-from utils.helpers import equidistance
+from utils.helpers import equidistance, find_nearest, find_centroid
 import matplotlib.pyplot as plt
 
 
@@ -88,11 +88,23 @@ def fourier_coeffs(shape_coords, n=64):
 
     x = np.array([p[0] for p in coords])
     y = np.array([p[1] for p in coords])
+
     # aligning start point of contour
-    start = np.argmax(y)
-    x = np.concatenate((x,x))[start : start+ len(coords)]
-    y = np.concatenate((y,y))[start : start+ len(coords)]
-    
+    centroid = find_centroid(coords)
+    _, val = find_nearest(y[np.where(x > centroid[0])], centroid[1])
+    if len(np.where(y == val)[0]) == 2:
+        x0 = x[np.where(y == val)[0][0]]
+        x1 = x[np.where(y == val)[0][1]]
+        if x0 > x1:
+            idx = np.where(y == val)[0][0]
+        else:
+            idx = np.where(y == val)[0][1]
+    else:
+        idx = np.where(y == val)[0][0]
+
+    x = np.concatenate((x, x))[idx : idx + len(coords)]
+    y = np.concatenate((y, y))[idx : idx + len(coords)]
+
     x_, y_ = equidistance(x, y, n_points=2 * n)
 
     fft_x, fft_y = forward_fft(x_, y_, n=n)  # returns len(fft_x)=len(fft_y)=n
@@ -107,7 +119,6 @@ def fourier_coeffs(shape_coords, n=64):
     ax[0].axis("scaled")
     ax[1].plot(x, label="x coord")
     ax[1].plot(y, label="y coord")
-    ax[1].scatter(x[0], y[0])
     ax[1].legend()
     # ax[2].plot(np.concatenate((x_,x_,x_))[len(x_)//3 :  len(x_)//3 + 2*len(y_)], label = "x coord")
     # ax[2].plot(np.concatenate((y_,y_)), label = "y coord")
