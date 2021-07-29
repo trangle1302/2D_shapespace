@@ -5,7 +5,7 @@ import pandas as pd
 class ComplexPCA:
     def __init__(self, n_components):
         self.n_components = n_components
-        self.u = self.s = self.principle_axis_ = None
+        self.components_ = self.u = self.s = self.principle_axis_ = None
         self.mean_ = None
 
     @property
@@ -35,7 +35,8 @@ class ComplexPCA:
         # Leave those components as rows of matrix so that it is compatible with Sklearn PCA.
         self.s = s  # lapack svd returns eigenvalues with s ** 2 sorted descending
         self.u = u
-
+        self.components_ = vh
+        
     def transform(self, matrix):
         """In SVD:
         X=USV⊤
