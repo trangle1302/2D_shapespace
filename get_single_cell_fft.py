@@ -122,6 +122,7 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
     print(f"Reconstruction error for cell: {np.average(error_c)}")
     return coef_df, names
 
+
 fun = "fft"
 if fun == "fft":
     get_coef_fun = coefs.fourier_coeffs  # coefs.wavelet_coefs  #
@@ -129,7 +130,7 @@ if fun == "fft":
 elif fun == "wavelet":
     get_coef_fun = coefs.wavelet_coefs
     inverse_func = coefs.inverse_wavelet
-    
+
 d = pathlib.Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS")
 imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
@@ -140,7 +141,7 @@ for n_coef in [128]:
 
 n_coef = 128
 df = fourier_df[f"fourier_10rep_startalign_{n_coef}"].copy()
-use_complex = False
+use_complex = True
 if fun == "fft":
     if not use_complex:
         df_ = pd.concat(
@@ -162,13 +163,13 @@ elif fun == "wavelet":
 
 matrix_of_features_transform = pca.transform(df_)
 pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
-pc_keep = [f"PC{c}" for c in range(1, 1 + 6)]
+pc_keep = [f"PC{c}" for c in range(1, 1 + 11)]
 df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
 df_trans.columns = pc_names
 df_trans.index = df.index
 df_trans[list(set(pc_names) - set(pc_keep))] = 0
 
-if get_coef_fun == coefs.fourier_coeffs and not use_complex:
+if fun == "fft" and not use_complex:
     df_sep_inv = pca.inverse_transform(df_trans)
     # df_inv = sc.inverse_transform(df_scaled_inv)
 
