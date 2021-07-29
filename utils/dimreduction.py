@@ -36,7 +36,7 @@ class ComplexPCA:
         self.s = s  # lapack svd returns eigenvalues with s ** 2 sorted descending
         self.u = u
         self.components_ = vh
-        
+
     def transform(self, matrix):
         """In SVD:
         X=USV⊤
