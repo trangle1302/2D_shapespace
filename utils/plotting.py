@@ -28,7 +28,7 @@ class PlotShapeModes:
         self.midpoints = None
         self.std = None
 
-        mean = self.matrix.mean() #.clip(0, None).mean()
+        mean = self.matrix.mean()  # .clip(0, None).mean()
         # mean = abs(self.matrix).mean(axis=0)
         self.midpoints = mean
         self.std = self.matrix.std()
@@ -234,7 +234,7 @@ def display_scree_plot(pca):
     plt.bar(np.arange(len(scree)) + 1, scree)
     plt.plot(np.arange(len(scree)) + 1, scree.cumsum(), c="red")
 
-    for thres in [70, 80, 90]:
+    for thres in [70, 80, 90, 95]:
         idx = np.searchsorted(scree.cumsum(), thres)
         plt.plot(idx + 1, scree.cumsum()[idx], c="red", marker="o")
         plt.annotate(f"{idx} PCs", xy=(idx + 3, scree.cumsum()[idx] - 5))
