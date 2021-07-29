@@ -122,10 +122,14 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
     print(f"Reconstruction error for cell: {np.average(error_c)}")
     return coef_df, names
 
-
-get_coef_fun = coefs.fourier_coeffs  # coefs.wavelet_coefs  #
-inverse_func = coefs.inverse_fft  # coefs.inverse_wavelet
-
+fun = "fft"
+if fun == "fft":
+    get_coef_fun = coefs.fourier_coeffs  # coefs.wavelet_coefs  #
+    inverse_func = coefs.inverse_fft  # coefs.inverse_wavelet
+elif fun == "wavelet":
+    get_coef_fun = coefs.wavelet_coefs
+    inverse_func = coefs.inverse_wavelet
+    
 d = pathlib.Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS")
 imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
@@ -137,7 +141,7 @@ for n_coef in [128]:
 n_coef = 128
 df = fourier_df[f"fourier_10rep_startalign_{n_coef}"].copy()
 use_complex = False
-if get_coef_fun == coefs.fourier_coeffs:
+if fun == "fft":
     if not use_complex:
         df_ = pd.concat(
             [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)], axis=1
@@ -150,7 +154,7 @@ if get_coef_fun == coefs.fourier_coeffs:
         pca = dimreduction.ComplexPCA(n_components=df_.shape[1])
         pca.fit(df_)
         plotting.display_scree_plot(pca)
-elif get_coef_fun == coefs.wavelet_coefs:
+elif fun == "wavelet":
     df_ = df
     pca = PCA(n_components=df_.shape[1])
     pca.fit(df_)
@@ -158,7 +162,7 @@ elif get_coef_fun == coefs.wavelet_coefs:
 
 matrix_of_features_transform = pca.transform(df_)
 pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
-pc_keep = [f"PC{c}" for c in range(1, 1 + 10)]
+pc_keep = [f"PC{c}" for c in range(1, 1 + 6)]
 df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
 df_trans.columns = pc_names
 df_trans.index = df.index
@@ -182,7 +186,7 @@ n_coef = df.shape[1] // 4
 i = 0
 for link, row in df_inv.iterrows():
     i = i + 1
-    if i < 50:
+    if i < 120:
         continue
     fcoef_c = row[0 : n_coef * 2]
     fcoef_n = row[n_coef * 2 :]
@@ -199,7 +203,7 @@ for link, row in df_inv.iterrows():
         ax[2].scatter(ix_[0], iy_[0], color="r")
         ax[2].plot(ix_, iy_)
         ax[2].axis("scaled")
-    if i > 70:
+    if i > 140:
         breakme
 
 midpoints = df_trans.clip(0, None).mean()
@@ -208,7 +212,7 @@ midpoints = df_trans.clip(None, 0).mean()
 midpoints = df_trans.mean()
 fcoef = pca.inverse_transform(midpoints)
 
-if get_coef_fun == coefs.fourier_coeffs and use_complex:
+if fun == "fft" and use_complex:
     midpoints = []
     for c in df_trans:
         col = df_trans[c]
