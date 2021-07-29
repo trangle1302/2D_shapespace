@@ -82,7 +82,7 @@ def inverse_fft(fft_x, fft_y, hamming=True):
     """
     return ix, iy
 
-
+### separate fft of cell and nucleus, and add back offset to 1st DC of nucleus
 def fourier_coeffs(shape_coords, n=64):
     coords = shape_coords
 
@@ -92,13 +92,14 @@ def fourier_coeffs(shape_coords, n=64):
     # aligning start point of contour
     centroid = find_centroid(coords)
     _, val = find_nearest(y[np.where(x > centroid[0])], centroid[1])
-    if len(np.where(y == val)[0]) == 2:
-        x0 = x[np.where(y == val)[0][0]]
-        x1 = x[np.where(y == val)[0][1]]
-        if x0 > x1:
-            idx = np.where(y == val)[0][0]
-        else:
-            idx = np.where(y == val)[0][1]
+    if len(np.where(y == val)[0]) >1 :
+        largest_x = x.min()
+        current_idx = None
+        for idx in np.where(y == val)[0]:
+            if x[idx] > largest_x:
+                largest_x = x[idx]
+                current_idx = idx
+        idx = current_idx
     else:
         idx = np.where(y == val)[0][0]
 
