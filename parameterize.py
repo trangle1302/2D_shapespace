@@ -2,6 +2,74 @@ import os
 import numpy as np
 from scipy import interpolate as spinterp
 from typing import Optional, List, Dict, Tuple
+import warnings
+
+
+def parameterize_image_coordinates(
+    seg_mem: np.array, seg_nuc: np.array, lmax: int, nisos: List
+):
+
+    """
+    Runs the parameterization for a cell represented by its spherical
+    harmonics coefficients calculated by using ther package aics-shparam.
+    Parameters
+    --------------------
+    seg_mem: np.array
+        2D binary cell segmentation.
+    seg_nuc: np.array
+        2D binary nuclear segmentation.
+    lmax: int
+        Degree of fft expansion.
+    nisos : list
+        [a,b] representing the number of layers that will be used to
+        parameterize the nucleoplasm and cytoplasm.
+    Returns
+    -------
+    coords: np.array
+        Array of shape 3xNxM, where NxM is the size of a
+        parameterized intensity representation generated with
+        same parameters lmax and nisos.
+    coeffs_mem: dict
+        coefficients that represent cell shape.
+    centroid_mem: tuple
+        (x,y) representing cell centroid.
+    coeffs_nuc: dict
+        coefficients that represent nuclear shape.
+    centroid_nuc: tuple
+        (x,y) representing nuclear centroid.
+    """
+
+    if (seg_mem.dtype != np.uint8) or (seg_nuc.dtype != np.uint8):
+        warnings.warn(
+            "One or more input images is not an 8-bit image\
+        and will be cast to 8-bit."
+        )
+
+    # Cell SHE coefficients
+    (coeffs_mem, _), (_, _, _, centroid_mem) = shparam.get_shcoeffs(
+        image=seg_mem, lmax=lmax, sigma=0, compute_lcc=True, alignment_2d=False
+    )
+
+    # Nuclear SHE coefficients
+    (coeffs_nuc, _), (_, _, _, centroid_nuc) = shparam.get_shcoeffs(
+        image=seg_nuc, lmax=lmax, sigma=0, compute_lcc=True, alignment_2d=False
+    )
+
+    # Get Coordinates
+    coords = get_mapping_coordinates(
+        coeffs_mem=coeffs_mem,
+        centroid_mem=centroid_mem,
+        coeffs_nuc=coeffs_nuc,
+        centroid_nuc=centroid_nuc,
+        nisos=nisos,
+    )
+
+    # Shift coordinates to the center of the input
+    # segmentations
+    coords += np.array(centroid_mem).reshape(3, 1, 1)
+
+    return coords, (coeffs_mem, centroid_mem, coeffs_nuc, centroid_nuc)
+
 
 def get_interpolators(
     coeffs_mem: Dict,
