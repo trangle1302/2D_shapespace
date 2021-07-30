@@ -4,16 +4,17 @@ from utils.helpers import equidistance, find_nearest, find_centroid
 import matplotlib.pyplot as plt
 
 
-def forward_fft(x, y, n=64, hamming=True):
+def forward_fft(x, y, n=64, hamming=False, repeat=False):
     """Fuction to convert coordinates to fft coefs
     n: number of fft coefficients to keep for x and y
     Returns fft_x and fft_y with len of n+1 (DC component and n fft coefs)
     """
     assert len(x) == len(y)
 
-    start = len(x) // 3
-    x = np.concatenate(np.repeat([x], 10, axis=0))  # [start : start + 10 * len(x)]
-    y = np.concatenate(np.repeat([y], 10, axis=0))
+    if repeat:
+        # start = len(x) // 3
+        x = np.concatenate(np.repeat([x], 10, axis=0))  # [start : start + 10 * len(x)]
+        y = np.concatenate(np.repeat([y], 10, axis=0))
     """
     # repeating xx times
     start = len(x) // 3  # np.random.randint(len(x)) #
@@ -32,13 +33,12 @@ def forward_fft(x, y, n=64, hamming=True):
     return fft_x[:n], fft_y[:n]
 
 
-def inverse_fft(fft_x, fft_y, hamming=True):
+def inverse_fft(fft_x, fft_y, hamming=False, repeat=False):
     """Fuction to convert fft coefficients back to coordinates
     n: number of data points
     """
-    n = len(fft_x)
     assert len(fft_x) == len(fft_y)
-    if n is None:
+    if not repeat:
         fft_x = np.concatenate((fft_x, np.conjugate(fft_x[1:][::-1])))
         fft_y = np.concatenate((fft_y, np.conjugate(fft_y[1:][::-1])))
     else:
@@ -66,7 +66,7 @@ def inverse_fft(fft_x, fft_y, hamming=True):
         ix = ix / np.hamming(len(ix))
         iy = iy / np.hamming(len(iy))
 
-    if n is not None:
+    if repeat:
         """
         start = n // 3
         ix = ix[2 * n - start : 2 * n - start + 100]  # Take the middle part of ix
@@ -116,17 +116,15 @@ def fourier_coeffs(shape_coords, n=64):
     ix_, iy_ = inverse_fft(fft_x, fft_y)
     ix, iy = equidistance(ix_.real, iy_.real, len(coords))
     """
-    fig, ax = plt.subplots(1, 4, figsize=(12, 4))
+    fig, ax = plt.subplots(1, 3, figsize=(6, 3))
     ax[0].plot(x, y)
     ax[0].axis("scaled")
     ax[1].plot(x, label="x coord")
     ax[1].plot(y, label="y coord")
     ax[1].legend()
-    # ax[2].plot(np.concatenate((x_,x_,x_))[len(x_)//3 :  len(x_)//3 + 2*len(y_)], label = "x coord")
-    # ax[2].plot(np.concatenate((y_,y_)), label = "y coord")
-    ax[3].plot(ix, iy)
-    ax[3].scatter(ix[0], iy[0])
-    ax[3].axis("scaled")
+    ax[2].plot(ix, iy)
+    ax[2].scatter(ix[0], iy[0], c="r")
+    ax[2].axis("scaled")
     plt.tight_layout()
     """
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
