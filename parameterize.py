@@ -76,9 +76,9 @@ def get_interpolators(
     centroid_mem: Dict,
     coeffs_nuc: Dict,
     centroid_nuc: Dict,
-    nisos: List
-    ):
-    
+    nisos: List,
+):
+
     """
     Creates 1D interpolators for fft/wavelet coefficients with fixed points
     at: 1) nuclear centroid, 2) nuclear shell and 3) cell membrane.
@@ -112,7 +112,7 @@ def get_interpolators(
     nc = len(coeffs_mem)
     # Degree of the expansion (lmax)
     lmax = int(np.sqrt(nc / 2.0) - 1)
-    
+
     # Concatenate centroid into same array for interpolation
     centroids = np.c_[centroid_nuc, centroid_nuc, centroid_mem]
 
@@ -140,16 +140,19 @@ def get_interpolators(
 
     # Centroid interpolator
     centroids_interpolator = spinterp.interp1d(iso_values, centroids)
-    
+
     return coeffs_interpolator, centroids_interpolator, lmax
 
+
 def get_mapping_coordinates():
-    
+
     return coords
 
+
 def cellular_mapping():
-    
+
     return mapping
+
 
 def morph_representation_on_shape():
     return img
