@@ -156,3 +156,41 @@ def cellular_mapping():
 
 def morph_representation_on_shape():
     return img
+
+def get_interp(coeffs_mem, coeffs_nuc, ):
+    """
+    Creates 1D interpolators for fft/wavelet coefficients with fixed points
+    at: 1) nuclear centroid, 2) nuclear shell and 3) cell membrane.
+    Also creates an interpolator for corresponding centroids.
+    Parameters
+    --------------------
+    coeffs_mem: dict
+        coefficients that represent cell shape (mem=membrane).
+    centroid_mem: tuple
+        (x,y) representing cell centroid
+    coeffs_nuc: dict
+        coefficients that represent nuclear shape (nuc=nuclear).
+    centroid_nuc: tuple
+        (x,y) representing nuclear centroid
+    nisos : list
+        [a,b] representing the number of layers that will be used to
+        parameterize the nucleoplasm and cytoplasm.
+    Returns
+    -------
+        coeffs_interpolator: spinterp.interp1d
+        centroids_interpolator: spinterp.interp1d
+        lmax: int
+    """
+    
+    
+from scipy import interpolate
+x = np.arange(-5.01, 5.01, 0.25)
+y = np.arange(-5.01, 5.01, 0.25)
+xx, yy = np.meshgrid(x, y)
+z = np.sin(xx**2+yy**2)
+f = interpolate.interp2d(x, y, z, kind='cubic')
+xnew = np.arange(-5.01, 5.01, 1e-2)
+ynew = np.arange(-5.01, 5.01, 1e-2)
+znew = f(xnew, ynew)
+plt.plot(x, z[0, :], 'ro-', xnew, znew[0, :], 'b-')
+plt.show()
