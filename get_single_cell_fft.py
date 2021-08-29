@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import sys
 import pathlib
 from sklearn.decomposition import PCA
-
+import scipy
 
 def align_cell_nuclei_centroids(data, plot=False):
     nuclei = data[1, :, :]
@@ -72,10 +72,10 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
     for im in imlist:
         data = np.load(im)
         try:
-            # nuclei, cell = align_cell_nuclei_centroids(data, plot=True)
-            nuclei, cell = align_cell_major_axis(data, plot=False)
-
-            centroid = center_of_mass(cell)
+            nuclei, cell = align_cell_nuclei_centroids(data, plot=False)
+            # nuclei, cell = align_cell_major_axis(data, plot=False)
+            centroid = center_of_mass(nuclei)
+            # centroid = center_of_mass(cell)
             nuclei_coords_ = find_contours(nuclei)
             nuclei_coords_ = nuclei_coords_[0] - centroid
 
@@ -136,12 +136,12 @@ imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
 for n_coef in [128]:
     df_, names_ = get_coefs_df(imlist, n_coef, func=get_coef_fun)
-    fourier_df[f"fourier_10rep_startalign_{n_coef}"] = df_
+    fourier_df[f"fourier_ccentroid_startalign_{n_coef}"] = df_
     df_.index = names_
 
 n_coef = 128
-df = fourier_df[f"fourier_10rep_startalign_{n_coef}"].copy()
-use_complex = True
+df = fourier_df[f"fourier_nucentroid_startalign_{n_coef}"].copy()
+use_complex = False
 if fun == "fft":
     if not use_complex:
         df_ = pd.concat(
@@ -163,7 +163,7 @@ elif fun == "wavelet":
 
 matrix_of_features_transform = pca.transform(df_)
 pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
-pc_keep = [f"PC{c}" for c in range(1, 1 + 11)]
+pc_keep = [f"PC{c}" for c in range(1, 1 + 13)]
 df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
 df_trans.columns = pc_names
 df_trans.index = df.index
@@ -191,19 +191,28 @@ for link, row in df_inv.iterrows():
         continue
     fcoef_c = row[0 : n_coef * 2]
     fcoef_n = row[n_coef * 2 :]
-    fig, ax = plt.subplots(1, 3)
-    ax[0].imshow(plt.imread(link.with_suffix(".jpg")))
+    fig, ax = plt.subplots(2, 3)        
+    plt.subplot(111)
+    plt.imshow(plt.imread(link.with_suffix(".jpg")))
     ori_fft = df.iloc[i - 1]
-    for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]:
+    cell = []
+    for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
         ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
-        ax[1].scatter(ix__[0], iy__[0], color="r")
-        ax[1].plot(ix__, iy__)
-        ax[1].axis("scaled")
+        
+        plt.subplot(112)
+        plt.scatter(ix__[0], iy__[0], color="r")
+        plt.plot(ix__, iy__)
+        plt.axis("scaled")
+        cell += [np.concatenate([ix__, iy__])] #(x_c, y_c), (x_n, y_n)
+    plt.subplot(122)
+    x_,y_ = get_coordinates(cell[1].real, cell[0].real, [0,0], n_isos = [3,7], plot=True)
     for fcoef in [fcoef_c, fcoef_n]:
         ix_, iy_ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
-        ax[2].scatter(ix_[0], iy_[0], color="r")
-        ax[2].plot(ix_, iy_)
-        ax[2].axis("scaled")
+        plt.subplot(113)
+        plt.scatter(ix_[0], iy_[0], color="r")
+        plt.plot(ix_, iy_)
+        plt.axis("scaled")
+    plt.show()
     if i > 140:
         breakme
 
@@ -237,8 +246,8 @@ fcoef_c = fcoef[0 : n_coef * 2]
 fcoef_n = fcoef[n_coef * 2 :]
 ix_n, iy_n = inverse_func(fcoef_n[0:n_coef], fcoef_n[n_coef:])
 ix_c, iy_c = inverse_func(fcoef_c[0:n_coef], fcoef_c[n_coef:])
-plt.plot(ix_n, iy_n)
-plt.plot(ix_c, iy_c)
+plt.plot(ix_n.real, iy_n.real)
+plt.plot(ix_c.real, iy_c.real)
 plt.axis("scaled")
 
 pm = plotting.PlotShapeModes(
@@ -257,8 +266,100 @@ for pc in pc_keep:
     pm.plot_pc_hist(pc)
     pm.plot_shape_variation(pc)
 
+coeffs_mem = [(x.real, y.real) for x, y in zip(fcoef_c[0:n_coef], fcoef_c[n_coef:])]
+coeffs_nuc = [(x.real, y.real) for x, y in zip(fcoef_n[0:n_coef], fcoef_n[n_coef:])]
+centroid_nuc = helpers.find_centroid([(x.real, y.real) for x, y in zip(ix_n, iy_n)])
+centroid_mem = helpers.find_centroid([(x.real, y.real) for x, y in zip(ix_c, iy_c)])
+plt.plot(ix_n.real, iy_n.real)
+plt.scatter(centroid_nuc[0],centroid_nuc[1], c="r")
+plt.plot(ix_c.real, iy_c.real)
+plt.scatter(centroid_mem[0],centroid_mem[1], c="b")
+plt.axis("scaled")
+
+
+
+plt.plot(ix_n,iy_n, c = "r")
+for i, iso_value in enumerate(np.linspace(0.0, 1.0, 1 + np.sum(nisos))):
+    # Get coeffs at given fixed point
+    ix = x_interpolator(iso_value)
+    iy = y_interpolator(iso_value)
+    plt.plot(ix, iy, "--")
+    plt.axis("scaled")
+    
+fcoef, e = get_coef_fun([(x,y) for x, y in zip(ix,iy)], n=n_coef)
+
+midpoints = df_trans.mean()
+fcoef = pca.inverse_transform(midpoints)
+    
+def get_coordinates(nuc, mem, centroid, n_isos = [3,7], plot=True):
+    """
+    Creates 1D interpolators for x, y with fixed points
+    at: 1) nuclear centroid, 2) nuclear shell and 3) cell membrane.
+    
+    Parameters
+    --------------------
+    nuc: list
+        coefficients that represent nuclear shape (nuc=nuclear).
+    mem: list
+        coefficients that represent cell shape (mem=membrane).
+    centroid: tuple
+        (x,y) representing nucleus centroid (center to interpolate outward)
+    nisos : list
+        [a,b] representing the number of layers that will be used to
+        parameterize the nucleoplasm and cytoplasm.
+    Returns
+    -------
+        ix: interpolated x values
+        iy: interpolated y values
+    """
+    x_n, y_n = nuc[:len(nuc)//2], nuc[len(nuc)//2:]
+    x_c, y_c = mem[:len(mem)//2], mem[len(mem)//2:]
+    iso_values = [0.0] + n_isos
+    iso_values = np.cumsum(iso_values)
+    iso_values = iso_values / iso_values[-1]
+    
+    x = np.c_[np.full_like(x_n, centroid[0]), x_n, x_c]
+    y = np.c_[np.full_like(y_n, centroid[1]), y_n, y_c]
+    
+    # Create x and y interpolator
+    x_interpolator = scipy.interpolate.interp1d(iso_values, x)
+    y_interpolator = scipy.interpolate.interp1d(iso_values, y)
+    ix_list = []
+    iy_list = []
+    if plot:
+        plt.plot(x_n, y_n)
+        plt.plot(x_c, y_c)
+        for i, iso_value in enumerate(np.linspace(0.0, 1.0, 1 + np.sum(n_isos))):
+            # Get coeffs at given fixed point
+            ix = x_interpolator(iso_value)
+            iy = y_interpolator(iso_value)
+            plt.plot(ix,iy, "--")
+            ix_list += [ix]
+            iy_list += [iy]
+        plt.axis("scaled")
+    else:
+        for i, iso_value in enumerate(np.linspace(0.0, 1.0, 1 + np.sum(n_isos))):
+            # Get coeffs at given fixed point
+            ix = x_interpolator(iso_value)
+            iy = y_interpolator(iso_value)    
+            ix_list += [ix]
+            iy_list += [iy]
+    return ix, iy
 
 # https://stats.stackexchange.com/questions/134282/relationship-between-svd-and-pca-how-to-use-svd-to-perform-pca
 # for each cell, do random start x100 and average the fft.
 # Move back to complex numbers
 # add beginning and end signals (10points eg) so the x, y is not periodic anymore
+
+    
+from scipy import interpolate
+x = np.arange(-5.01, 5.01, 0.25)
+y = np.arange(-5.01, 5.01, 0.25)
+xx, yy = np.meshgrid(x, y)
+z = np.sin(xx**2+yy**2)
+f = interpolate.interp2d(x, y, z, kind='cubic')
+xnew = np.arange(-5.01, 5.01, 1e-2)
+ynew = np.arange(-5.01, 5.01, 1e-2)
+znew = f(xnew, ynew)
+plt.plot(x, z[0, :], 'ro-', xnew, znew[0, :], 'b-')
+plt.show()
