@@ -39,8 +39,8 @@ def inverse_fft(fft_x, fft_y, hamming=False, repeat=False):
     """
     assert len(fft_x) == len(fft_y)
     if not repeat:
-        fft_x = np.concatenate((fft_x, np.conjugate(fft_x[1:][::-1])))
-        fft_y = np.concatenate((fft_y, np.conjugate(fft_y[1:][::-1])))
+        fft_x = np.concatenate((fft_x, [0], np.conjugate(fft_x[1:][::-1])))
+        fft_y = np.concatenate((fft_y, [0], np.conjugate(fft_y[1:][::-1])))
     else:
         n = len(fft_x)
         fft_x = np.concatenate(
