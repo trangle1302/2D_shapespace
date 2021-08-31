@@ -5,7 +5,7 @@ import numpy as np
 import math
 from scipy import ndimage as ndi
 from geojson import FeatureCollection, dump
-import utils.annotationUtils
+import utils.annotationUtils as annotationUtils
 import skimage
 from skimage.filters import threshold_otsu, gaussian, sobel
 from skimage.measure import regionprops
