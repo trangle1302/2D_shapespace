@@ -126,27 +126,6 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, save_path, plot=False)
         np.save(f'{save_path}{region_c.label}.npy', data)
         """
 
-        """
-        # Haar wavelet transformation, cD=Approximation coef, cA=Detail coef
-        cA, cD = pywt.dwt(mask_alligned, 'haar')
-        # reconstruction signal
-        y = pywt.idwt(cA, cD, 'haar')
-        
-        coeffs2 = pywt.dwt2(mask_alligned, 'bior1.3')
-        # Approximation, (Horizonal details, Vertical details, Diagonal details)
-        LL, (LH, HL, HH) = coeffs2
-        #savepath = os.path.join(args.imgOutput, name)
-        #skimage.io.imsave(savepath, fig)
-        
-        # 1d fourier transform on all x coordinates and y cooridnates -> coeff
-        # fourier expansion on the x(t) and y(t) -> coefficients
-        
-        sp = np.fft.fft(mask_alligned)
-        freq = np.fft.fftfreq(mask_alligned.shape[-1])
-        plt.plot(freq, sp.real, freq, sp.imag)
-        breakme
-        """
-
 
 def wavelet(x, max_lev=3, label_levels=3):
     shape = x.shape
