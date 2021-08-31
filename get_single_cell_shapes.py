@@ -15,7 +15,7 @@ import pandas as pd
 from scipy import ndimage as ndi
 import gzip
 from descartes import PolygonPatch
-from utils import (
+from utils.helpers import (
     read_from_json,
     geojson_to_masks,
     image_roll,
@@ -64,14 +64,20 @@ def get_cell_nuclei_masks(image_id, cell_json):
     img = imageio.imread(tf, "tiff")
     nuclei_mask, _ = watershed_lab(img, marker=None, rm_border=True)
 
+    url = f"{base_url}/{plate}/{plate}_{well}_{sample}_green.tif.gz"
+    r = requests.get(url, auth=HTTPBasicAuth("trang", "H3dgeh0g1302"))
+    f = io.BytesIO(r.content)
+    tf = gzip.open(f).read()
+    protein = imageio.imread(tf, "tiff")
+
     marker = np.zeros_like(nuclei_mask)
     marker[nuclei_mask > 0] = nuclei_mask[nuclei_mask > 0] + 1  # foreground
     cell_mask2 = watershed_lab2(cell_mask, marker=marker)
 
-    return cell_mask2, nuclei_mask
+    return cell_mask2, nuclei_mask, protein
 
 
-def get_single_cell_mask(cell_mask, nuclei_mask, save_path):
+def get_single_cell_mask(cell_mask, nuclei_mask, protein, save_path, plot=False):
     for region_c, region_n in zip(
         skimage.measure.regionprops(cell_mask), skimage.measure.regionprops(nuclei_mask)
     ):
@@ -87,31 +93,45 @@ def get_single_cell_mask(cell_mask, nuclei_mask, save_path):
         mask_n[mask_n != region_n.label] = 0
         mask_n[mask_n == region_n.label] = 1
 
-        plt.figure(figsize=(10, 10))
-        plt.imshow(mask)
-        plt.imshow(mask_n, alpha=0.5)
+        pr = protein[minr:maxr, minc:maxc].copy()
+        pr[mask != 1] = 0
 
+        if plot:
+            plt.figure(figsize=(10, 10))
+            plt.imshow(mask)
+            plt.imshow(mask_n, alpha=0.5)
+
+        """
         # align cell to the 1st major axis
         theta = region_n.orientation * 180 / np.pi  # radiant to degree conversion
         mask = ndi.rotate(mask, 90 - theta)
         mask_n = ndi.rotate(mask_n, 90 - theta)
-
+        pr = ndi.rotate(pr, 90 - theta)
+        """
+        if plot:
+            fig = plt.imshow(pr)
+            fig.axes.get_xaxis().set_visible(False)
+            fig.axes.get_yaxis().set_visible(False)
+            # plt.savefig(f"{save_path}{region_c.label}_protein.jpg")
         # centroid_n = np.round(skimage.measure.centroid(mask_n))
         # allign the centroid
         # mask = image_roll(mask, centroid_n)
         # mask_n = image_roll(mask_n, centroid_n)
         # center to the center of mass of the nucleus
         # fig = shift_center_mass(mask)
+        if plot:
+            plt.figure(figsize=(10, 10))
+            plt.imshow(mask)
+            plt.imshow(mask_n, alpha=0.5)
+            plt.axis("off")
+            plt.tight_layout()
+            # plt.savefig(f"{save_path}{region_c.label}.jpg")
 
-        plt.figure(figsize=(10, 10))
-        plt.imshow(mask)
-        plt.imshow(mask_n, alpha=0.5)
-        plt.axis("off")
-        plt.tight_layout()
-        plt.savefig(f"{save_path}{region_c.label}.jpg")
-
+        imageio.imwrite(f"{save_path}{region_c.label}_protein.png", pr)
         data = np.stack((mask, mask_n))
         np.save(f"{save_path}{region_c.label}.npy", data)
+        data = np.dstack((mask, np.zeros_like(mask), mask_n)) * 255
+        imageio.imwrite(f"{save_path}{region_c.label}.png", data)
         """
         data = np.expand_dims(data, axis=1)
         data = np.repeat(data, 10, axis=1)
@@ -191,7 +211,7 @@ np.random.seed(42)  # for reproducibility
 
 base_dir = "C:/Users/trang.le/Desktop/annotation-tool"
 base_url = "https://if.proteinatlas.org"
-save_dir = "C:/Users/trang.le/Desktop/2D_shape_space/U2OS"
+save_dir = "C:/Users/trang.le/Desktop/2D_shape_space/U2OS_2"
 # json_path = base_dir + "/HPA-Challenge-2020-all/segmentation/10093_1772_F9_7/annotation_all_ulrika.json"
 df = pd.read_csv(base_dir + "/final_labels_allversions.csv")
 df = df[df.atlas_name == "U-2 OS"]
@@ -203,9 +223,9 @@ for img_id in imlist:
         ),
         key=os.path.getctime,
     )
-    cell_mask, nuclei_mask = get_cell_nuclei_masks(img_id, json_path)
+    cell_mask, nuclei_mask, protein = get_cell_nuclei_masks(img_id, json_path)
     save_path = f"{save_dir}/{img_id}_"
-    get_single_cell_mask(cell_mask, nuclei_mask, save_path)
+    get_single_cell_mask(cell_mask, nuclei_mask, protein, save_path)
 
 wavelet(mask_alligned)
 #%%
