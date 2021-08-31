@@ -101,24 +101,11 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, save_path, plot=False)
             plt.imshow(mask)
             plt.imshow(mask_n, alpha=0.5)
 
-        """
-        # align cell to the 1st major axis
-        theta = region_n.orientation * 180 / np.pi  # radiant to degree conversion
-        mask = ndi.rotate(mask, 90 - theta)
-        mask_n = ndi.rotate(mask_n, 90 - theta)
-        pr = ndi.rotate(pr, 90 - theta)
-        """
         if plot:
             fig = plt.imshow(pr)
             fig.axes.get_xaxis().set_visible(False)
-            fig.axes.get_yaxis().set_visible(False)
-            # plt.savefig(f"{save_path}{region_c.label}_protein.jpg")
-        # centroid_n = np.round(skimage.measure.centroid(mask_n))
-        # allign the centroid
-        # mask = image_roll(mask, centroid_n)
-        # mask_n = image_roll(mask_n, centroid_n)
-        # center to the center of mass of the nucleus
-        # fig = shift_center_mass(mask)
+            fig.axes.get_yaxis().set_visible(False) 
+            
         if plot:
             plt.figure(figsize=(10, 10))
             plt.imshow(mask)
