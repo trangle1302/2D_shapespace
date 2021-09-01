@@ -193,25 +193,28 @@ for link, row in df_inv.iterrows():
     fcoef_n = row[n_coef * 2 :]
     fig, ax = plt.subplots(2, 3)        
     plt.subplot(111)
-    plt.imshow(plt.imread(link.with_suffix(".jpg")))
+    plt.imshow(plt.imread(link.with_suffix(".png")))
+    plt.imshow(plt.imread(pathlib.Path(str(link).replace(".npy","_protein.png"))))
     ori_fft = df.iloc[i - 1]
-    cell = []
+    cell__ = []
     for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
         ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
-        
-        plt.subplot(112)
+        plt.subplot(122)
         plt.scatter(ix__[0], iy__[0], color="r")
         plt.plot(ix__, iy__)
         plt.axis("scaled")
-        cell += [np.concatenate([ix__, iy__])] #(x_c, y_c), (x_n, y_n)
-    plt.subplot(122)
-    x_,y_ = get_coordinates(cell[1].real, cell[0].real, [0,0], n_isos = [3,7], plot=True)
+        cell__ += [np.concatenate([ix__, iy__])] #(x_c, y_c), (x_n, y_n)
+    plt.subplot(222)
+    x_,y_ = get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [3,7], plot=True)
+    cell_ = []
     for fcoef in [fcoef_c, fcoef_n]:
         ix_, iy_ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
-        plt.subplot(113)
+        #plt.subplot(123)
         plt.scatter(ix_[0], iy_[0], color="r")
         plt.plot(ix_, iy_)
         plt.axis("scaled")
+        cell_ += [np.concatenate([ix_, iy_])] #(x_c, y_c), (x_n, y_n)
+    x_,y_ = get_coordinates(cell_[1].real, cell_[0].real, [0,0], n_isos = [3,7], plot=True)
     plt.show()
     if i > 140:
         breakme
@@ -249,6 +252,7 @@ ix_c, iy_c = inverse_func(fcoef_c[0:n_coef], fcoef_c[n_coef:])
 plt.plot(ix_n.real, iy_n.real)
 plt.plot(ix_c.real, iy_c.real)
 plt.axis("scaled")
+x_,y_ = get_coordinates(np.concatenate([ix_n.real, iy_n.real]), np.concatenate([ix_c.real, iy_c.real]), [0,0], n_isos = [5,5], plot=True)
 
 pm = plotting.PlotShapeModes(
     pca,
@@ -304,7 +308,7 @@ def get_coordinates(nuc, mem, centroid, n_isos = [3,7], plot=True):
         coefficients that represent cell shape (mem=membrane).
     centroid: tuple
         (x,y) representing nucleus centroid (center to interpolate outward)
-    nisos : list
+    n_isos : list
         [a,b] representing the number of layers that will be used to
         parameterize the nucleoplasm and cytoplasm.
     Returns
