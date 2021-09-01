@@ -193,7 +193,6 @@ for img_id in imlist:
     save_path = f"{save_dir}/{img_id}_"
     get_single_cell_mask(cell_mask, nuclei_mask, protein, save_path)
 
-wavelet(mask_alligned)
 #%%
 import vtk
 from vtk.util import numpy_support
