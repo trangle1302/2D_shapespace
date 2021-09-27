@@ -5,7 +5,7 @@ from utils.helpers import equidistance
 from utils import coefs
 from sklearn.linear_model import LinearRegression
 from matplotlib.animation import FuncAnimation, PillowWriter
-
+from parameterize import get_coordinates
 
 class PlotShapeModes:
     def __init__(
@@ -246,3 +246,35 @@ def display_scree_plot(pca):
     # plt.hlines(y=80, xmin = 0, xmax = len(scree), linestyles='dashed', alpha=0.5)
     # plt.vlines(x=np.argmax(scree.cumsum()>80), ymin = 0, ymax = 100, linestyles='dashed', alpha=0.5)
     plt.show(block=False)
+
+
+def plot_interpolations(shape_path, pro_path, ori_fft, reduced_fft, n_coef, inverse_func):
+    fig, ax = plt.subplots(2, 3)        
+    ax[0,0].imshow(plt.imread(shape_path))
+    ax[1,0].imshow(plt.imread(pro_path))
+    cell__ = []
+    for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
+        ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
+        ax[0,1].scatter(ix__[0], iy__[0], color="r")
+        ax[0,1].plot(ix__, iy__)
+        ax[0,1].axis("scaled")
+        cell__ += [np.concatenate([ix__, iy__])]
+
+    x_,y_ = get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [3,7], plot=False)
+    for (xi, yi) in zip(x_,y_):
+        ax[0,2].plot(xi, yi, "--")
+        
+    fcoef_c = reduced_fft[0 : n_coef * 2]
+    fcoef_n = reduced_fft[n_coef * 2 :]
+    
+    cell_ = []
+    for fcoef in [fcoef_c, fcoef_n]:
+        ix_, iy_ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
+        ax[1,1].scatter(ix_[0], iy_[0], color="r")
+        ax[1,1].plot(ix_, iy_)
+        ax[1,1].axis("scaled")
+        cell_ += [np.concatenate([ix_, iy_])]
+    x_,y_ = get_coordinates(cell_[1].real, cell_[0].real, [0,0], n_isos = [3,7], plot=False)
+    for (xi, yi) in zip(x_,y_):
+        ax[1,2].plot(xi, yi, "--")
+    plt.show()
