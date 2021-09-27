@@ -58,4 +58,6 @@ target/
 
 # Folder(s)
 U2OS
-tmp
+U2OS_2
+shapespace_plots
+interpolations_plots
