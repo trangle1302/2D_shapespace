@@ -3,7 +3,8 @@ import numpy as np
 from scipy import interpolate as spinterp
 from typing import Optional, List, Dict, Tuple
 import warnings
-
+import matplotlib.pyplot as plt
+import scipy
 
 def parameterize_image_coordinates(
     seg_mem: np.array, seg_nuc: np.array, lmax: int, nisos: List
@@ -157,28 +158,57 @@ def cellular_mapping():
 def morph_representation_on_shape():
     return img
 
-def get_interp(coeffs_mem, coeffs_nuc, ):
+def get_coordinates(nuc, mem, centroid, n_isos = [3,7], plot=True):
     """
-    Creates 1D interpolators for fft/wavelet coefficients with fixed points
+    Creates 1D interpolators for x, y with fixed points
     at: 1) nuclear centroid, 2) nuclear shell and 3) cell membrane.
-    Also creates an interpolator for corresponding centroids.
+    
     Parameters
     --------------------
-    coeffs_mem: dict
-        coefficients that represent cell shape (mem=membrane).
-    centroid_mem: tuple
-        (x,y) representing cell centroid
-    coeffs_nuc: dict
+    nuc: list
         coefficients that represent nuclear shape (nuc=nuclear).
-    centroid_nuc: tuple
-        (x,y) representing nuclear centroid
-    nisos : list
+    mem: list
+        coefficients that represent cell shape (mem=membrane).
+    centroid: tuple
+        (x,y) representing nucleus centroid (center to interpolate outward)
+    n_isos : list
         [a,b] representing the number of layers that will be used to
         parameterize the nucleoplasm and cytoplasm.
     Returns
     -------
-        coeffs_interpolator: spinterp.interp1d
-        centroids_interpolator: spinterp.interp1d
-        lmax: int
+        ix: interpolated x values
+        iy: interpolated y values
     """
+    x_n, y_n = nuc[:len(nuc)//2], nuc[len(nuc)//2:]
+    x_c, y_c = mem[:len(mem)//2], mem[len(mem)//2:]
+    iso_values = [0.0] + n_isos
+    iso_values = np.cumsum(iso_values)
+    iso_values = iso_values / iso_values[-1]
     
+    x = np.c_[np.full_like(x_n, centroid[0]), x_n, x_c]
+    y = np.c_[np.full_like(y_n, centroid[1]), y_n, y_c]
+    
+    # Create x and y interpolator
+    x_interpolator = scipy.interpolate.interp1d(iso_values, x)
+    y_interpolator = scipy.interpolate.interp1d(iso_values, y)
+    ix_list = []
+    iy_list = []
+    if plot:
+        plt.plot(x_n, y_n)
+        plt.plot(x_c, y_c)
+        for i, iso_value in enumerate(np.linspace(0.0, 1.0, 1 + np.sum(n_isos))):
+            # Get coeffs at given fixed point
+            ix = x_interpolator(iso_value)
+            iy = y_interpolator(iso_value)
+            plt.plot(ix,iy, "--")
+            ix_list += [ix]
+            iy_list += [iy]
+        plt.axis("scaled")
+    else:
+        for i, iso_value in enumerate(np.linspace(0.0, 1.0, 1 + np.sum(n_isos))):
+            # Get coeffs at given fixed point
+            ix = x_interpolator(iso_value)
+            iy = y_interpolator(iso_value)    
+            ix_list += [ix]
+            iy_list += [iy]
+    return ix_list, iy_list
