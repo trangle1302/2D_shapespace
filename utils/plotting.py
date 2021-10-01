@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.helpers import equidistance
@@ -248,8 +247,8 @@ def display_scree_plot(pca):
     plt.show(block=False)
 
 
-def plot_interpolations(shape_path, pro_path, ori_fft, reduced_fft, n_coef, inverse_func):
-    fig, ax = plt.subplots(2, 3)        
+def plot_interpolations(shape_path, pro_path, save_path, ori_fft, reduced_fft, n_coef, inverse_func):
+    fig, ax = plt.subplots(2, 3, figsize=(25,30))        
     ax[0,0].imshow(plt.imread(shape_path))
     ax[1,0].imshow(plt.imread(pro_path))
     cell__ = []
@@ -263,6 +262,7 @@ def plot_interpolations(shape_path, pro_path, ori_fft, reduced_fft, n_coef, inve
     x_,y_ = get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [3,7], plot=False)
     for (xi, yi) in zip(x_,y_):
         ax[0,2].plot(xi, yi, "--")
+    ax[0,2].axis("scaled")
         
     fcoef_c = reduced_fft[0 : n_coef * 2]
     fcoef_n = reduced_fft[n_coef * 2 :]
@@ -277,4 +277,5 @@ def plot_interpolations(shape_path, pro_path, ori_fft, reduced_fft, n_coef, inve
     x_,y_ = get_coordinates(cell_[1].real, cell_[0].real, [0,0], n_isos = [3,7], plot=False)
     for (xi, yi) in zip(x_,y_):
         ax[1,2].plot(xi, yi, "--")
-    plt.show()
+    ax[1,2].axis("scaled")
+    plt.savefig(save_path)
