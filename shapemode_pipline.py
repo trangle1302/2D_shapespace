@@ -1,4 +1,10 @@
-from parameterize import get_coordinates
+from utils.parameterize import get_coordinates
+from utils import plotting, helpers, dimreduction, coefs, alignment
+from sklearn.decomposition import PCA
+from scipy.ndimage import rotate
+from pathlib import Path
+import pandas as pd
+import numpy as np
 
 #%% Coefficients
 fun = "fft"
@@ -11,9 +17,9 @@ elif fun == "wavelet":
 
 d = Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS_2")
 imlist = [i for i in d.glob("*.npy")]
-#fourier_df = dict()
+fourier_df = dict()
 for n_coef in [128]:
-    df_, names_ = get_coefs_df(imlist, n_coef, func=get_coef_fun)
+    df_, names_, shifts = alignment.get_coefs_df(imlist[:300], n_coef, func=get_coef_fun)
     fourier_df[f"fourier_ccentroid_fft_{n_coef}"] = df_
     df_.index = names_
 
@@ -66,7 +72,7 @@ n_coef = df.shape[1] // 4
 i = 0
 for link, row in df_inv.iterrows():
     i = i + 1
-    if i < 120:
+    if i < 100:
         continue
     shape_path = link.with_suffix(".png")
     protein_path = Path(str(link).replace(".npy","_protein.png"))
@@ -74,13 +80,23 @@ for link, row in df_inv.iterrows():
     pca_fft = row
     save_path = Path("C:/Users/trang.le/Desktop/2D_shape_space/interpolations_plots").joinpath(shape_path.name)
     plotting.plot_interpolations(shape_path = shape_path, 
-                                 pro_path = protein_path, 
+                                 pro_path = protein_path,
+                                 shift_dict = shifts[link],
                                  save_path = save_path,
                                  ori_fft = ori_fft, 
                                  reduced_fft = pca_fft, 
                                  n_coef = n_coef, 
                                  inverse_func = inverse_func)
-    if i > 125:
+    
+    plotting.plot_interpolation2(shape_path = shape_path, 
+                                 pro_path = protein_path,
+                                 shift_dict = shifts[link],
+                                 save_path = save_path,
+                                 ori_fft = ori_fft, 
+                                 reduced_fft = pca_fft, 
+                                 n_coef = n_coef, 
+                                 inverse_func = inverse_func)
+    if i > 105:
         breakme
 
 midpoints = df_trans.clip(0, None).mean()
@@ -144,26 +160,9 @@ plt.plot(ix_c.real, iy_c.real)
 plt.scatter(centroid_mem[0],centroid_mem[1], c="b")
 plt.axis("scaled")
 
-def make_kernel(center, k=3):
-    assert k % 2 !=0 #assert k is odd
-    step = k//2
-    kernel = []
-    c = [i for i in range(center-step, center+step+1,1)]
-    for s in range(-step, step+1,1):
-        kernel += [np.array(c) + s]
-    kernel = np.array(kernel).reshape((k,k))
-    return kernel
-
-def kernel_coordinates(center_coord, k=3):
-    assert k % 2 !=0 #assert k is odd
-    step = k//2
-    x,y = center_coord[0],center_coord[1]
-    kernel_coords = []
-    for x_ in range(x-step, x+step+1,1):
-        for y_ in range(y-step, y+step+1,1):
-            kernel_coords += [(x_,y_)]
-    kernel_coords = np.array(kernel_coords).reshape((k,k))
-    return kernel_coords
+def rotate_img(img, alpha, ):
+    
+    return r_image
 
 def get_intensity(pro, x):
     for p in zip(x,y):
