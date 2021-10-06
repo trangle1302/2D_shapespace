@@ -3,6 +3,7 @@ from scipy import interpolate as spinterp
 import warnings
 import matplotlib.pyplot as plt
 import scipy
+from typing import Optional, List, Dict, Tuple
 
 def parameterize_image_coordinates(
     seg_mem: np.array, seg_nuc: np.array, lmax: int, nisos: List
@@ -155,6 +156,28 @@ def cellular_mapping():
 
 def morph_representation_on_shape():
     return img
+
+
+def make_kernel(center, k=3):
+    assert k % 2 !=0 #assert k is odd
+    step = k//2
+    kernel = []
+    c = [i for i in range(center-step, center+step+1,1)]
+    for s in range(-step, step+1,1):
+        kernel += [np.array(c) + s]
+    kernel = np.array(kernel).reshape((k,k))
+    return kernel
+
+def kernel_coordinates(center_coord, k=3):
+    assert k % 2 !=0 #assert k is odd
+    step = k//2
+    x,y = center_coord[0],center_coord[1]
+    kernel_coords = []
+    for x_ in range(x-step, x+step+1,1):
+        for y_ in range(y-step, y+step+1,1):
+            kernel_coords += [(x_,y_)]
+    kernel_coords = np.array(kernel_coords).reshape((k,k))
+    return kernel_coords
 
 def get_coordinates(nuc, mem, centroid, n_isos = [3,7], plot=True):
     """
