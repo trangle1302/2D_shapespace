@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.helpers import equidistance
-from utils import coefs
+from utils import coefs, parameterize
 from sklearn.linear_model import LinearRegression
 from matplotlib.animation import FuncAnimation, PillowWriter
-from parameterize import get_coordinates
+from imageio import imread
+from scipy.ndimage import rotate
 
 class PlotShapeModes:
     def __init__(
@@ -247,19 +248,25 @@ def display_scree_plot(pca):
     plt.show(block=False)
 
 
-def plot_interpolations(shape_path, pro_path, save_path, ori_fft, reduced_fft, n_coef, inverse_func):
+def plot_interpolations(shape_path, pro_path,shift_dict, save_path, ori_fft, reduced_fft, n_coef, inverse_func):
+    
+    protein_ch = rotate(imread(pro_path), shift_dict["theta"])
+    shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
+  
     fig, ax = plt.subplots(2, 3, figsize=(25,30))        
-    ax[0,0].imshow(plt.imread(shape_path))
-    ax[1,0].imshow(plt.imread(pro_path))
+    ax[0,0].imshow(shapes)    
+    ax[1,0].imshow(protein_ch)
     cell__ = []
     for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
         ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
+        ax[0,0].scatter(iy__[0]+shift_dict["shift_c"][1],ix__[0]+shift_dict["shift_c"][0], color="w")
+        ax[1,0].scatter(iy__[0]+shift_dict["shift_c"][1],ix__[0]+shift_dict["shift_c"][0], color="r")
         ax[0,1].scatter(ix__[0], iy__[0], color="r")
         ax[0,1].plot(ix__, iy__)
         ax[0,1].axis("scaled")
         cell__ += [np.concatenate([ix__, iy__])]
 
-    x_,y_ = get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [3,7], plot=False)
+    x_,y_ = parameterize.get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [3,7], plot=False)
     for (xi, yi) in zip(x_,y_):
         ax[0,2].plot(xi, yi, "--")
     ax[0,2].axis("scaled")
@@ -274,8 +281,43 @@ def plot_interpolations(shape_path, pro_path, save_path, ori_fft, reduced_fft, n
         ax[1,1].plot(ix_, iy_)
         ax[1,1].axis("scaled")
         cell_ += [np.concatenate([ix_, iy_])]
-    x_,y_ = get_coordinates(cell_[1].real, cell_[0].real, [0,0], n_isos = [3,7], plot=False)
+    x_,y_ = parameterize.get_coordinates(cell_[1].real, cell_[0].real, [0,0], n_isos = [3,7], plot=False)
     for (xi, yi) in zip(x_,y_):
         ax[1,2].plot(xi, yi, "--")
     ax[1,2].axis("scaled")
     plt.savefig(save_path)
+    
+def plot_interpolation2(shape_path, pro_path,shift_dict, save_path, ori_fft, reduced_fft, n_coef, inverse_func):
+    
+    protein_ch = rotate(imread(pro_path), shift_dict["theta"])
+    shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
+  
+    fig, ax = plt.subplots(1, 3, figsize=(25,30))        
+    ax[0].imshow(shapes)    
+    ax[1].imshow(protein_ch)
+    cell__ = []
+    for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
+        ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
+        cell__ += [np.concatenate([ix__, iy__])]
+    x_,y_ = parameterize.get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [3,7], plot=False)
+    for (xi, yi) in zip(x_,y_):
+        #ax[0].plot(xi, yi, "--")
+        for (xii, yii) in zip(xi, yi):
+            ax[0].scatter(yii+shift_dict["shift_c"][1],xii+shift_dict["shift_c"][0], color="w",s=1)
+            ax[1].scatter(yii+shift_dict["shift_c"][1],xii+shift_dict["shift_c"][0], color="w",s=1)
+                    
+    fcoef_c = reduced_fft[0 : n_coef * 2]
+    fcoef_n = reduced_fft[n_coef * 2 :]
+    
+    cell_ = []
+    for fcoef in [fcoef_c, fcoef_n]:
+        ix_, iy_ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
+        cell_ += [np.concatenate([ix_, iy_])]
+    x_,y_ = parameterize.get_coordinates(cell_[1].real, cell_[0].real, [0,0], n_isos = [3,7], plot=False)
+    for (xi, yi) in zip(x_,y_):
+        ax[2].plot(xi, yi, "--")
+        for (xii, yii) in zip(xi, yi):
+            ax[0].scatter(yii+shift_dict["shift_c"][1],xii+shift_dict["shift_c"][0], color="w",s=1)
+            ax[1].scatter(yii+shift_dict["shift_c"][1],xii+shift_dict["shift_c"][0], color="w",s=1)
+    #ax[1,2].axis("scaled")
+    #plt.savefig(save_path)
