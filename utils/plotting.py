@@ -299,12 +299,10 @@ def plot_interpolation2(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
         ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
         cell__ += [np.concatenate([ix__, iy__])]
-    x_,y_ = parameterize.get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [3,7], plot=False)
+    x_,y_ = parameterize.get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [5,5], plot=False)
     for (xi, yi) in zip(x_,y_):
-        #ax[0].plot(xi, yi, "--")
-        for (xii, yii) in zip(xi, yi):
-            ax[0].scatter(yii+shift_dict["shift_c"][1],xii+shift_dict["shift_c"][0], color="w",s=1)
-            ax[1].scatter(yii+shift_dict["shift_c"][1],xii+shift_dict["shift_c"][0], color="w",s=1)
+        ax[0].scatter(yi+shift_dict["shift_c"][1],xi+shift_dict["shift_c"][0], s=1, color="w")
+        ax[1].scatter(yi+shift_dict["shift_c"][1],xi+shift_dict["shift_c"][0], s=1, color="w")
                     
     fcoef_c = reduced_fft[0 : n_coef * 2]
     fcoef_n = reduced_fft[n_coef * 2 :]
@@ -313,11 +311,8 @@ def plot_interpolation2(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     for fcoef in [fcoef_c, fcoef_n]:
         ix_, iy_ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
         cell_ += [np.concatenate([ix_, iy_])]
-    x_,y_ = parameterize.get_coordinates(cell_[1].real, cell_[0].real, [0,0], n_isos = [3,7], plot=False)
+    x_,y_ = parameterize.get_coordinates(cell_[1].real, cell_[0].real, [0,0], n_isos = [5,5], plot=False)
     for (xi, yi) in zip(x_,y_):
         ax[2].plot(xi, yi, "--")
-        for (xii, yii) in zip(xi, yi):
-            ax[0].scatter(yii+shift_dict["shift_c"][1],xii+shift_dict["shift_c"][0], color="w",s=1)
-            ax[1].scatter(yii+shift_dict["shift_c"][1],xii+shift_dict["shift_c"][0], color="w",s=1)
-    #ax[1,2].axis("scaled")
+    ax[2].axis("scaled")
     #plt.savefig(save_path)
