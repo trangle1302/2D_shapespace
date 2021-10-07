@@ -4,7 +4,6 @@ import json
 import numpy as np
 import math
 from scipy import ndimage as ndi
-from geojson import FeatureCollection, dump
 import utils.annotationUtils as annotationUtils
 import skimage
 from skimage.filters import threshold_otsu, gaussian, sobel
@@ -12,10 +11,10 @@ from skimage.measure import regionprops
 from skimage.feature import peak_local_max
 from skimage.morphology import watershed, closing, square
 from skimage.segmentation import clear_border
-from scipy import ndimage as ndi
-from PIL import Image
 from scipy.interpolate import interp1d
-
+import matplotlib.pyplot as plt
+from aicsshparam import shtools
+from skimage.morphology import ball, cube, octahedron
 
 def find(dirpath, prefix=None, suffix=None, recursive=True, full_path=True):
     """Function to find recursively all files with specific prefix and suffix in a directory
@@ -448,3 +447,31 @@ def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return idx, array[idx]
+
+
+def get_random_3d_shape():
+    idx = np.random.choice([0, 1, 2], 1)[0]
+    element = [ball, cube, octahedron][idx]
+    label = ["ball", "cube", "octahedron"][idx]
+    img = element(10 + int(10 * np.random.rand()))
+    img = np.pad(img, ((1, 1), (1, 1), (1, 1)), mode="constant")
+    img = img.reshape(1, *img.shape)
+    # Rotate shapes to increase dataset variability.
+    img = shtools.rotate_image_2d(image=img, angle=360 * np.random.rand()).squeeze()
+    return label, img
+
+
+def make_ax(grid=False):
+    fig = plt.figure()
+    ax = fig.gca(projection="3d")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
+    ax.grid(grid)
+    return ax
+
+
+def plot_3d(array_3d):
+    ax = make_ax(True)
+    ax.voxels(array_3d, edgecolors="gray")
+    plt.show()
