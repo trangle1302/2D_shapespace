@@ -172,12 +172,14 @@ def kernel_coordinates(center_coord, k=3):
     assert k % 2 !=0 #assert k is odd
     step = k//2
     x,y = center_coord[0],center_coord[1]
-    kernel_coords = []
+    kernel_coords = []    
     for x_ in range(x-step, x+step+1,1):
-        for y_ in range(y-step, y+step+1,1):
+        for y_ in range(y-step, y+step+1,1):      
             kernel_coords += [(x_,y_)]
-    kernel_coords = np.array(kernel_coords).reshape((k,k))
+    #kernel_coords = np.array(kernel_coords).reshape((k,k))
     return kernel_coords
+
+    
 
 def get_coordinates(nuc, mem, centroid, n_isos = [3,7], plot=True):
     """
@@ -233,3 +235,36 @@ def get_coordinates(nuc, mem, centroid, n_isos = [3,7], plot=True):
             ix_list += [ix]
             iy_list += [iy]
     return ix_list, iy_list
+
+
+def get_intensity(pro, x, y, k=3):
+    """
+    Get mean intensity of all pixels in the kernel of size k on protein channel
+
+    Args
+    --------------------
+    pro: np.array
+        2D image of protein channel.
+    x: list
+        x coordinates of the kernel center
+    y: list
+        y coordinates of the kernel center
+    k: int
+        Kernel size, odd
+
+    Returns
+    -------
+    matrix: np.array
+        matrix of size [x,y] representing protein intensity representation at all input points
+    """ 
+    assert x.shape == y.shape
+    shape = x.shape
+    x = x.round().astype('uint8').ravel()
+    y = y.round().astype('uint8').ravel()
+    matrix = []
+    for p in zip(x,y):
+        k_c = kernel_coordinates(p, k=k)
+        kernel_intensity = [pro[pi] for pi in k_c]
+        matrix += [np.mean(kernel_intensity)]
+    matrix = np.array(matrix).reshape(shape)
+    return matrix
