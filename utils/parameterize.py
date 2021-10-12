@@ -259,12 +259,18 @@ def get_intensity(pro, x, y, k=3):
     """ 
     assert x.shape == y.shape
     shape = x.shape
-    x = x.round().astype('uint8').ravel()
-    y = y.round().astype('uint8').ravel()
+    x = x.round().astype('uint16').flatten()
+    y = y.round().astype('uint16').flatten()
     matrix = []
     for p in zip(x,y):
         k_c = kernel_coordinates(p, k=k)
-        kernel_intensity = [pro[pi] for pi in k_c]
+        kernel_intensity = []
+        for pi in k_c:
+            if pi[0]<pro.shape[0] and pi[1]<pro.shape[1]:
+                kernel_intensity += [pro[pi]]
+        if len(kernel_intensity) == 0:
+            kernel_intensity=[0]
+        print()
         matrix += [np.mean(kernel_intensity)]
     matrix = np.array(matrix).reshape(shape)
     return matrix
