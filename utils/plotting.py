@@ -323,34 +323,40 @@ def plot_interpolation3(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
     shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
   
-    fig, ax = plt.subplots(1, 3, figsize=(25,30))        
-    ax[0].imshow(shapes)    
-    ax[1].imshow(protein_ch)
+    fig, ax = plt.subplots(1, 4, figsize=(25,30))        
+    ax[0].imshow(shapes, origin='lower')    
+    ax[1].imshow(protein_ch, origin='lower')
     cell__ = []
     for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
         ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
         cell__ += [np.concatenate([ix__, iy__])]
-    x_,y_ = parameterize.get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [5,5], plot=False)
-    for (xi, yi) in zip(x_,y_):
-        ax[0].scatter(yi+shift_dict["shift_c"][1],xi+shift_dict["shift_c"][0], s=1, color="w")
-        ax[1].scatter(yi+shift_dict["shift_c"][1],xi+shift_dict["shift_c"][0], s=1, color="w")
-    
+    x_,y_ = parameterize.get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [10,10], plot=False)
+    for i, (xi, yi) in enumerate(zip(x_,y_)):
+        ax[0].scatter(yi+shift_dict["shift_c"][1],xi+shift_dict["shift_c"][0], s=0.5, alpha=0.3, color="w")
+        ax[1].scatter(yi+shift_dict["shift_c"][1],xi+shift_dict["shift_c"][0], s=0.5, alpha=0.3, color="w")
+
     #Get intensity
-    y = np.array(x_) + shift_dict["shift_c"][0]
-    x = np.array(y_) + shift_dict["shift_c"][1]
-    m = parameterize.get_intensity(protein_ch, x, y, k=3)
+    x = np.array(x_) + shift_dict["shift_c"][0]
+    y = np.array(y_) + shift_dict["shift_c"][1]
+    m = parameterize.get_intensity(protein_ch, x, y, k=5)
     m_normed = m/m.max()
+    
+    for i, (xi, yi) in enumerate(zip(x_,y_)):
+        ax[2].scatter(yi+shift_dict["shift_c"][1],xi+shift_dict["shift_c"][0],c=m_normed[i,:], s=1)
+
+    ax[2].axis("scaled")
+    ax[2].set_facecolor("#541352FF")   
+    
     fcoef_c = reduced_fft[0 : n_coef * 2]
     fcoef_n = reduced_fft[n_coef * 2 :]
-    
     cell_ = []
     for fcoef in [fcoef_c, fcoef_n]:
         ix_, iy_ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
         cell_ += [np.concatenate([ix_, iy_])]
-    x_,y_ = parameterize.get_coordinates(cell_[1].real, cell_[0].real, [0,0], n_isos = [5,5], plot=False)
+    x_,y_ = parameterize.get_coordinates(cell_[1].real, cell_[0].real, [0,0], n_isos = [10,10], plot=False)
     for i, (xi, yi) in enumerate(zip(x_,y_)):
-        ax[2].plot(xi, yi, "--", alpha=0.3)
-        ax[2].scatter(xi, yi,c=m_normed[i,:])
-    ax[2].axis("scaled")
-    ax[2].set_facecolor("black")
+        ax[3].plot(xi, yi, "--", alpha=0.3)
+        ax[3].scatter(xi, yi,c=m_normed[i,:])
+    ax[3].axis("scaled")
+    ax[3].set_facecolor('#541352FF')
     plt.savefig(save_path)
