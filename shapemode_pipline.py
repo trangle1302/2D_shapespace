@@ -1,5 +1,5 @@
 from utils.parameterize import get_coordinates
-from utils import plotting, helpers, dimreduction, coefs, alignment
+from utils import plotting, helpers, dimreduction, coefs, alignment, parameterize
 from sklearn.decomposition import PCA
 from scipy.ndimage import rotate
 from pathlib import Path
@@ -19,7 +19,7 @@ d = Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS_2")
 imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
 for n_coef in [128]:
-    df_, names_, shifts = alignment.get_coefs_df(imlist[:300], n_coef, func=get_coef_fun)
+    df_, names_, shifts = alignment.get_coefs_df(imlist, n_coef, func=get_coef_fun)
     fourier_df[f"fourier_ccentroid_fft_{n_coef}"] = df_
     df_.index = names_
 
@@ -54,6 +54,8 @@ df_trans.columns = pc_names
 df_trans.index = df.index
 df_trans[list(set(pc_names) - set(pc_keep))] = 0
 
+
+#%% Plotting
 if fun == "fft" and not use_complex:
     df_sep_inv = pca.inverse_transform(df_trans)
     # df_inv = sc.inverse_transform(df_scaled_inv)
@@ -72,13 +74,14 @@ n_coef = df.shape[1] // 4
 i = 0
 for link, row in df_inv.iterrows():
     i = i + 1
-    if i < 100:
+    if i < 10:
         continue
     shape_path = link.with_suffix(".png")
     protein_path = Path(str(link).replace(".npy","_protein.png"))
     ori_fft = df.iloc[i - 1]
     pca_fft = row
     save_path = Path("C:/Users/trang.le/Desktop/2D_shape_space/interpolations_plots").joinpath(shape_path.name)
+    """
     plotting.plot_interpolations(shape_path = shape_path, 
                                  pro_path = protein_path,
                                  shift_dict = shifts[link],
@@ -87,8 +90,8 @@ for link, row in df_inv.iterrows():
                                  reduced_fft = pca_fft, 
                                  n_coef = n_coef, 
                                  inverse_func = inverse_func)
-    
-    plotting.plot_interpolation2(shape_path = shape_path, 
+    """
+    plotting.plot_interpolation3(shape_path = shape_path, 
                                  pro_path = protein_path,
                                  shift_dict = shifts[link],
                                  save_path = save_path,
@@ -96,7 +99,7 @@ for link, row in df_inv.iterrows():
                                  reduced_fft = pca_fft, 
                                  n_coef = n_coef, 
                                  inverse_func = inverse_func)
-    if i > 105:
+    if i > 25:
         breakme
 
 midpoints = df_trans.clip(0, None).mean()
@@ -150,6 +153,7 @@ for pc in pc_keep:
     pm.plot_pc_hist(pc)
     pm.plot_shape_variation(pc)
 
+"""
 coeffs_mem = [(x.real, y.real) for x, y in zip(fcoef_c[0:n_coef], fcoef_c[n_coef:])]
 coeffs_nuc = [(x.real, y.real) for x, y in zip(fcoef_n[0:n_coef], fcoef_n[n_coef:])]
 centroid_nuc = helpers.find_centroid([(x.real, y.real) for x, y in zip(ix_n, iy_n)])
@@ -160,19 +164,13 @@ plt.plot(ix_c.real, iy_c.real)
 plt.scatter(centroid_mem[0],centroid_mem[1], c="b")
 plt.axis("scaled")
 
-def rotate_img(img, alpha, ):
-    
-    return r_image
-
-def get_intensity(pro, x):
-    for p in zip(x,y):
-        k_c = kernel_coordinates(p, k=3)
-        for pi in k_c:
-            
-        
-    return matrix
 # https://stats.stackexchange.com/questions/134282/relationship-between-svd-and-pca-how-to-use-svd-to-perform-pca
+y = np.array(x_) + shift_dict["shift_c"][0]
+x = np.array(y_) + shift_dict["shift_c"][1]
 
+m = get_intensity(protein_ch, x, y, k=3)
+    
+    
 
     x_n, y_n = ix_n.real, iy_n.real
     x_c, y_c = ix_c.real, iy_c.real
@@ -245,3 +243,5 @@ plt.xlim(-2,2)
 plt.ylim(-2,2)
 plt.title('griddata test (%d points)' % npts)
 plt.show()
+
+"""
