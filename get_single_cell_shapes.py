@@ -71,7 +71,7 @@ def get_cell_nuclei_masks(image_id, cell_json):
     return cell_mask2, nuclei_mask, protein
 
 
-def get_single_cell_mask(cell_mask, nuclei_mask, protein, save_path, plot=False):
+def get_single_cell_mask(cell_mask, nuclei_mask, protein, save_path, plot=True):
     for region_c, region_n in zip(
         skimage.measure.regionprops(cell_mask), skimage.measure.regionprops(nuclei_mask)
     ):
@@ -108,11 +108,11 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, save_path, plot=False)
             plt.tight_layout()
             # plt.savefig(f"{save_path}{region_c.label}.jpg")
 
-        imageio.imwrite(f"{save_path}{region_c.label}_protein.png", pr)
-        data = np.stack((mask, mask_n))
-        np.save(f"{save_path}{region_c.label}.npy", data)
-        data = np.dstack((mask, np.zeros_like(mask), mask_n)) * 255
-        imageio.imwrite(f"{save_path}{region_c.label}.png", data)
+        #imageio.imwrite(f"{save_path}{region_c.label}_protein.png", pr)
+        #data = np.stack((mask, mask_n))
+        #np.save(f"{save_path}{region_c.label}.npy", data)
+        #data = np.dstack((mask, np.zeros_like(mask), mask_n)) * 255
+        #imageio.imwrite(f"{save_path}{region_c.label}.png", data)
         """
         data = np.expand_dims(data, axis=1)
         data = np.repeat(data, 10, axis=1)
@@ -130,6 +130,7 @@ base_url = "https://if.proteinatlas.org"
 save_dir = "C:/Users/trang.le/Desktop/2D_shape_space/U2OS_2"
 # json_path = base_dir + "/HPA-Challenge-2020-all/segmentation/10093_1772_F9_7/annotation_all_ulrika.json"
 df = pd.read_csv(base_dir + "/final_labels_allversions.csv")
+df_test = pd.read_csv(base_dir + "/final_labels_allversions.csv")
 df = df[df.atlas_name == "U-2 OS"]
 imlist = list(set(df.image_id))
 for img_id in imlist:
