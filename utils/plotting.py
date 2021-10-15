@@ -134,7 +134,7 @@ class PlotShapeModes:
             midpoint = self.midpoints[c].copy()
             std_ = self.std[c].copy()
             p_std = []
-            for k in np.arange(-2, 2, 0.5):
+            for k in np.arange(-1.5, 1.5, 0.3):
                 p_std += [midpoint + k * std_]
             points[c] = p_std
         self.stdpoints = points
@@ -222,7 +222,7 @@ class PlotShapeModes:
         ax.axis("scaled")
         writer = PillowWriter(fps=5)
         ani.save(
-            f"C:/Users/trang.le/Desktop/2D_shape_space/tmp/shapevar_{pc_name}.gif",
+            f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/shapevar_{pc_name}.gif",
             writer=writer,
         )
 
