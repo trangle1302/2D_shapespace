@@ -1,10 +1,10 @@
 from utils.parameterize import get_coordinates
-from utils import plotting, helpers, dimreduction, coefs, alignment, parameterize
+from utils import plotting, helpers, dimreduction, coefs, alignment
 from sklearn.decomposition import PCA
-from scipy.ndimage import rotate
 from pathlib import Path
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 #%% Coefficients
 fun = "fft"
@@ -245,3 +245,28 @@ plt.title('griddata test (%d points)' % npts)
 plt.show()
 
 """
+def rreplace(s, old, new, occurrence):
+    li = s.rsplit(old, occurrence)
+    return new.join(li)
+
+#%%
+df = pd.read_csv("C:/Users/trang.le/Desktop/annotation-tool//final_labels_allversions.csv")
+df = df[df.atlas_name == "U-2 OS"]
+
+df.sc_locations_reindex
+df_inv.index
+
+mappings = pd.DataFrame(df_inv.index, columns=['Link'])
+mappings["basename"] = [l.stem for l in mappings.Link]
+mappings["image_id"] = [n[:-2] for n in mappings.basename]
+mappings["cell_id"] = [n.split("_")[-1] for n in mappings.basename]
+mappings["cell_id"] = mappings.image_id + "/" + mappings.cell_id
+mappings = mappings.merge(df, how='inner', on=["image_id","cell_id"])
+
+
+# std normalization 
+# keep 1st - 99th percentile, rm outliers
+# check the histogram distribution of cells in each PC
+# For each bin (0.5 std step), average the protein representations of all cells in the same bin
+
+# For visualization: do nearest-neighbor interpolation on the mapped protein representation.
