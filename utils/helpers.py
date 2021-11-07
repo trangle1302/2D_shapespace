@@ -13,7 +13,7 @@ from skimage.morphology import watershed, closing, square
 from skimage.segmentation import clear_border
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-from aicsshparam import shtools
+#from aicsshparam import shtools
 from skimage.morphology import ball, cube, octahedron
 
 def find(dirpath, prefix=None, suffix=None, recursive=True, full_path=True):
@@ -475,3 +475,18 @@ def plot_3d(array_3d):
     ax = make_ax(True)
     ax.voxels(array_3d, edgecolors="gray")
     plt.show()
+
+
+def get_location_counts(locations_list, all_locations):
+    
+    label_counts = dict.fromkeys(all_locations, 0)
+    for locations in locations_list:
+        if locations != 'Discard':
+            sc_locations = []
+            idx_list = locations.split('|')
+            for idx in idx_list:
+                sc_locations += [k for k, v in all_locations.items() if v == int(float(idx))]
+    
+            for l in sc_locations:
+                label_counts[l] += 1
+    return label_counts
