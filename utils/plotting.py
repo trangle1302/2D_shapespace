@@ -6,6 +6,7 @@ from sklearn.linear_model import LinearRegression
 from matplotlib.animation import FuncAnimation, PillowWriter
 from imageio import imread
 from scipy.ndimage import rotate
+from more_itertools import windowed
 
 class PlotShapeModes:
     def __init__(
@@ -138,6 +139,18 @@ class PlotShapeModes:
                 p_std += [midpoint + k * std_]
             points[c] = p_std
         self.stdpoints = points
+    
+    def assign_cells(self, pc_name):
+        cnums = self.matrix[pc_name]
+        minnum = min(cnums)
+        maxnum = max(cnums)
+        
+        points = [minnum] + self.stdpoints[pc_name] + [maxnum]
+        ws = windowed(points, 2)
+        idxes_assigned = []
+        for w in ws:
+            idxes_assigned += [np.where((cnums>w[0]) & (cnums<w[1]))]
+        return idxes_assigned
 
     def get_lm(self):
         points = dict()
@@ -225,6 +238,7 @@ class PlotShapeModes:
             f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/shapevar_{pc_name}.gif",
             writer=writer,
         )
+
 
 
 def display_scree_plot(pca):
