@@ -5,7 +5,31 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from helpers import get_location_counts
 
+LABEL_NAMES = {
+  0: 'Nucleoplasm',
+  1: 'Nuclear membrane',
+  2: 'Nucleoli',
+  3: 'Nucleoli fibrillar center',
+  4: 'Nuclear speckles',
+  5: 'Nuclear bodies',
+  6: 'Endoplasmic reticulum',
+  7: 'Golgi apparatus',
+  8: 'Intermediate filaments',
+  9: 'Actin filaments',
+  10: 'Microtubules',
+  11: 'Mitotic spindle',
+  12: 'Centrosome',
+  13: 'Plasma membrane',
+  14: 'Mitochondria',
+  15: 'Aggresome',
+  16: 'Cytosol',
+  17: 'Vesicles and punctate cytosolic patterns',
+  18: 'Negative',
+}
+
+all_locations = dict((v, k) for k,v in LABEL_NAMES.items())
 #%% Coefficients
 fun = "fft"
 if fun == "fft":
@@ -14,6 +38,7 @@ if fun == "fft":
 elif fun == "wavelet":
     get_coef_fun = coefs.wavelet_coefs
     inverse_func = coefs.inverse_wavelet
+    
 
 d = Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS_2")
 imlist = [i for i in d.glob("*.npy")]
@@ -22,7 +47,7 @@ for n_coef in [128]:
     df_, names_, shifts = alignment.get_coefs_df(imlist, n_coef, func=get_coef_fun)
     fourier_df[f"fourier_ccentroid_fft_{n_coef}"] = df_
     df_.index = names_
-
+#np.savetxt(os.path.join(d,"numbers.txt"), A.view(float))
 #%% PCA and shape modes
 n_coef = 128
 df = fourier_df[f"fourier_ccentroid_fft_{n_coef}"].copy()
@@ -74,7 +99,7 @@ n_coef = df.shape[1] // 4
 i = 0
 for link, row in df_inv.iterrows():
     i = i + 1
-    if i < 10:
+    if i < 4:
         continue
     shape_path = link.with_suffix(".png")
     protein_path = Path(str(link).replace(".npy","_protein.png"))
@@ -99,9 +124,11 @@ for link, row in df_inv.iterrows():
                                  reduced_fft = pca_fft, 
                                  n_coef = n_coef, 
                                  inverse_func = inverse_func)
-    if i > 25:
+    
+    if i > 6:
         breakme
 
+#%%
 midpoints = df_trans.clip(0, None).mean()
 midpoints = df_trans.clip(None, 0).mean()
 
@@ -262,6 +289,11 @@ mappings["image_id"] = [n[:-2] for n in mappings.basename]
 mappings["cell_id"] = [n.split("_")[-1] for n in mappings.basename]
 mappings["cell_id"] = mappings.image_id + "/" + mappings.cell_id
 mappings = mappings.merge(df, how='inner', on=["image_id","cell_id"])
+location_counts = get_location_counts(list(mappings.sc_locations_reindex), all_locations)
+
+LABELNAME = 'Nucleoplasm'
+LABELINDEX = 0
+df_sl_Nuceloplasm = mappings[mappings.sc_locations_reindex == '0']
 
 
 # std normalization 
