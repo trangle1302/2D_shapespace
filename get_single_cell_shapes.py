@@ -25,6 +25,27 @@ from requests.auth import HTTPBasicAuth
 import io
 import glob
 
+
+def bbox_iou(boxA, boxB):
+	# determine the (x, y)-coordinates of the intersection rectangle
+	xA = max(boxA[0], boxB[0])
+	yA = max(boxA[1], boxB[1])
+	xB = min(boxA[2], boxB[2])
+	yB = min(boxA[3], boxB[3])
+	# compute the area of intersection rectangle
+	interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+	# compute the area of both the prediction and ground-truth
+	# rectangles
+	boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+	boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+	# compute the intersection over union by taking the intersection
+	# area and dividing it by the sum of prediction + ground-truth
+	# areas - the interesection area
+	iou = interArea / float(boxAArea + boxBArea - interArea)
+	# return the intersection over union value
+	return iou
+
+
 def plot_complete_mask(json_path):
     mask = read_from_json(json_path)
     img_size = (
@@ -123,33 +144,41 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_p
 
 
 def get_cell_nuclei_masks2(encoded_image_id):
-    cell_mask = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_mask.png')
-    cell_regionprops = skimage.measure.regionprops(cell_mask)
+    cell_mask_ = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_mask.png')
+    cell_regionprops = skimage.measure.regionprops(cell_mask_)
 
     nu = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_blue.png')
-    nuclei_mask_0, _ = watershed_lab(nu, marker=None, rm_border=False)
+    #mt = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_red.png')
+    # Discard bordered cells because they have incomplete shapes
+    nuclei_mask_0, _ = watershed_lab(nu, marker=None, rm_border=True)
     #nuclei_regionprops = skimage.measure.regionprops(nuclei_mask_0)
         
     marker = np.zeros_like(nuclei_mask_0)
-    marker[nuclei_mask_0 > 0] = nuclei_mask_0[nuclei_mask_0 > 0] + 1  # foreground
-    cell_mask_0 = watershed_lab2(cell_mask, marker=marker)
+    marker[nuclei_mask_0 > 0] = nuclei_mask_0[nuclei_mask_0 > 0]  # foreground
+    cell_mask_0 = watershed_lab2(cell_mask_, marker=marker)
     cell_regionprops_0 = skimage.measure.regionprops(cell_mask_0)
     
     # Relabel
-    nuclei_mask = np.zeros_like(cell_mask)
-    for region in cell_regionprops_0:
-        old_label = region.label
-        minr, minc, maxr, maxc = region.bbox
-        print(region.bbox)
-        for r in cell_regionprops:
-            bbox = r.bbox
-            print(bbox)
-            #print(f'{bool(bbox[0]-1<=minr)} and {bool(bbox[1]-1 < minc)} and {bbox[2]+1 > maxr} and {bbox[0]+1 > maxc}')
-            if (bbox[0]-1 <= minr) and (bbox[1]-1 <= minc) and (bbox[2]+1 >= maxr) and (bbox[3]+1 >= maxc):
-                new_label = r.label
-                print(old_label,new_label)
-        nuclei_mask[nuclei_mask_0==old_label] = new_label
-        print(np.unique(nuclei_mask))
+    nuclei_mask = np.zeros_like(cell_mask_)
+    cell_mask = cell_mask_.copy()
+    for region in cell_regionprops:
+        new_label = region.label
+        bbox_new = region.bbox
+        old_label = None
+        for r in cell_regionprops_0:
+            bbox_old = r.bbox
+            if bbox_iou(bbox_old, bbox_new) > 0.6:
+                old_label = r.label
+                #print(new_label,old_label)
+        if old_label == None:
+            # If don't find any corresponding cell/nuclei, delete this mask
+            print(f'Dont find cell {new_label}')
+            cell_mask[cell_mask_ == new_label] = 0
+        else:
+            # If find something, update nuclei mask to the same index
+            nuclei_mask[nuclei_mask_0==old_label] = new_label
+        #print(np.unique(nuclei_mask))
+        #print(np.unique(cell_mask))
     protein = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_green.png')
     return cell_mask, nuclei_mask, protein
 
@@ -231,7 +260,7 @@ imlist = list(set(df.image_id))
 encoded_imlist = [mappings[mappings.HPA_ID==im].Image_ID.values[0] for im in imlist]
 for img_id, encoded_id in zip(imlist, encoded_imlist):
     df_img = df[df.image_id == img_id]
-    cell_idx = [int(c.split('/')[1]) for c in df_img.cell_id]
+    cell_idx = [int(c.split('/')[1])+1 for c in df_img.cell_id]
     json_path = max(
         glob.glob(
             f"{base_dir}/HPA-Challenge-2020-all/segmentation/{img_id}/annotation_*"
