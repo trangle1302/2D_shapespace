@@ -75,7 +75,7 @@ def watershed_lab(image, marker=None, rm_border=False):
     # remove too small or too large object
     output = np.zeros(labeled_obj.shape)
     for region in regionprops(labeled_obj):
-        if region.area >= 20000:  # <= thres_high:
+        if region.area >= 2000:  # <= thres_high:
             # if the component has a volume within the two thresholds,
             # set the output image to 1 for every pixel of the component
             output[labeled_obj == region.label] = 1
