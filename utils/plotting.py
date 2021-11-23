@@ -28,6 +28,7 @@ class PlotShapeModes:
         self.inverse_func = inverse_func
         self.midpoints = None
         self.std = None
+        self.protein_intensities = None
 
         mean = self.matrix.mean()  # .clip(0, None).mean()
         # mean = abs(self.matrix).mean(axis=0)
@@ -145,13 +146,21 @@ class PlotShapeModes:
         minnum = min(cnums)
         maxnum = max(cnums)
         
-        points = [minnum] + self.stdpoints[pc_name] + [maxnum]
+        ws = windowed(self.stdpoints[pc_name], 2)
+        points = []
+        for w in ws:
+            points += [(w[0]+w[1])/2]
+        points = [minnum] + points + [maxnum]
         ws = windowed(points, 2)
         idxes_assigned = []
+        binned_links = []
         for w in ws:
-            idxes_assigned += [np.where((cnums>w[0]) & (cnums<w[1]))]
-        return idxes_assigned
-
+            idxes = np.where((cnums>w[0]) & (cnums<w[1]))
+            idxes_assigned += [idxes]
+            binned_links += [cnums.index[idxes]]
+        return idxes_assigned, binned_links
+    
+    
     def get_lm(self):
         points = dict()
         for c in self.pc_keep:
@@ -203,7 +212,7 @@ class PlotShapeModes:
             ax.set_xlim(-600, 600)
             ax.set_ylim(-600, 600)
 
-        def update(p):
+        def update(i,p):
             cell_coef = self.midpoints.copy()
             cell_coef[pc_name] = p
             fcoef = self.pca.inverse_transform(cell_coef)
@@ -240,6 +249,122 @@ class PlotShapeModes:
         )
 
 
+    def plot_protein_through_shape_variation_gif(self, pc_name):
+        def init():
+            """Local function to init space in animated plots"""
+            ax.set_xlim(-600, 600)
+            ax.set_ylim(-600, 600)
+
+        def update(p):
+            i = np.where(self.stdpoints['PC1'] == p)[0][0]
+            cell_coef = self.midpoints.copy()
+            cell_coef[pc_name] = p
+            fcoef = self.pca.inverse_transform(cell_coef)
+            if self.sc != None:
+                fcoef = self.sc.inverse_transform(fcoef)
+            if not self.complex:
+                real = fcoef[: len(fcoef) // 2]
+                imag = fcoef[len(fcoef) // 2 :]
+                fcoef = [complex(r, i) for r, i in zip(real, imag)]
+            fcoef_c = fcoef[0 : self.n * 2]
+            fcoef_n = fcoef[self.n * 2 :]
+            ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
+            ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+
+            nu.set_data(ix_n.real, iy_n.real)
+            cell.set_data(ix_c.real, iy_c.real)
+
+            x_,y_ = parameterize.get_coordinates(
+                np.concatenate([ix_n.real, iy_n.real]), 
+                np.concatenate([ix_c.real, iy_c.real]), 
+                [0,0], 
+                n_isos = [10,10], 
+                plot=False)
+            
+            ipoints0.set_offsets(np.c_[x_[0],y_[0]])
+            ipoints0.set_array(self.protein_intensities[i][0])
+            ipoints1.set_offsets(np.c_[x_[1],y_[1]])
+            ipoints1.set_array(self.protein_intensities[i][1])
+            ipoints2.set_offsets(np.c_[x_[2],y_[2]])
+            ipoints2.set_array(self.protein_intensities[i][2])
+            ipoints3.set_offsets(np.c_[x_[3],y_[3]])
+            ipoints3.set_array(self.protein_intensities[i][3])
+            ipoints4.set_offsets(np.c_[x_[4],y_[4]])
+            ipoints4.set_array(self.protein_intensities[i][4])
+            ipoints5.set_offsets(np.c_[x_[5],y_[5]])
+            ipoints5.set_array(self.protein_intensities[i][5])
+            ipoints6.set_offsets(np.c_[x_[6],y_[6]])
+            ipoints6.set_array(self.protein_intensities[i][6])
+            ipoints7.set_offsets(np.c_[x_[7],y_[7]])
+            ipoints7.set_array(self.protein_intensities[i][7])
+            ipoints8.set_offsets(np.c_[x_[8],y_[8]])
+            ipoints8.set_array(self.protein_intensities[i][8])
+            ipoints9.set_offsets(np.c_[x_[9],y_[9]])
+            ipoints9.set_array(self.protein_intensities[i][9])
+            ipoints10.set_offsets(np.c_[x_[10],y_[10]])
+            ipoints10.set_array(self.protein_intensities[i][10])
+            ipoints11.set_offsets(np.c_[x_[11],y_[11]])
+            ipoints11.set_array(self.protein_intensities[i][11])
+            ipoints12.set_offsets(np.c_[x_[12],y_[12]])
+            ipoints12.set_array(self.protein_intensities[i][12])
+            ipoints13.set_offsets(np.c_[x_[13],y_[13]])
+            ipoints13.set_array(self.protein_intensities[i][13])            
+            ipoints14.set_offsets(np.c_[x_[14],y_[14]])
+            ipoints14.set_array(self.protein_intensities[i][14])
+            ipoints15.set_offsets(np.c_[x_[15],y_[15]])
+            ipoints15.set_array(self.protein_intensities[i][15])
+            ipoints16.set_offsets(np.c_[x_[16],y_[16]])
+            ipoints16.set_array(self.protein_intensities[i][16])
+            ipoints17.set_offsets(np.c_[x_[17],y_[17]])
+            ipoints17.set_array(self.protein_intensities[i][17])
+            ipoints18.set_offsets(np.c_[x_[18],y_[18]])
+            ipoints18.set_array(self.protein_intensities[i][18])
+            ipoints19.set_offsets(np.c_[x_[19],y_[19]])
+            ipoints19.set_array(self.protein_intensities[i][19])
+            ipoints20.set_offsets(np.c_[x_[20],y_[20]])
+            ipoints20.set_array(self.protein_intensities[i][20])
+            
+        fig, ax = plt.subplots()
+        fig.suptitle(pc_name)
+        (nu,) = plt.plot([], [], "b", lw=2)
+        (cell,) = plt.plot([], [], "m", lw=2)
+        if True:
+            ipoints0 = plt.scatter([], [], c=[])
+            ipoints1 = plt.scatter([], [], c=[])       
+            ipoints2 = plt.scatter([], [], c=[])            
+            ipoints3 = plt.scatter([], [], c=[])            
+            ipoints4 = plt.scatter([], [], c=[])            
+            ipoints5 = plt.scatter([], [], c=[])            
+            ipoints6 = plt.scatter([], [], c=[])      
+            ipoints7 = plt.scatter([], [], c=[])
+            ipoints8 = plt.scatter([], [], c=[])       
+            ipoints9 = plt.scatter([], [], c=[])            
+            ipoints10 = plt.scatter([], [], c=[])            
+            ipoints11 = plt.scatter([], [], c=[])            
+            ipoints12 = plt.scatter([], [], c=[])            
+            ipoints13 = plt.scatter([], [], c=[])      
+            ipoints14 = plt.scatter([], [], c=[])
+            ipoints15 = plt.scatter([], [], c=[])       
+            ipoints16 = plt.scatter([], [], c=[])            
+            ipoints17 = plt.scatter([], [], c=[])            
+            ipoints18 = plt.scatter([], [], c=[])            
+            ipoints19 = plt.scatter([], [], c=[])            
+            ipoints20 = plt.scatter([], [], c=[])      
+            
+        ani = FuncAnimation(
+            fig,
+            update,
+            self.stdpoints[pc_name] + self.stdpoints[pc_name][::-1],
+            #fargs = (list(range(10))),
+            init_func=init,
+        )
+        ax.axis("scaled")
+        ax.set_facecolor('#541352FF')
+        writer = PillowWriter(fps=5)
+        ani.save(
+            f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/shapevar_{pc_name}.gif",
+            writer=writer,
+        )
 
 def display_scree_plot(pca):
     """Display a scree plot for the pca"""
@@ -374,3 +499,23 @@ def plot_interpolation3(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     ax[3].axis("scaled")
     ax[3].set_facecolor('#541352FF')
     plt.savefig(save_path)
+    
+
+def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func):
+    
+    protein_ch = rotate(imread(pro_path), shift_dict["theta"])
+    #shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
+  
+    cell__ = []
+    for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
+        ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
+        cell__ += [np.concatenate([ix__, iy__])]
+    x_,y_ = parameterize.get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [10,10], plot=False)
+
+    #Get intensity
+    x = np.array(x_) + shift_dict["shift_c"][0]
+    y = np.array(y_) + shift_dict["shift_c"][1]
+    m = parameterize.get_intensity(protein_ch, x, y, k=5)
+    m_normed = m/m.max()
+    return m_normed
+    
