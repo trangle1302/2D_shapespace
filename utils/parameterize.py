@@ -4,6 +4,7 @@ import warnings
 import matplotlib.pyplot as plt
 import scipy
 from typing import Optional, List, Dict, Tuple
+from pathlib import Path
 
 def parameterize_image_coordinates(
     seg_mem: np.array, seg_nuc: np.array, lmax: int, nisos: List
@@ -274,3 +275,51 @@ def get_intensity(pro, x, y, k=3):
         matrix += [np.mean(kernel_intensity)]
     matrix = np.array(matrix).reshape(shape)
     return matrix
+'''
+def get_intensity_interpolations(pc_bins, df, keep_list):
+    """
+    Get mean protein intensity of all interpolated points in each binned pc
+
+    Args
+    --------------------
+    pro: np.array
+        2D image of protein channel.
+    x: list
+        x coordinates of the kernel center
+    y: list
+        y coordinates of the kernel center
+    k: int
+        Kernel size, odd
+
+    Returns
+    -------
+    matrix: np.array
+        matrix of size [x,y] representing protein intensity representation at all input points
+    """ 
+
+    intensities_pcX = []
+    for ls in pc_bins:
+        intensities = []
+        for l in ls:
+            if l in keep_list:
+                protein_path = Path(str(l).replace(".npy","_protein.png"))
+                ori_fft = df.loc[df.index== l].values[0]
+                shifts[l]
+                
+                intensity = plotting.get_protein_intensity(
+                    pro_path = protein_path, 
+                    shift_dict = shifts[link],
+                    ori_fft = ori_fft, 
+                    n_coef = n_coef, 
+                    inverse_func = inverse_func
+                    )
+                intensities += [intensity.flatten()]
+    
+        if len(intensities) == 0:
+            print('No cell sample at this bin for Nucleoplasm')
+            intensities_pcX += [np.zeros_like(intensity)]
+        else:
+            print(len(intensities))
+            intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
+    return intensities_pcX
+'''
