@@ -148,7 +148,7 @@ def get_cell_nuclei_masks2(encoded_image_id):
     cell_regionprops = skimage.measure.regionprops(cell_mask_)
 
     nu = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_blue.png')
-    #mt = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_red.png')
+    mt = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_red.png')
     # Discard bordered cells because they have incomplete shapes
     nuclei_mask_0, _ = watershed_lab(nu, marker=None, rm_border=True)
     #nuclei_regionprops = skimage.measure.regionprops(nuclei_mask_0)
@@ -165,24 +165,26 @@ def get_cell_nuclei_masks2(encoded_image_id):
         new_label = region.label
         bbox_new = region.bbox
         old_label = None
+        #if new_label == 8:
+        #    breakme
         for r in cell_regionprops_0:
             bbox_old = r.bbox
-            if bbox_iou(bbox_old, bbox_new) > 0.6:
+            if bbox_iou(bbox_old, bbox_new) > 0.5:
                 old_label = r.label
-                #print(new_label,old_label)
+                print(new_label,old_label)
         if old_label == None:
             # If don't find any corresponding cell/nuclei, delete this mask
             print(f'Dont find cell {new_label}')
             cell_mask[cell_mask_ == new_label] = 0
         else:
             # If find something, update nuclei mask to the same index
-            nuclei_mask[nuclei_mask_0==old_label] = new_label
-        #print(np.unique(nuclei_mask))
-        #print(np.unique(cell_mask))
+            nuclei_mask[nuclei_mask_0 == old_label] = new_label
+    assert set(np.unique(nuclei_mask)) == set(np.unique(cell_mask))
+        
     protein = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_green.png')
     return cell_mask, nuclei_mask, protein
 
-def get_single_cell_mask2(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, plot=True):
+def get_single_cell_mask2(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, plot=False):
     regions_c = skimage.measure.regionprops(cell_mask)
     regions_n = skimage.measure.regionprops(nuclei_mask)
     for region_c in regions_c:  
@@ -257,18 +259,32 @@ labels = pd.merge(labels, df_test, on = 'cell_id')
 df = labels[labels.atlas_name == "U-2 OS"]
 df = df[df.Label != 'Discard']
 imlist = list(set(df.image_id))
+error_list = []
 encoded_imlist = [mappings[mappings.HPA_ID==im].Image_ID.values[0] for im in imlist]
+
+finished_imlist = glob.glob(save_dir+'/*.npy')
+finished_imlist = [os.path.basename(t) for t in finished_imlist]
+finished_imlist = [t.rsplit('_',1)[0] for t in finished_imlist]
+finished_imlist = list(set(finished_imlist))
+
 for img_id, encoded_id in zip(imlist, encoded_imlist):
+    if img_id in finished_imlist:
+        continue
     df_img = df[df.image_id == img_id]
     cell_idx = [int(c.split('/')[1])+1 for c in df_img.cell_id]
-    json_path = max(
-        glob.glob(
-            f"{base_dir}/HPA-Challenge-2020-all/segmentation/{img_id}/annotation_*"
-        ),
-        key=os.path.getctime,
-    )
-    #plot_complete_mask(json_path)
-    #cell_mask, nuclei_mask, protein = get_cell_nuclei_masks(img_id, json_path)
-    cell_mask, nuclei_mask, protein = get_cell_nuclei_masks2(encoded_id)
-    save_path = f"{save_dir}/{img_id}_"
-    get_single_cell_mask2(cell_mask, nuclei_mask, protein, cell_idx, save_path)
+    #json_path = max(
+    #    glob.glob(
+    #        f"{base_dir}/HPA-Challenge-2020-all/segmentation/{img_id}/annotation_*"
+    #    ),
+    #    key=os.path.getctime,
+    #)
+    try:
+        #plot_complete_mask(json_path)
+        #cell_mask, nuclei_mask, protein = get_cell_nuclei_masks(img_id, json_path)
+        cell_mask, nuclei_mask, protein = get_cell_nuclei_masks2(encoded_id)
+        save_path = f"{save_dir}/{img_id}_"
+        get_single_cell_mask2(cell_mask, nuclei_mask, protein, cell_idx, save_path)
+    except:
+        error_list += [img_id] 
+        
+'46178_1496_E4_2'
