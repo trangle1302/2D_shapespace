@@ -7,6 +7,8 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 from imageio import imread
 from scipy.ndimage import rotate
 from more_itertools import windowed
+from skimage import exposure
+from skimage.filters import threshold_mean
 
 class PlotShapeModes:
     def __init__(
@@ -212,7 +214,7 @@ class PlotShapeModes:
             ax.set_xlim(-600, 600)
             ax.set_ylim(-600, 600)
 
-        def update(i,p):
+        def update(p):
             cell_coef = self.midpoints.copy()
             cell_coef[pc_name] = p
             fcoef = self.pca.inverse_transform(cell_coef)
@@ -362,7 +364,7 @@ class PlotShapeModes:
         ax.set_facecolor('#541352FF')
         writer = PillowWriter(fps=5)
         ani.save(
-            f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/shapevar_{pc_name}.gif",
+            f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/proteinvar_{pc_name}.gif",
             writer=writer,
         )
 
@@ -505,7 +507,10 @@ def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func):
     
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
     #shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
-  
+    #protein_ch = exposure.equalize_hist(protein_ch)
+    thresh = threshold_mean(protein_ch)
+    protein_ch[protein_ch < thresh] = 0 
+    
     cell__ = []
     for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
         ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
