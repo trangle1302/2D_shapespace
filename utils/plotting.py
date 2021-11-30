@@ -519,8 +519,8 @@ def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func):
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
     #shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
     #protein_ch = exposure.equalize_hist(protein_ch)
-    thresh = threshold_mean(protein_ch)
-    protein_ch[protein_ch < thresh] = 0 
+    #thresh = threshold_mean(protein_ch)
+    #protein_ch[protein_ch < thresh] = 0 
     
     cell__ = []
     for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
@@ -532,6 +532,6 @@ def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func):
     x = np.array(x_) + shift_dict["shift_c"][0]
     y = np.array(y_) + shift_dict["shift_c"][1]
     m = parameterize.get_intensity(protein_ch, x, y, k=5)
-    m_normed = m/m.max()
+    m_normed = m#/m.max()
     return m_normed
     
