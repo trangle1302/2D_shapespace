@@ -258,7 +258,7 @@ class PlotShapeModes:
             ax.set_ylim(-600, 600)
 
         def update(p):
-            i = np.where(self.stdpoints['PC1'] == p)[0][0]
+            i = np.where(self.stdpoints[pc_name] == p)[0][0]
             cell_coef = self.midpoints.copy()
             cell_coef[pc_name] = p
             fcoef = self.pca.inverse_transform(cell_coef)
@@ -325,33 +325,35 @@ class PlotShapeModes:
             ipoints19.set_array(self.protein_intensities[i][19])
             ipoints20.set_offsets(np.c_[x_[20],y_[20]])
             ipoints20.set_array(self.protein_intensities[i][20])
-            
+        
+        
+        norm = plt.Normalize(vmin=0, vmax=1)
         fig, ax = plt.subplots()
         fig.suptitle(pc_name)
         (nu,) = plt.plot([], [], "b", lw=2)
         (cell,) = plt.plot([], [], "m", lw=2)
         if True:
-            ipoints0 = plt.scatter([], [], c=[])
-            ipoints1 = plt.scatter([], [], c=[])       
-            ipoints2 = plt.scatter([], [], c=[])            
-            ipoints3 = plt.scatter([], [], c=[])            
-            ipoints4 = plt.scatter([], [], c=[])            
-            ipoints5 = plt.scatter([], [], c=[])            
-            ipoints6 = plt.scatter([], [], c=[])      
-            ipoints7 = plt.scatter([], [], c=[])
-            ipoints8 = plt.scatter([], [], c=[])       
-            ipoints9 = plt.scatter([], [], c=[])            
-            ipoints10 = plt.scatter([], [], c=[])            
-            ipoints11 = plt.scatter([], [], c=[])            
-            ipoints12 = plt.scatter([], [], c=[])            
-            ipoints13 = plt.scatter([], [], c=[])      
-            ipoints14 = plt.scatter([], [], c=[])
-            ipoints15 = plt.scatter([], [], c=[])       
-            ipoints16 = plt.scatter([], [], c=[])            
-            ipoints17 = plt.scatter([], [], c=[])            
-            ipoints18 = plt.scatter([], [], c=[])            
-            ipoints19 = plt.scatter([], [], c=[])            
-            ipoints20 = plt.scatter([], [], c=[])      
+            ipoints0 = plt.scatter([], [], c=[], norm=norm)
+            ipoints1 = plt.scatter([], [], c=[], norm=norm)       
+            ipoints2 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints3 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints4 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints5 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints6 = plt.scatter([], [], c=[], norm=norm)      
+            ipoints7 = plt.scatter([], [], c=[], norm=norm)
+            ipoints8 = plt.scatter([], [], c=[], norm=norm)       
+            ipoints9 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints10 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints11 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints12 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints13 = plt.scatter([], [], c=[], norm=norm)      
+            ipoints14 = plt.scatter([], [], c=[], norm=norm)
+            ipoints15 = plt.scatter([], [], c=[], norm=norm)       
+            ipoints16 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints17 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints18 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints19 = plt.scatter([], [], c=[], norm=norm)            
+            ipoints20 = plt.scatter([], [], c=[], norm=norm)      
             
         ani = FuncAnimation(
             fig,
@@ -464,9 +466,14 @@ def plot_interpolation3(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
     shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
   
-    fig, ax = plt.subplots(1, 4, figsize=(25,30))        
-    ax[0].imshow(shapes, origin='lower')    
+    fig, ax = plt.subplots(1, 4, figsize=(25,30))   
+    fig.patch.set_facecolor('#191919')
+    #fig.patch.set_alpha(1)
+    ax[0].imshow(shapes, origin='lower') 
+    #ax[0].set_facecolor('#191919')
+    #ax[0].tight_axis()
     ax[1].imshow(protein_ch, origin='lower')
+    ax[1].set_facecolor('#191919')
     cell__ = []
     for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
         ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
@@ -475,18 +482,21 @@ def plot_interpolation3(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     for i, (xi, yi) in enumerate(zip(x_,y_)):
         ax[0].scatter(yi+shift_dict["shift_c"][1],xi+shift_dict["shift_c"][0], s=0.5, alpha=0.3, color="w")
         ax[1].scatter(yi+shift_dict["shift_c"][1],xi+shift_dict["shift_c"][0], s=0.5, alpha=0.3, color="w")
+        #ax[1].text(yi[i]+shift_dict["shift_c"][1], xi[i]+shift_dict["shift_c"][0], str(i))
 
     #Get intensity
     x = np.array(x_) + shift_dict["shift_c"][0]
     y = np.array(y_) + shift_dict["shift_c"][1]
-    m = parameterize.get_intensity(protein_ch, x, y, k=5)
+    m = parameterize.get_intensity(protein_ch, x, y, k=7)
     m_normed = m/m.max()
-    
+    norm = plt.Normalize(vmin=0, vmax=1)
+    print(m_normed.min(),m_normed.max(), m_normed[1,:])
     for i, (xi, yi) in enumerate(zip(x_,y_)):
-        ax[2].scatter(yi+shift_dict["shift_c"][1],xi+shift_dict["shift_c"][0],c=m_normed[i,:], s=1)
-
+        ax[2].scatter(yi+shift_dict["shift_c"][1], xi+shift_dict["shift_c"][0], c=m_normed[i,:], norm=norm,s=2)
+        #ax[2].text(yi[i]+shift_dict["shift_c"][1], xi[i]+shift_dict["shift_c"][0], str(i))
     ax[2].axis("scaled")
-    ax[2].set_facecolor("#541352FF")   
+    #ax[2].set_facecolor("#541352FF")   
+    ax[2].set_facecolor("#191919")   
     
     fcoef_c = reduced_fft[0 : n_coef * 2]
     fcoef_n = reduced_fft[n_coef * 2 :]
@@ -497,9 +507,10 @@ def plot_interpolation3(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     x_,y_ = parameterize.get_coordinates(cell_[1].real, cell_[0].real, [0,0], n_isos = [10,10], plot=False)
     for i, (xi, yi) in enumerate(zip(x_,y_)):
         ax[3].plot(xi, yi, "--", alpha=0.3)
-        ax[3].scatter(xi, yi,c=m_normed[i,:])
+        ax[3].scatter(xi, yi,c=m_normed[i,:],norm=norm)
     ax[3].axis("scaled")
-    ax[3].set_facecolor('#541352FF')
+    ax[3].set_facecolor('#191919')
+    plt.tight_layout()
     plt.savefig(save_path)
     
 
