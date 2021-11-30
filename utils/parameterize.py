@@ -225,6 +225,7 @@ def get_coordinates(nuc, mem, centroid, n_isos = [3,7], plot=True):
             ix = x_interpolator(iso_value)
             iy = y_interpolator(iso_value)
             plt.plot(ix,iy, "--")
+            plt.text(ix[i], iy[i], str(i))
             ix_list += [ix]
             iy_list += [iy]
         plt.axis("scaled")
@@ -271,7 +272,6 @@ def get_intensity(pro, x, y, k=3):
                 kernel_intensity += [pro[pi]]
         if len(kernel_intensity) == 0:
             kernel_intensity=[0]
-        print()
         matrix += [np.mean(kernel_intensity)]
     matrix = np.array(matrix).reshape(shape)
     return matrix
