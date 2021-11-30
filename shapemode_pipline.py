@@ -1,3 +1,4 @@
+import os
 from utils.parameterize import get_coordinates
 from utils import plotting, helpers, dimreduction, coefs, alignment
 from sklearn.decomposition import PCA
@@ -110,7 +111,7 @@ for link, row in df_inv.iterrows():
     pca_fft = row
     save_path = Path("C:/Users/trang.le/Desktop/2D_shape_space/interpolations_plots").joinpath(shape_path.name)
     """
-    plotting.plot_interpolations(shape_path = shape_path, 
+    plotting.plot_interpolation2(shape_path = shape_path, 
                                  pro_path = protein_path,
                                  shift_dict = shifts[link],
                                  save_path = save_path,
@@ -294,8 +295,12 @@ labels["Image_ID"] = [l.split("_")[0] for l in labels.ID]
 labels["cell_ID"] = [str(int(l.split("_")[1]) - 1) for l in labels.ID] 
 mappings = pd.read_csv(base_dir + "/HPA-Challenge-2020-all/mappings.csv")
 labels = pd.merge(labels, mappings, on='Image_ID')
-labels["cell_id"] = labels["HPA_ID"] + '_' +  labels["cell_ID"]
+labels["cell_id"] = labels["HPA_ID"] + '/' +  labels["cell_ID"]
 meta = pd.merge(labels, df_test, on = 'cell_id')
+meta["HPA_ID"] = [os.path.basename(f) for f in meta.HPA_path]
+ifimages = pd.read_csv("C:/Users/trang.le/Desktop/annotation-tool/HPA-Challenge-2020-all/IF-image_v21.csv")
+ifimages["HPA_ID"] = [os.path.basename(f)[:-1] for f in ifimages.filename]
+meta = meta.merge(ifimages, how="left", on = "HPA_ID")
 
 mappings = pd.DataFrame(df.index, columns=['Link'])
 mappings["basename"] = [l.stem for l in mappings.Link]
@@ -306,18 +311,13 @@ mappings = mappings.merge(meta, how='inner', on=["image_id","cell_id"])
 location_counts = get_location_counts(list(mappings.sc_locations_reindex), all_locations)
 
 LABELNAME = 'Nucleoplasm'
-LABELINDEX = 0
-df_sl_Nucleoplasm = mappings[mappings.sc_locations_reindex == '0']
-df_sl_Nucleoplasm.WindowLink = [Path(l) for l in df_sl_Nucleoplasm.Link]
-pc1, pc1l = pm.assign_cells('PC1')
+PC = "PC1"
+LABELINDEX = str(all_locations[LABELNAME])
+df_sl_Label = mappings[mappings.sc_locations_reindex == LABELINDEX]
+df_sl_Label.WindowLink = [Path(l) for l in df_sl_Label.Link]
+pc1, pc1l = pm.assign_cells(PC)
 
 #pc1l_Nucleoplasm = [l for l in ls for ls in pc1l if l in df_sl_Nucleoplasm.Link]
-
-for i, row in df_sl_Nucleoplasm.iterrows():
-    l = row.Link
-    protein_path = Path(str(l).replace(".npy","_protein.png"))
-    fig, ax = plt.subplots()
-    plt.imshow()    
 
 shape = (21,256)
 intensities__pc1 = []
@@ -326,16 +326,16 @@ for ls in pc1l:
     intensities = []
     i= 0
     for l in ls:
-        if l in list(df_sl_Nucleoplasm.Link):
-            print(l)
+        if l in list(df_sl_Label.Link):
+            #print(l)
             protein_path = Path(str(l).replace(".npy","_protein.png"))
             ori_fft = df.loc[df.index== l].values[0]
             """
             fig, ax = plt.subplots()
             p = rotate(imread(protein_path), shifts[l]["theta"])
-            thresh = threshold_mean(p)
-            #p = exposure.equalize_hist(p)
-            p[p<thresh] = 0
+            #thresh = threshold_mean(p)
+            p = exposure.equalize_hist(p)
+            #p[p<thresh] = 0
             plt.imshow(p)    
             """
             intensity = plotting.get_protein_intensity(
@@ -345,6 +345,9 @@ for ls in pc1l:
                 n_coef = n_coef, 
                 inverse_func = inverse_func
                 )
+            
+            #fig, ax = plt.subplots()
+            #plt.imshow(intensity)
             intensities += [intensity.flatten()]
             i +=1
     counts += [i]
@@ -355,8 +358,15 @@ for ls in pc1l:
         print(len(intensities))
         intensities__pc1 += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
 
-pm.protein_intensities = intensities__pc1
-pm.plot_protein_through_shape_variation_gif("PC1")
+pm.protein_intensities = intensities__pc1/np.array(intensities__pc1).max()
+pm.plot_protein_through_shape_variation_gif(PC)
+
+
+for i, row in df_sl_Label.iterrows():
+    l = row.Link
+    protein_path = Path(str(l).replace(".npy","_protein.png"))
+    fig, ax = plt.subplots()
+    plt.imshow()    
 # std normalization 
 # keep 1st - 99th percentile, rm outliers
 # check the histogram distribution of cells in each PC
