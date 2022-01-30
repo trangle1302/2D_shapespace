@@ -101,7 +101,7 @@ class PlotShapeModes:
         plt.title(pc_name)
         plt.show()
 
-    def plot_avg_cell(self):
+    def plot_avg_cell(self, dark=True):
         midpoint = self.midpoints.copy()
         fcoef = self.pca.inverse_transform(midpoint)
         if not self.complex:
@@ -115,12 +115,21 @@ class PlotShapeModes:
         ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
         ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
 
+        if dark:
+            plt.style.use('dark_background')
+            plt.rcParams['savefig.facecolor'] = '#191919'
+            plt.rcParams['figure.facecolor'] ='#191919'
+            plt.rcParams['axes.facecolor'] ='#191919'
+        else:
+            plt.style.use('default')
+        
         ix_n, iy_n = equidistance(ix_n.real, iy_n.real, self.n * 10)
         ix_c, iy_c = equidistance(ix_c.real, iy_c.real, self.n * 10)
         plt.title("Avg cell")
-        plt.plot(ix_n, iy_n)
-        plt.plot(ix_c, iy_c)
+        plt.plot(ix_n, iy_n,"#8ab0cf")
+        plt.plot(ix_c, iy_c,"m")
         plt.axis("scaled")
+        plt.savefig("C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/Avg_cell.jpg")
 
     def get_equipoints(self):
         points = dict()
@@ -138,6 +147,7 @@ class PlotShapeModes:
             midpoint = self.midpoints[c].copy()
             std_ = self.std[c].copy()
             p_std = []
+            #for k in np.arange(-1.5, 1.5, 1):
             for k in np.arange(-1.5, 1.5, 0.3):
                 p_std += [midpoint + k * std_]
             points[c] = p_std
@@ -180,8 +190,15 @@ class PlotShapeModes:
             points[c] = [complex(p_r[k], p_i[k]) for k in range(len(p_r))]
         self.lmpoints = points
 
-    def plot_shape_variation(self, pc_name):
-        fig, ax = plt.subplots(1, len(self.stdpoints[pc_name]), figsize=(15, 4))
+    def plot_shape_variation(self, pc_name, dark=True):
+        if dark:
+            plt.style.use('dark_background')
+            plt.rcParams['savefig.facecolor'] = '#191919'
+            plt.rcParams['figure.facecolor'] ='#191919'
+            plt.rcParams['axes.facecolor'] = '#191919'
+        else:
+            plt.style.use('default')
+        fig, ax = plt.subplots(1, len(self.stdpoints[pc_name]), figsize=(15, 4),sharex=True, sharey=True)
         for i, p in enumerate(self.stdpoints[pc_name]):
             # for i, p in enumerate(self.equipoints[pc_name]):
             # for i, p in enumerate(self.lmpoints[pc_name]):
@@ -203,12 +220,13 @@ class PlotShapeModes:
             # ix_c, iy_c = self.inverse_fun(fcoef[self.n:2*self.n], fcoef[3*self.n:])
 
             # ax[i].title(f'Cell at {}std')
-            ax[i].plot(ix_n.real, iy_n.real)
-            ax[i].plot(ix_c.real, iy_c.real)
+            ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
+            ax[i].plot(ix_c.real, iy_c.real, "m")
             ax[i].axis("scaled")
+        plt.savefig(f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/shapevar_{pc_name}.png")
         plt.show()
-
-    def plot_shape_variation_gif(self, pc_name):
+        
+    def plot_shape_variation_gif(self, pc_name, dark=True):
         def init():
             """Local function to init space in animated plots"""
             ax.set_xlim(-600, 600)
@@ -231,11 +249,22 @@ class PlotShapeModes:
 
             nu.set_data(ix_n.real, iy_n.real)
             cell.set_data(ix_c.real, iy_c.real)
-
-        fig, ax = plt.subplots()
-        fig.suptitle(pc_name)
-        (nu,) = plt.plot([], [], "b", lw=2)
-        (cell,) = plt.plot([], [], "m", lw=2)
+        
+        if dark:
+            plt.style.use('dark_background')
+            plt.rcParams['savefig.facecolor'] = '#191919'
+            plt.rcParams['figure.facecolor'] ='#191919'
+            plt.rcParams['axes.facecolor'] = '#191919'
+        else:
+            plt.style.use('default')
+        fig, ax = plt.subplots(figsize=(8,8))
+        fig.suptitle(pc_name, y=0.95)
+        (nu,) = plt.plot([], [], "#8ab0cf", lw=5)
+        (cell,) = plt.plot([], [], "m", lw=5)
+        ax.axis("scaled")
+        #ax.set_facecolor('#191919')        
+        #fig.patch.set_facecolor('#191919')
+        
         ani = FuncAnimation(
             fig,
             update,
@@ -243,7 +272,6 @@ class PlotShapeModes:
             self.stdpoints[pc_name] + self.stdpoints[pc_name][::-1],
             init_func=init,
         )
-        ax.axis("scaled")
         writer = PillowWriter(fps=5)
         ani.save(
             f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/shapevar_{pc_name}.gif",
@@ -251,7 +279,7 @@ class PlotShapeModes:
         )
 
 
-    def plot_protein_through_shape_variation_gif(self, pc_name):
+    def plot_protein_through_shape_variation_gif(self, pc_name, dark=True):
         def init():
             """Local function to init space in animated plots"""
             ax.set_xlim(-600, 600)
@@ -327,33 +355,40 @@ class PlotShapeModes:
             ipoints20.set_array(self.protein_intensities[i][20])
         
         
+        if dark:
+            plt.style.use('dark_background')
+            plt.rcParams['savefig.facecolor'] = '#191919'
+            plt.rcParams['figure.facecolor'] ='#191919'
+            plt.rcParams['axes.facecolor'] = '#191919'
+        else:
+            plt.style.use('default')
         norm = plt.Normalize(vmin=0, vmax=1)
         fig, ax = plt.subplots()
         fig.suptitle(pc_name)
         (nu,) = plt.plot([], [], "b", lw=2)
         (cell,) = plt.plot([], [], "m", lw=2)
         if True:
-            ipoints0 = plt.scatter([], [], c=[], norm=norm)
-            ipoints1 = plt.scatter([], [], c=[], norm=norm)       
-            ipoints2 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints3 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints4 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints5 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints6 = plt.scatter([], [], c=[], norm=norm)      
-            ipoints7 = plt.scatter([], [], c=[], norm=norm)
-            ipoints8 = plt.scatter([], [], c=[], norm=norm)       
-            ipoints9 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints10 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints11 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints12 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints13 = plt.scatter([], [], c=[], norm=norm)      
-            ipoints14 = plt.scatter([], [], c=[], norm=norm)
-            ipoints15 = plt.scatter([], [], c=[], norm=norm)       
-            ipoints16 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints17 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints18 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints19 = plt.scatter([], [], c=[], norm=norm)            
-            ipoints20 = plt.scatter([], [], c=[], norm=norm)      
+            ipoints0 = plt.scatter([], [], c=[], norm=norm, s=5)
+            ipoints1 = plt.scatter([], [], c=[], norm=norm, s=5)       
+            ipoints2 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints3 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints4 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints5 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints6 = plt.scatter([], [], c=[], norm=norm, s=5)      
+            ipoints7 = plt.scatter([], [], c=[], norm=norm, s=5)
+            ipoints8 = plt.scatter([], [], c=[], norm=norm, s=5)       
+            ipoints9 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints10 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints11 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints12 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints13 = plt.scatter([], [], c=[], norm=norm, s=5)      
+            ipoints14 = plt.scatter([], [], c=[], norm=norm, s=5)
+            ipoints15 = plt.scatter([], [], c=[], norm=norm, s=5)       
+            ipoints16 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints17 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints18 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints19 = plt.scatter([], [], c=[], norm=norm, s=5)            
+            ipoints20 = plt.scatter([], [], c=[], norm=norm, s=5)      
             
         ani = FuncAnimation(
             fig,
@@ -364,32 +399,40 @@ class PlotShapeModes:
         )
         ax.axis("scaled")
         ax.set_facecolor('#541352FF')
-        writer = PillowWriter(fps=5)
+        writer = PillowWriter(fps=3)
         ani.save(
             f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/proteinvar_{pc_name}.gif",
             writer=writer,
         )
 
-def display_scree_plot(pca):
+def display_scree_plot(pca, dark=True):
     """Display a scree plot for the pca"""
 
     scree = pca.explained_variance_ratio_ * 100
     plt.bar(np.arange(len(scree)) + 1, scree)
     plt.plot(np.arange(len(scree)) + 1, scree.cumsum(), c="red")
 
+    if dark:
+        plt.style.use('dark_background')
+        plt.rcParams['savefig.facecolor'] = '#191919'
+        plt.rcParams['figure.facecolor'] ='#191919'
+        plt.rcParams['axes.facecolor'] = '#191919'
+        #plt.set_facecolor('#191919')  
     for thres in [70, 80, 90, 95]:
         idx = np.searchsorted(scree.cumsum(), thres)
         plt.plot(idx + 1, scree.cumsum()[idx], c="red", marker="o")
         plt.annotate(f"{idx} PCs", xy=(idx + 3, scree.cumsum()[idx] - 5))
     plt.xlabel("Number of PCs")
     plt.ylabel("Percentage explained variance")
-    plt.title("Scree plot")
+    plt.title("Scree plot")   
+    plt.savefig("C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/PCA_scree.jpg")
+
     # plt.hlines(y=70, xmin = 0, xmax = len(scree), linestyles='dashed', alpha=0.5)
     # plt.vlines(x=np.argmax(scree.cumsum()>70), ymin = 0, ymax = 100, linestyles='dashed', alpha=0.5)
     # plt.hlines(y=80, xmin = 0, xmax = len(scree), linestyles='dashed', alpha=0.5)
     # plt.vlines(x=np.argmax(scree.cumsum()>80), ymin = 0, ymax = 100, linestyles='dashed', alpha=0.5)
     plt.show(block=False)
-
+    
 
 def plot_interpolations(shape_path, pro_path,shift_dict, save_path, ori_fft, reduced_fft, n_coef, inverse_func):
     
