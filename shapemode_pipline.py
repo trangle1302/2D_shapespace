@@ -184,12 +184,12 @@ pm = plotting.PlotShapeModes(
     complex_type=use_complex,
     inverse_func=inverse_func,
 )
-pm.plot_avg_cell()
+pm.plot_avg_cell(dark=False)
 for pc in pc_keep:
-    pm.plot_shape_variation_gif(pc)
+    pm.plot_shape_variation_gif(pc, dark=False)
     pm.plot_pc_dist(pc)
     pm.plot_pc_hist(pc)
-    pm.plot_shape_variation(pc)
+    pm.plot_shape_variation(pc, dark=False)
 
 """
 coeffs_mem = [(x.real, y.real) for x, y in zip(fcoef_c[0:n_coef], fcoef_c[n_coef:])]
@@ -310,63 +310,101 @@ mappings["cell_id"] = mappings.image_id + "/" + mappings.cell_id
 mappings = mappings.merge(meta, how='inner', on=["image_id","cell_id"])
 location_counts = get_location_counts(list(mappings.sc_locations_reindex), all_locations)
 
-LABELNAME = 'Nucleoplasm'
-PC = "PC1"
-LABELINDEX = str(all_locations[LABELNAME])
-df_sl_Label = mappings[mappings.sc_locations_reindex == LABELINDEX]
+Gene = "P2RX1"
+df_sl_Label = mappings[mappings.gene_names == Gene]
 df_sl_Label.WindowLink = [Path(l) for l in df_sl_Label.Link]
-pc1, pc1l = pm.assign_cells(PC)
 
-#pc1l_Nucleoplasm = [l for l in ls for ls in pc1l if l in df_sl_Nucleoplasm.Link]
+LABELNAME = 'Nucleoplasm'
+LABELINDEX = str(all_locations[LABELNAME])
+for PC in pc_keep:
+#df_sl_Label = mappings[mappings.sc_locations_reindex == LABELINDEX]
+    pc1, pc1l = pm.assign_cells(PC)
+    
+    #pc1l_Nucleoplasm = [l for l in ls for ls in pc1l if l in df_sl_Nucleoplasm.Link]
+    
+    shape = (21,256)
+    intensities__pc1 = []
+    counts = []
+    for ls in pc1l:
+        intensities = []
+        i= 0
+        for l in ls:
+            if l in list(df_sl_Label.Link):
+                #print(l)
+                protein_path = Path(str(l).replace(".npy","_protein.png"))
+                ori_fft = df.loc[df.index== l].values[0]
+                """
+                fig, ax = plt.subplots()
+                p = rotate(imread(protein_path), shifts[l]["theta"])
+                #thresh = threshold_mean(p)
+                p = exposure.equalize_hist(p)
+                #p[p<thresh] = 0
+                plt.imshow(p)    
+                """
+                intensity = plotting.get_protein_intensity(
+                    pro_path = protein_path, 
+                    shift_dict = shifts[l],
+                    ori_fft = ori_fft, 
+                    n_coef = n_coef, 
+                    inverse_func = inverse_func
+                    )
+                
+                #fig, ax = plt.subplots()
+                #plt.imshow(intensity)
+                intensities += [intensity.flatten()]
+                i +=1
+        counts += [i]
+        if len(intensities) == 0:
+            print('No cell sample at this bin for Nucleoplasm')
+            intensities__pc1 += [np.zeros(shape)]
+        else:
+            print(len(intensities))
+            intensities__pc1 += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
+    
+    pm.protein_intensities = intensities__pc1/np.array(intensities__pc1).max()
+    pm.plot_protein_through_shape_variation_gif(PC)
 
-shape = (21,256)
-intensities__pc1 = []
-counts = []
+
+from scipy.ndimage import rotate
+from skimage import exposure
+from imageio import imread
+encoded_image_dir = 'C:/Users/trang.le/Desktop/annotation-tool/HPA-Challenge-2020-all/HPA_Kaggle_Challenge_2020/data_for_Kaggle/data'
+
 for ls in pc1l:
-    intensities = []
-    i= 0
+    ls = pc1l[8]
     for l in ls:
         if l in list(df_sl_Label.Link):
-            #print(l)
+            #print(l.name)
+            encoded_image_id= mappings[mappings.image_id==l.name.rsplit('_',1)[0]].Image_ID.values[0]
+            nu = imread(encoded_image_dir +'/' + encoded_image_id + '_blue.png')
+            mt = imread(encoded_image_dir +'/' + encoded_image_id + '_red.png')
+            protein = imread(encoded_image_dir +'/' + encoded_image_id + '_green.png')
+            if mt.dtype == 'uint8':
+                cell = np.dstack([mt, protein, nu])
+            else:
+                cell = (np.dstack([mt, protein, nu])/255).astype('uint8')
             protein_path = Path(str(l).replace(".npy","_protein.png"))
-            ori_fft = df.loc[df.index== l].values[0]
-            """
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(1,3)
             p = rotate(imread(protein_path), shifts[l]["theta"])
-            #thresh = threshold_mean(p)
-            p = exposure.equalize_hist(p)
-            #p[p<thresh] = 0
-            plt.imshow(p)    
-            """
-            intensity = plotting.get_protein_intensity(
-                pro_path = protein_path, 
-                shift_dict = shifts[l],
-                ori_fft = ori_fft, 
-                n_coef = n_coef, 
-                inverse_func = inverse_func
-                )
             
-            #fig, ax = plt.subplots()
-            #plt.imshow(intensity)
-            intensities += [intensity.flatten()]
-            i +=1
-    counts += [i]
-    if len(intensities) == 0:
-        print('No cell sample at this bin for Nucleoplasm')
-        intensities__pc1 += [np.zeros_like(shape)]
-    else:
-        print(len(intensities))
-        intensities__pc1 += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
-
-pm.protein_intensities = intensities__pc1/np.array(intensities__pc1).max()
-pm.plot_protein_through_shape_variation_gif(PC)
-
-
+            mask = rotate(imread(Path(str(l).replace(".npy",".png"))), shifts[l]["theta"])
+            #thresh = threshold_mean(p)
+            #p = exposure.equalize_hist(p)
+            #p[p<thresh] = 0
+            ax[0].imshow(cell) 
+            ax[0].set_axis_off()
+            ax[1].imshow(p) 
+            ax[1].set_axis_off()
+            ax[2].imshow(mask) 
+            ax[2].set_axis_off()
+    
+"""
 for i, row in df_sl_Label.iterrows():
     l = row.Link
     protein_path = Path(str(l).replace(".npy","_protein.png"))
     fig, ax = plt.subplots()
     plt.imshow()    
+"""
 # std normalization 
 # keep 1st - 99th percentile, rm outliers
 # check the histogram distribution of cells in each PC
