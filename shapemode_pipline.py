@@ -50,7 +50,13 @@ for n_coef in [128]:
     df_, names_, shifts = alignment.get_coefs_df(imlist, n_coef, func=get_coef_fun)
     fourier_df[f"fourier_ccentroid_fft_{n_coef}"] = df_
     df_.index = names_
-#np.savetxt(os.path.join(d,"numbers.txt"), A.view(float))
+
+with open(os.path.join(d,"fft",f"fourier_ccentroid_fft_{n_coef}.txt"), 'wb') as f:
+    np.savetxt(f, df_)
+
+df = np.loadtxt(os.path.join(d,"fft",f"fourier_ccentroid_fft_{n_coef}.txt"), dtype=complex)
+names =
+pd.DataFrame() 
 #%% PCA and shape modes
 n_coef = 128
 df = fourier_df[f"fourier_ccentroid_fft_{n_coef}"].copy()
@@ -103,7 +109,7 @@ n_coef = df.shape[1] // 4
 i = 0
 for link, row in df_inv.iterrows():
     i = i + 1
-    if i < 4:
+    if not link.name.startswith('10896_208_G1_2'):
         continue
     shape_path = link.with_suffix(".png")
     protein_path = Path(str(link).replace(".npy","_protein.png"))
@@ -129,8 +135,8 @@ for link, row in df_inv.iterrows():
                                  n_coef = n_coef, 
                                  inverse_func = inverse_func)
     
-    if i > 6:
-        breakme
+    #if i > 508:
+    #    breakme
 
 #%%
 midpoints = df_trans.clip(0, None).mean()
@@ -316,6 +322,7 @@ df_sl_Label.WindowLink = [Path(l) for l in df_sl_Label.Link]
 
 LABELNAME = 'Nucleoplasm'
 LABELINDEX = str(all_locations[LABELNAME])
+
 for PC in pc_keep:
 #df_sl_Label = mappings[mappings.sc_locations_reindex == LABELINDEX]
     pc1, pc1l = pm.assign_cells(PC)
@@ -411,3 +418,53 @@ for i, row in df_sl_Label.iterrows():
 # For each bin (0.5 std step), average the protein representations of all cells in the same bin
 
 # For visualization: do nearest-neighbor interpolation on the mapped protein representation.
+
+#%% Map single organelles
+for org in all_locations.keys():
+    LABELINDEX = str(all_locations[org])
+    df_sl_Label = mappings[mappings.sc_locations_reindex == LABELINDEX]
+    
+    for PC in pc_keep:
+        pc1, pc1l = pm.assign_cells(PC)
+                
+        shape = (21,256)
+        intensities__pc1 = []
+        counts = []
+        for ls in pc1l:
+            intensities = []
+            i= 0
+            for l in ls:
+                if l in list(df_sl_Label.Link):
+                    #print(l)
+                    protein_path = Path(str(l).replace(".npy","_protein.png"))
+                    ori_fft = df.loc[df.index== l].values[0]
+                    """
+                    fig, ax = plt.subplots()
+                    p = rotate(imread(protein_path), shifts[l]["theta"])
+                    #thresh = threshold_mean(p)
+                    p = exposure.equalize_hist(p)
+                    #p[p<thresh] = 0
+                    plt.imshow(p)    
+                    """
+                    intensity = plotting.get_protein_intensity(
+                        pro_path = protein_path, 
+                        shift_dict = shifts[l],
+                        ori_fft = ori_fft, 
+                        n_coef = n_coef, 
+                        inverse_func = inverse_func
+                        )
+                    
+                    #fig, ax = plt.subplots()
+                    #plt.imshow(intensity)
+                    intensities += [intensity.flatten()]
+                    i +=1
+            counts += [i]
+            if len(intensities) == 0:
+                print('No cell sample at this bin for Nucleoplasm')
+                intensities__pc1 += [np.zeros(shape)]
+            else:
+                print(len(intensities))
+                intensities__pc1 += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
+        
+        pm.protein_intensities = intensities__pc1/np.array(intensities__pc1).max()
+        pm.plot_protein_through_shape_variation_gif(PC, title=org)
