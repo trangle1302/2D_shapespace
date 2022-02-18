@@ -279,7 +279,7 @@ class PlotShapeModes:
         )
 
 
-    def plot_protein_through_shape_variation_gif(self, pc_name, dark=True):
+    def plot_protein_through_shape_variation_gif(self, pc_name, title='', dark=True):
         def init():
             """Local function to init space in animated plots"""
             ax.set_xlim(-600, 600)
@@ -401,7 +401,7 @@ class PlotShapeModes:
         ax.set_facecolor('#541352FF')
         writer = PillowWriter(fps=3)
         ani.save(
-            f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/proteinvar_{pc_name}.gif",
+            f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/{title}_{pc_name}.gif",
             writer=writer,
         )
 
