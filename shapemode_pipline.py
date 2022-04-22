@@ -55,7 +55,7 @@ with open(os.path.join(d,"fft",f"fourier_ccentroid_fft_{n_coef}.txt"), 'wb') as 
     np.savetxt(f, df_)
 
 df = np.loadtxt(os.path.join(d,"fft",f"fourier_ccentroid_fft_{n_coef}.txt"), dtype=complex)
-names =
+#names =
 pd.DataFrame() 
 #%% PCA and shape modes
 n_coef = 128
@@ -468,3 +468,50 @@ for org in all_locations.keys():
         
         pm.protein_intensities = intensities__pc1/np.array(intensities__pc1).max()
         pm.plot_protein_through_shape_variation_gif(PC, title=org)
+
+#%% Average intensity on average cells 
+# plot on avg cells
+
+x_,y_ = get_coordinates(np.concatenate([ix_n.real, iy_n.real]), np.concatenate([ix_c.real, iy_c.real]), [0,0], n_isos = [10,10], plot=True)
+norm = plt.Normalize(vmin=0, vmax=1)
+
+for org in list(all_locations.keys())[:-1]:
+    LABELINDEX = str(all_locations[org])
+    df_sl_Label = mappings[mappings.sc_locations_reindex == LABELINDEX]
+    print(f'{org}, # of cells: {df_sl_Label.shape[0]}')
+    intensities = []
+    for l in df_sl_Label.Link:
+        protein_path = Path(str(l).replace(".npy","_protein.png"))
+        ori_fft = df.loc[df.index== l].values[0]
+        intensity = plotting.get_protein_intensity(
+            pro_path = protein_path, 
+            shift_dict = shifts[l],
+            ori_fft = ori_fft, 
+            n_coef = n_coef, 
+            inverse_func = inverse_func
+            )
+        
+        intensities += [intensity.flatten()]
+    tmp = np.nanmean(intensities, axis=0).reshape(intensity.shape)
+    
+    
+    org_intensities = tmp/tmp.max()
+    fig, ax = plt.subplots()
+    for (xi,yi,intensities_layer) in zip(x_,y_,org_intensities):
+        ax.scatter(xi, yi, c=intensities_layer, norm=norm)
+    ax.axis("scaled")
+    ax.set_facecolor('#541352FF')
+    ax.axis("off")
+    plt.savefig(f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/U2OS_{org}.png", bbox_inches='tight')
+    
+    
+#%%
+
+COLORS = [
+    '#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5',
+    '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50',
+    '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800',
+    '#ff5722', '#795548', '#9e9e9e', '#607d8b', '#dddddd',
+    '#212121', '#ff9e80', '#ff6d00', '#ffff00', '#76ff03',
+    '#00e676', '#64ffda', '#18ffff',
+]
