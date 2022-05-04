@@ -79,14 +79,21 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
         data = np.load(im)
         pro = imread(Path(str(im).replace('.npy', '_protein.png')))
         try:
-            nuclei, cell, theta = align_cell_nuclei_centroids(data, pro, plot=False)
+            nuclei_, cell_, theta = align_cell_nuclei_centroids(data, pro, plot=False)
             # nuclei, cell = align_cell_major_axis(data, pro, plot=False)
-            centroid = center_of_mass(nuclei)
+            centroid = center_of_mass(nuclei_)
             # centroid = center_of_mass(cell)
-            nuclei_coords_ = find_contours(nuclei)
+            
+            # Padd surrounding with 0 so no contour touch the border. This help matching squares algo not failing
+            nuclei = np.zeros((nuclei_.shape[0]+2, nuclei_.shape[1]+2))
+            nuclei[1:1+nuclei_.shape[0],1:1+nuclei_.shape[1]] = nuclei_
+            cell = np.zeros((cell_.shape[0]+2, cell_.shape[1]+2))
+            cell[1:1+cell_.shape[0],1:1+cell_.shape[1]] = cell_
+            
+            nuclei_coords_ = find_contours(nuclei, 0, fully_connected='high') #find_contours(nuclei)
             nuclei_coords_ = nuclei_coords_[0] - centroid
 
-            cell_coords_ = find_contours(cell)
+            cell_coords_ = find_contours(cell, 0, fully_connected='high') # find_contours(cell)
             cell_coords_ = cell_coords_[0] - centroid
 
             if min(cell_coords_[:, 0]) > 0 or min(cell_coords_[:, 1]) > 0:
