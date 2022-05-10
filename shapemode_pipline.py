@@ -39,7 +39,6 @@ if fun == "fft":
 elif fun == "wavelet":
     get_coef_fun = coefs.wavelet_coefs
     inverse_func = coefs.inverse_wavelet
-    
 
 d = Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS")
 meta = pd.read_csv("C:/Users/trang.le/Desktop/annotation-tool//final_labels_allversions.csv")
@@ -48,18 +47,25 @@ imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
 for n_coef in [128]:
     df_, names_, shifts = alignment.get_coefs_df(imlist, n_coef, func=get_coef_fun)
-    fourier_df[f"fourier_ccentroid_fft_{n_coef}"] = df_
+    fourier_df[f"fourier_ccentroid_fft_{n_coef}_fixed"] = df_
     df_.index = names_
 
-with open(os.path.join(d,"fft",f"fourier_ccentroid_fft_{n_coef}.txt"), 'wb') as f:
-    np.savetxt(f, df_)
+df_.columns = [f'coef{i}' for i in range(len(df_.columns))]
+save_path = os.path.join(d.cwd(),"fft",f"fourier_ccentroid_fft_{n_coef}.txt")
+df_.to_csv(save_path)
+df = pd.read_csv(save_path, index_col=0)
+df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
 
-df = np.loadtxt(os.path.join(d,"fft",f"fourier_ccentroid_fft_{n_coef}.txt"), dtype=complex)
-#names =
-pd.DataFrame() 
+compare = (df == df2)      # Dataframe of True/False
+compare.all()              # By column, True if all values are equal
+compare.count()            # By column, how many values are equal
+
+# Return any rows where there was a difference
+df.where(~compare).dropna(how='all')
+
 #%% PCA and shape modes
 n_coef = 128
-df = fourier_df[f"fourier_ccentroid_fft_{n_coef}"].copy()
+df = fourier_df[f"fourier_ccentroid_fft_{n_coef}_fixed"].copy()
 #df = df[df.index.isin(mappings.Link)]
 use_complex = False
 if fun == "fft":
@@ -502,7 +508,7 @@ for org in list(all_locations.keys())[:-1]:
     ax.axis("scaled")
     ax.set_facecolor('#541352FF')
     ax.axis("off")
-    plt.savefig(f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/U2OS_{org}.png", bbox_inches='tight')
+    plt.savefig(os.path.join(d.cwd(), f"shapespace_plots/U2OS_{org}.png"), bbox_inches='tight')
     
     
 #%%
@@ -515,3 +521,5 @@ COLORS = [
     '#212121', '#ff9e80', '#ff6d00', '#ffff00', '#76ff03',
     '#00e676', '#64ffda', '#18ffff',
 ]
+
+imageio.imread('')
