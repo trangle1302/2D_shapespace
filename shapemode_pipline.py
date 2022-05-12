@@ -56,7 +56,7 @@ df_.to_csv(save_path)
 df = pd.read_csv(save_path, index_col=0)
 df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
 
-compare = (df == df2)      # Dataframe of True/False
+compare = (df_ == df)      # Dataframe of True/False
 compare.all()              # By column, True if all values are equal
 compare.count()            # By column, how many values are equal
 
@@ -65,7 +65,7 @@ df.where(~compare).dropna(how='all')
 
 #%% PCA and shape modes
 n_coef = 128
-df = fourier_df[f"fourier_ccentroid_fft_{n_coef}_fixed"].copy()
+#df = fourier_df[f"fourier_ccentroid_fft_{n_coef}_fixed"].copy()
 #df = df[df.index.isin(mappings.Link)]
 use_complex = False
 if fun == "fft":
@@ -115,9 +115,7 @@ n_coef = df.shape[1] // 4
 i = 0
 for link, row in df_inv.iterrows():
     i = i + 1
-    if not link.name.startswith('10896_208_G1_2'):
-        continue
-    shape_path = link.with_suffix(".png")
+    shape_path = Path(link).with_suffix(".png")
     protein_path = Path(str(link).replace(".npy","_protein.png"))
     ori_fft = df.loc[df.index== link].values[0]
     pca_fft = row
@@ -134,7 +132,7 @@ for link, row in df_inv.iterrows():
     """
     plotting.plot_interpolation3(shape_path = shape_path, 
                                  pro_path = protein_path,
-                                 shift_dict = shifts[link],
+                                 shift_dict = shifts[Path(link)],
                                  save_path = save_path,
                                  ori_fft = ori_fft, 
                                  reduced_fft = pca_fft, 
@@ -522,4 +520,5 @@ COLORS = [
     '#00e676', '#64ffda', '#18ffff',
 ]
 
-imageio.imread('')
+for org in list(all_locations.keys())[:-1]:
+    imageio.imread(os.path.join(d.cwd(), f"shapespace_plots/U2OS_{org}.png"))
