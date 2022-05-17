@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.helpers import get_location_counts
+import argparse
 
 LABEL_NAMES = {
   0: 'Nucleoplasm',
@@ -55,14 +56,14 @@ save_path = os.path.join(d.cwd(),"fft",f"fourier_ccentroid_fft_{n_coef}.txt")
 df_.to_csv(save_path)
 df = pd.read_csv(save_path, index_col=0)
 df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
-
+"""
 compare = (df_ == df)      # Dataframe of True/False
 compare.all()              # By column, True if all values are equal
 compare.count()            # By column, how many values are equal
 
 # Return any rows where there was a difference
 df.where(~compare).dropna(how='all')
-
+"""
 #%% PCA and shape modes
 n_coef = 128
 #df = fourier_df[f"fourier_ccentroid_fft_{n_coef}_fixed"].copy()
