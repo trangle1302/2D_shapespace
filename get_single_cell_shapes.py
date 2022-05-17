@@ -26,6 +26,7 @@ from requests.auth import HTTPBasicAuth
 import io
 import glob
 import pickle 
+from skimage.segmentation import clear_border
 
 def bbox_iou(boxA, boxB):
 	# determine the (x, y)-coordinates of the intersection rectangle
@@ -92,7 +93,12 @@ def get_cell_nuclei_masks(image_id, cell_json, base_url):
 
     return cell_mask2, nuclei_mask, protein
     
-def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, plot=True):
+def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, rm_border=True, plot=True):
+    if rm_border:
+        nuclei_mask = clear_border(nuclei_mask)
+        borderedcellmask = (nuclei_mask !=0).astype('uint8')
+        cell_mask = cell_mask*borderedcellmask
+    assert set(np.unique(nuclei_mask)) == set(np.unique(cell_mask)) 
     for region_c, region_n in zip(
         skimage.measure.regionprops(cell_mask), skimage.measure.regionprops(nuclei_mask)
     ):  
@@ -293,26 +299,27 @@ def publicHPA():
     cell_line = "U-2 OS"
     save_dir = "/data/2Dshapespace/{cell_line}"
     if not os.path.isdir(save_dir):
-        os.makedirs(save_path)
+        os.makedirs(save_dir)
 
     finished_imlist=[]
     ifimages = pd.read_csv(f"{base_url}/IF-image.csv")
     ifimages = ifimages[ifimages.atlas_name==cell_line]
     ifimages["ID"] = [f.split("/")[-1][:-1] for f in ifimages.filename]
     im_df = pd.read_csv(f"{mask_dir}.csv")
-    imlist = list(set(im_df.id.unique()).intersection(set(ifimages.ID)))
-    error_list = open('failedimages.pkl', 'wb')
+    print(im_df.columns)
+    imlist = list(set(im_df.ID.unique()).intersection(set(ifimages.ID)))
+    error_list = open(f'{save_dir}/failedimages.pkl', 'wb')
     for img_id in imlist:
         if img_id in finished_imlist:
             continue
-        df_img = im_df[im_df.image_id == img_id]
-        cell_idx = [int(c.split('/')[1])+1 for c in df_img.mask_id]
+        df_img = im_df[im_df.ID == img_id]
+        cell_idx = df_img.maskid.to_list()
         try:
             cell_mask = imageio.imread(f"{mask_dir}/{img_id}_cellmask.png")
             nuclei_mask = imageio.imread(f"{mask_dir}/{img_id}_nucleimask.png")
             protein = imageio.imread(f"{image_dir}/{img_id}_green.png")
             save_path = f"{save_dir}/{img_id}_"
-            get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path)
+            get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, plot=False)
         except:
             pickle.dump(img_id, error_list)
 
@@ -320,4 +327,3 @@ if __name__ == "__main__":
     np.random.seed(42)  # for reproducibility
     #pilot_U2OS_kaggle2021test()
     publicHPA()
-
