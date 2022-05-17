@@ -25,7 +25,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import io
 import glob
-
+import pickle 
 
 def bbox_iou(boxA, boxB):
 	# determine the (x, y)-coordinates of the intersection rectangle
@@ -289,11 +289,17 @@ def publicHPA():
     base_url = "/data/HPA-IF-images" #"https://if.proteinatlas.org"
     image_dir = "/data/kaggle-dataset/PUBLICHPA/images/test"
     mask_dir = "/data/kaggle-dataset/PUBLICHPA/mask/test"
-    save_dir = "/data/2Dshapespace"
+    
+    cell_line = "U-2 OS"
+    save_dir = "/data/2Dshapespace/cellshapes/{cell_line}"
 
     finished_imlist=[]
-    im_df = pd.read_csv(f"{mask_dir}/test.csv")
-    imlist = im_df.id.unique().to_list()
+    ifimages = pd.read_csv(f"{base_url}/IF-image.csv")
+    ifimages = ifimages[ifimages.atlas_name==cell_line]
+    ifimages["ID"] = [f.split("/")[-1][:-1] for f in ifimages.filename]
+    im_df = pd.read_csv(f"{mask_dir}.csv")
+    imlist = list(set(im_df.id.unique()).intersection(set(ifimages.ID)))
+    error_list = open('failedimages.pkl', 'wb')
     for img_id in imlist:
         if img_id in finished_imlist:
             continue
@@ -306,7 +312,7 @@ def publicHPA():
             save_path = f"{save_dir}/{img_id}_"
             get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path)
         except:
-            error_list += [img_id] 
+            pickle.dump(img_id, error_list)
 
 if __name__ == "__main__":   
     np.random.seed(42)  # for reproducibility
