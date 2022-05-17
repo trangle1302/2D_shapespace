@@ -96,7 +96,8 @@ def get_cell_nuclei_masks(image_id, cell_json, base_url):
 def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, rm_border=True, plot=True):
     if rm_border:
         nuclei_mask = clear_border(nuclei_mask)
-        borderedcellmask = (nuclei_mask !=0).astype('uint8')
+        keep_value = np.unique(nuclei_mask)
+        borderedcellmask = np.array([[x_ in keep_value for x_ in x] for x in cell_mask]).astype('uint8')
         cell_mask = cell_mask*borderedcellmask
     assert set(np.unique(nuclei_mask)) == set(np.unique(cell_mask)) 
     for region_c, region_n in zip(
@@ -142,12 +143,6 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_p
         np.save(f"{save_path}{region_c.label}.npy", data)
         data = np.dstack((mask, np.zeros_like(mask), mask_n)) * 255
         imageio.imwrite(f"{save_path}{region_c.label}.png", data)
-        """
-        data = np.expand_dims(data, axis=1) 
-        data = np.repeat(data, 10, axis=1)
-        data = np.swapaxes(data, 2,3) #channel,z,h,w
-        np.save(f'{save_path}{region_c.label}.npy', data)
-        """
 
 
 def get_cell_nuclei_masks2(encoded_image_id):
@@ -297,18 +292,32 @@ def publicHPA():
     mask_dir = "/data/kaggle-dataset/PUBLICHPA/mask/test"
     
     cell_line = "U-2 OS"
-    save_dir = "/data/2Dshapespace/{cell_line}"
+    save_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/cell_masks"
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
+    
+    log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
+    if not os.path.isdir(log_dir):
+        os.makedirs(log_dir)
 
-    finished_imlist=[]
+    # Load 
+    finished_imlist = []
+    if os.path.exists(f"{log_dir}/images_done.pkl"):
+        with open(f"{log_dir}/images_done.pkl", "rb") as f:
+            while True:
+                try:
+                    finished_imlist.append(pickle.load(f))
+                except EOFError:
+                    break        
+            
     ifimages = pd.read_csv(f"{base_url}/IF-image.csv")
     ifimages = ifimages[ifimages.atlas_name==cell_line]
     ifimages["ID"] = [f.split("/")[-1][:-1] for f in ifimages.filename]
     im_df = pd.read_csv(f"{mask_dir}.csv")
     print(im_df.columns)
     imlist = list(set(im_df.ID.unique()).intersection(set(ifimages.ID)))
-    error_list = open(f'{save_dir}/failedimages.pkl', 'wb')
+    success_list = open(f'{log_dir}/images_done.pkl', 'wb')
+    error_list = open(f'{log_dir}/images_failed.pkl', 'wb')
     for img_id in imlist:
         if img_id in finished_imlist:
             continue
@@ -319,9 +328,12 @@ def publicHPA():
             nuclei_mask = imageio.imread(f"{mask_dir}/{img_id}_nucleimask.png")
             protein = imageio.imread(f"{image_dir}/{img_id}_green.png")
             save_path = f"{save_dir}/{img_id}_"
-            get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, plot=False)
+            get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, plot=False)
+            pickle.dump(img_id, success_list)
         except:
             pickle.dump(img_id, error_list)
+    success_list.close()
+    error_list.close()
 
 if __name__ == "__main__":   
     np.random.seed(42)  # for reproducibility
