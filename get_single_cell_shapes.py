@@ -291,7 +291,9 @@ def publicHPA():
     mask_dir = "/data/kaggle-dataset/PUBLICHPA/mask/test"
     
     cell_line = "U-2 OS"
-    save_dir = "/data/2Dshapespace/cellshapes/{cell_line}"
+    save_dir = "/data/2Dshapespace/{cell_line}"
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_path)
 
     finished_imlist=[]
     ifimages = pd.read_csv(f"{base_url}/IF-image.csv")
@@ -316,6 +318,6 @@ def publicHPA():
 
 if __name__ == "__main__":   
     np.random.seed(42)  # for reproducibility
-    pilot_U2OS_kaggle2021test()
+    #pilot_U2OS_kaggle2021test()
     publicHPA()
 
