@@ -6,6 +6,7 @@ Created on Thu Mar 11 08:23:22 2021
 
 This code takes in images and cell masks and return single cell shapes
 """
+import imaplib
 import os
 import skimage
 import imageio
@@ -67,7 +68,7 @@ def plot_complete_mask(json_path):
     # plt.imshow(img)
 
 
-def get_cell_nuclei_masks(image_id, cell_json):
+def get_cell_nuclei_masks(image_id, cell_json, base_url):
     mask_dict = geojson_to_masks(cell_json, mask_types=["labels"])
     cell_mask = mask_dict["labels"]
 
@@ -236,55 +237,79 @@ def get_single_cell_mask2(cell_mask, nuclei_mask, protein, keep_cell_list, save_
         np.save(f'{save_path}{region_c.label}.npy', data)
         """
 #%% Test
-import glob
+def pilot_U2OS_kaggle2021test():
+    base_dir = "C:/Users/trang.le/Desktop/annotation-tool"
+    base_url = "https://if.proteinatlas.org"
+    encoded_image_dir = f"{base_dir}/HPA-Challenge-2020-all/HPA_Kaggle_Challenge_2020/data_for_Kaggle/data"
+    save_dir = "C:/Users/trang.le/Desktop/2D_shape_space/U2OS"
+    # json_path = base_dir + "/HPA-Challenge-2020-all/segmentation/10093_1772_F9_7/annotation_all_ulrika.json"
+    df = pd.read_csv(base_dir + "/final_labels_allversions.csv")
+    df_test = pd.read_csv(base_dir + "/final_labels_allversions_current_withv6.csv")
 
-np.random.seed(42)  # for reproducibility
+    labels = pd.read_csv(f"{base_dir}/HPA-Challenge-2020-all/data_for_Kaggle/labels.csv")
+    labels["Image_ID"] = [l.split("_")[0] for l in labels.ID] 
+    labels["cell_ID"] = [str(int(l.split("_")[1]) - 1) for l in labels.ID] 
+    mappings = pd.read_csv(f"{base_dir}/HPA-Challenge-2020-all/mappings.csv")
+    labels = pd.merge(labels, mappings, on='Image_ID')
+    labels["cell_id"] = labels["HPA_ID"] + '/' +  labels["cell_ID"]
+    labels = pd.merge(labels, df_test, on = 'cell_id')
 
-base_dir = "C:/Users/trang.le/Desktop/annotation-tool"
-base_url = "https://if.proteinatlas.org"
-encoded_image_dir = 'C:/Users/trang.le/Desktop/annotation-tool/HPA-Challenge-2020-all/HPA_Kaggle_Challenge_2020/data_for_Kaggle/data'
-save_dir = "C:/Users/trang.le/Desktop/2D_shape_space/U2OS"
-# json_path = base_dir + "/HPA-Challenge-2020-all/segmentation/10093_1772_F9_7/annotation_all_ulrika.json"
-df = pd.read_csv(base_dir + "/final_labels_allversions.csv")
-df_test = pd.read_csv(base_dir + "/final_labels_allversions_current_withv6.csv")
+    df = labels[labels.atlas_name == "U-2 OS"]
+    df = df[df.Label != 'Discard']
+    imlist = list(set(df.image_id))
+    error_list = []
+    encoded_imlist = [mappings[mappings.HPA_ID==im].Image_ID.values[0] for im in imlist]
 
-labels = pd.read_csv('C:/Users/trang.le/Desktop/annotation-tool/HPA-Challenge-2020-all/data_for_Kaggle/labels.csv')
-labels["Image_ID"] = [l.split("_")[0] for l in labels.ID] 
-labels["cell_ID"] = [str(int(l.split("_")[1]) - 1) for l in labels.ID] 
-mappings = pd.read_csv('C:/Users/trang.le/Desktop/annotation-tool/HPA-Challenge-2020-all/mappings.csv')
-labels = pd.merge(labels, mappings, on='Image_ID')
-labels["cell_id"] = labels["HPA_ID"] + '/' +  labels["cell_ID"]
-labels = pd.merge(labels, df_test, on = 'cell_id')
+    finished_imlist = glob.glob(save_dir+'/*.npy')
+    finished_imlist = [os.path.basename(t) for t in finished_imlist]
+    finished_imlist = [t.rsplit('_',1)[0] for t in finished_imlist]
+    finished_imlist = list(set(finished_imlist))
 
-df = labels[labels.atlas_name == "U-2 OS"]
-df = df[df.Label != 'Discard']
-imlist = list(set(df.image_id))
-error_list = []
-encoded_imlist = [mappings[mappings.HPA_ID==im].Image_ID.values[0] for im in imlist]
+    for img_id, encoded_id in zip(imlist, encoded_imlist):
+        if img_id in finished_imlist:
+            continue
+        df_img = df[df.image_id == img_id]
+        cell_idx = [int(c.split('/')[1])+1 for c in df_img.cell_id]
+        #json_path = max(
+        #    glob.glob(
+        #        f"{base_dir}/HPA-Challenge-2020-all/segmentation/{img_id}/annotation_*"
+        #    ),
+        #    key=os.path.getctime,
+        #)
+        try:
+            #plot_complete_mask(json_path)
+            #cell_mask, nuclei_mask, protein = get_cell_nuclei_masks(img_id, json_path, base_url)
+            cell_mask, nuclei_mask, protein = get_cell_nuclei_masks2(encoded_id, encoded_image_dir)
+            save_path = f"{save_dir}/{img_id}_"
+            get_single_cell_mask2(cell_mask, nuclei_mask, protein, cell_idx, save_path)
+        except:
+            error_list += [img_id] 
 
-finished_imlist = glob.glob(save_dir+'/*.npy')
-finished_imlist = [os.path.basename(t) for t in finished_imlist]
-finished_imlist = [t.rsplit('_',1)[0] for t in finished_imlist]
-finished_imlist = list(set(finished_imlist))
+def publicHPA():
+    base_url = "/data/HPA-IF-images" #"https://if.proteinatlas.org"
+    image_dir = "/data/kaggle-dataset/PUBLICHPA/images/test"
+    mask_dir = "/data/kaggle-dataset/PUBLICHPA/mask/test"
+    save_dir = "/data/2Dshapespace"
 
-for img_id, encoded_id in zip(imlist, encoded_imlist):
-    if img_id in finished_imlist:
-        continue
-    df_img = df[df.image_id == img_id]
-    cell_idx = [int(c.split('/')[1])+1 for c in df_img.cell_id]
-    #json_path = max(
-    #    glob.glob(
-    #        f"{base_dir}/HPA-Challenge-2020-all/segmentation/{img_id}/annotation_*"
-    #    ),
-    #    key=os.path.getctime,
-    #)
-    try:
-        #plot_complete_mask(json_path)
-        #cell_mask, nuclei_mask, protein = get_cell_nuclei_masks(img_id, json_path)
-        cell_mask, nuclei_mask, protein = get_cell_nuclei_masks2(encoded_id)
-        save_path = f"{save_dir}/{img_id}_"
-        get_single_cell_mask2(cell_mask, nuclei_mask, protein, cell_idx, save_path)
-    except:
-        error_list += [img_id] 
-        
-'46178_1496_E4_2'
+    finished_imlist=[]
+    im_df = pd.read_csv(f"{mask_dir}/test.csv")
+    imlist = im_df.id.unique().to_list()
+    for img_id in imlist:
+        if img_id in finished_imlist:
+            continue
+        df_img = im_df[im_df.image_id == img_id]
+        cell_idx = [int(c.split('/')[1])+1 for c in df_img.mask_id]
+        try:
+            cell_mask = imageio.imread(f"{mask_dir}/{img_id}_cellmask.png")
+            nuclei_mask = imageio.imread(f"{mask_dir}/{img_id}_nucleimask.png")
+            protein = imageio.imread(f"{image_dir}/{img_id}_green.png")
+            save_path = f"{save_dir}/{img_id}_"
+            get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path)
+        except:
+            error_list += [img_id] 
+
+if __name__ == "__main__":   
+    np.random.seed(42)  # for reproducibility
+    pilot_U2OS_kaggle2021test()
+    publicHPA()
+
