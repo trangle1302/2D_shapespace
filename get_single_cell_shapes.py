@@ -27,6 +27,7 @@ import io
 import glob
 import pickle 
 from skimage.segmentation import clear_border
+from tqdm import tqdm
 
 def bbox_iou(boxA, boxB):
 	# determine the (x, y)-coordinates of the intersection rectangle
@@ -318,7 +319,7 @@ def publicHPA():
     imlist = list(set(im_df.ID.unique()).intersection(set(ifimages.ID)))
     success_list = open(f'{log_dir}/images_done.pkl', 'wb')
     error_list = open(f'{log_dir}/images_failed.pkl', 'wb')
-    for img_id in imlist:
+    for i_, img_id in tqdm(enumerate(imlist), total=len(imlist)):
         if img_id in finished_imlist:
             continue
         df_img = im_df[im_df.ID == img_id]
