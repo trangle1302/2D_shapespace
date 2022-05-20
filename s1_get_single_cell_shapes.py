@@ -28,6 +28,8 @@ import glob
 import pickle 
 from skimage.segmentation import clear_border
 from tqdm import tqdm
+import multiprocessing
+from joblib import Parallel, delayed
 
 def bbox_iou(boxA, boxB):
 	# determine the (x, y)-coordinates of the intersection rectangle
@@ -287,6 +289,21 @@ def pilot_U2OS_kaggle2021test():
         except:
             error_list += [img_id] 
 
+def process_img(img_id, im_df, mask_dir, image_dir, save_dir, log_dir):
+    df_img = im_df[im_df.ID == img_id]
+    cell_idx = df_img.maskid.to_list()
+    try:
+        cell_mask = imageio.imread(f"{mask_dir}/{img_id}_cellmask.png")
+        nuclei_mask = imageio.imread(f"{mask_dir}/{img_id}_nucleimask.png")
+        protein = imageio.imread(f"{image_dir}/{img_id}_green.png")
+        save_path = f"{save_dir}/{img_id}_"
+        get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, plot=False)
+        with open(f'{log_dir}/images_done.pkl', 'wb') as success_list:
+            pickle.dump(img_id, success_list)
+    except:
+        with open(f'{log_dir}/images_failed.pkl', 'wb') as error_list:
+            pickle.dump(img_id, error_list)
+
 def publicHPA():
     base_url = "/data/HPA-IF-images" #"https://if.proteinatlas.org"
     image_dir = "/data/kaggle-dataset/PUBLICHPA/images/test"
@@ -310,31 +327,22 @@ def publicHPA():
                     finished_imlist.append(pickle.load(f))
                 except EOFError:
                     break        
-            
+    print(f"{len(finished_imlist)} images done, processing the rest ...")
+    num_cores = multiprocessing.cpu_count() -1 # save 1 core for some other processes
     ifimages = pd.read_csv(f"{base_url}/IF-image.csv")
     ifimages = ifimages[ifimages.atlas_name==cell_line]
     ifimages["ID"] = [f.split("/")[-1][:-1] for f in ifimages.filename]
     im_df = pd.read_csv(f"{mask_dir}.csv")
     print(im_df.columns)
-    imlist = list(set(im_df.ID.unique()).intersection(set(ifimages.ID)))
-    success_list = open(f'{log_dir}/images_done.pkl', 'wb')
-    error_list = open(f'{log_dir}/images_failed.pkl', 'wb')
-    for i_, img_id in tqdm(enumerate(imlist), total=len(imlist)):
-        if img_id in finished_imlist:
-            continue
-        df_img = im_df[im_df.ID == img_id]
-        cell_idx = df_img.maskid.to_list()
-        try:
-            cell_mask = imageio.imread(f"{mask_dir}/{img_id}_cellmask.png")
-            nuclei_mask = imageio.imread(f"{mask_dir}/{img_id}_nucleimask.png")
-            protein = imageio.imread(f"{image_dir}/{img_id}_green.png")
-            save_path = f"{save_dir}/{img_id}_"
-            get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, plot=False)
-            pickle.dump(img_id, success_list)
-        except:
-            pickle.dump(img_id, error_list)
-    success_list.close()
-    error_list.close()
+    imlist = set(im_df.ID.unique()).intersection(set(ifimages.ID))
+    print(f"...Found {len(imlist)} images with masks")
+    imlist = list(imlist.difference(finished_imlist))
+    print(f"...Processing {len(imlist)} images with masks in {num_cores}")
+    inputs = tqdm(imlist)
+    processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir) for i in inputs)
+    with open(f'{log_dir}/processedlist.pkl', 'wb') as f:
+        pickle.dump(processed_list, f)
+
 
 if __name__ == "__main__":   
     np.random.seed(42)  # for reproducibility
