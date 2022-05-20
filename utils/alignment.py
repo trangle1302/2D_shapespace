@@ -1,3 +1,4 @@
+from lib2to3.pgen2.token import NT_OFFSET
 import numpy as np
 import pandas as pd
 from skimage.measure import find_contours, regionprops
@@ -7,6 +8,8 @@ import matplotlib.pyplot as plt
 import sys
 from pathlib import Path
 from imageio import imread
+import pickle
+import os
 
 def align_cell_nuclei_centroids(data, protein_ch, plot=False):
     nuclei = data[1, :, :]
@@ -136,3 +139,67 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
     print(f"Reconstruction error for cell: {np.average(error_c)}")
     return coef_df, names, shifts
 
+def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
+    data = np.load(im)
+    pro = imread(Path(str(im).replace('.npy', '_protein.png')))
+    try:
+        nuclei_, cell_, theta = align_cell_nuclei_centroids(data, pro, plot=False)
+        # nuclei, cell = align_cell_major_axis(data, pro, plot=False)
+        centroid = center_of_mass(nuclei_)
+        # centroid = center_of_mass(cell)
+        
+        # Padd surrounding with 0 so no contour touch the border. This help matching squares algo not failing
+        nuclei = np.zeros((nuclei_.shape[0]+2, nuclei_.shape[1]+2))
+        nuclei[1:1+nuclei_.shape[0],1:1+nuclei_.shape[1]] = nuclei_
+        cell = np.zeros((cell_.shape[0]+2, cell_.shape[1]+2))
+        cell[1:1+cell_.shape[0],1:1+cell_.shape[1]] = cell_
+        
+        nuclei_coords_ = find_contours(nuclei, 0, fully_connected='high') #find_contours(nuclei)
+        nuclei_coords_ = nuclei_coords_[0] - centroid
+
+        cell_coords_ = find_contours(cell, 0, fully_connected='high') # find_contours(cell)
+        cell_coords_ = cell_coords_[0] - centroid
+
+        if min(cell_coords_[:, 0]) > 0 or min(cell_coords_[:, 1]) > 0:
+            with open(f'{log_dir}/images_fft_failed.pkl', 'wb') as error_list:
+                pickle.dump(f"Contour failed {im}", error_list)
+            return im, 0
+        elif max(cell_coords_[:, 0]) < 0 or max(cell_coords_[:, 1]) < 0:
+            with open(f'{log_dir}/images_fft_failed.pkl', 'wb') as error_list:
+                pickle.dump(f"Contour failed {im}", error_list)
+            return im, 0
+
+        cell_coords = cell_coords_.copy()
+        nuclei_coords = nuclei_coords_.copy()
+        if plot:
+            fig, ax = plt.subplots(1, 3, figsize=(8, 4))
+            ax[0].imshow(nuclei, alpha=0.5)
+            ax[0].imshow(cell, alpha=0.5)
+            ax[1].plot(nuclei_coords_[:, 0], nuclei_coords_[:, 1])
+            ax[1].plot(cell_coords_[:, 0], cell_coords_[:, 1])
+            ax[1].axis("scaled")
+            ax[2].plot(nuclei_coords[:, 0], nuclei_coords[:, 1])
+            ax[2].plot(cell_coords[:, 0], cell_coords[:, 1])
+            ax[2].scatter(cell_coords[0, 0], cell_coords[0, 1], color="r")
+            ax[2].axis("scaled")
+            plt.show()
+            plt.savefig(f"{save_dir}/{os.path.basename(im)}.png")
+
+        fcoef_n, e_n = func(nuclei_coords, n=n_coef)
+        fcoef_c, e_c = func(cell_coords, n=n_coef)
+
+        with open(f"{save_dir}/fftcoefs_{n_coef}.txt", "a") as F:
+            #print(",".join(map(str,[im]+np.concatenate([fcoef_c, fcoef_n]).ravel().tolist()))[:100])
+            F.writelines(",".join(map(str,[im]+np.concatenate([fcoef_c, fcoef_n]).ravel().tolist())))
+
+        with open(f"{save_dir}/shift_error_meta_fft{n_coef}.txt", "a") as F:
+            # Saving: image_name, theta_alignment_rotation, shift_centroid, reconstruct_err_c, reconstruct_err_n
+            #print(", ".join(map(str,[im, theta, centroid, e_c, e_n])))
+            F.writelines(",".join(map(str,[im, theta, centroid, e_c, e_n])))
+        return im, 1
+    except:
+        with open(f'{log_dir}/images_fft_failed.pkl', 'wb') as error_list:
+            pickle.dump(f"Oops! {sys.exc_info()[0]} occurred for {im}", error_list)
+        return im, 0
+
+# https://stackoverflow.com/questions/59701966/forming-complex-number-array-in-python-from-test-file-of-two-column
