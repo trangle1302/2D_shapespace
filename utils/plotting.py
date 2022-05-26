@@ -101,7 +101,7 @@ class PlotShapeModes:
         plt.title(pc_name)
         plt.show()
 
-    def plot_avg_cell(self, dark=True):
+    def plot_avg_cell(self, dark=True, save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
         midpoint = self.midpoints.copy()
         fcoef = self.pca.inverse_transform(midpoint)
         if not self.complex:
@@ -129,7 +129,7 @@ class PlotShapeModes:
         plt.plot(ix_n, iy_n,"#8ab0cf")
         plt.plot(ix_c, iy_c,"m")
         plt.axis("scaled")
-        plt.savefig("C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/Avg_cell.jpg")
+        plt.savefig(f"{save_dir}/Avg_cell.jpg")
 
     def get_equipoints(self):
         points = dict()
@@ -190,7 +190,7 @@ class PlotShapeModes:
             points[c] = [complex(p_r[k], p_i[k]) for k in range(len(p_r))]
         self.lmpoints = points
 
-    def plot_shape_variation(self, pc_name, dark=True):
+    def plot_shape_variation(self, pc_name, dark=True, save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
         if dark:
             plt.style.use('dark_background')
             plt.rcParams['savefig.facecolor'] = '#191919'
@@ -223,10 +223,10 @@ class PlotShapeModes:
             ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
             ax[i].plot(ix_c.real, iy_c.real, "m")
             ax[i].axis("scaled")
-        plt.savefig(f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/shapevar_{pc_name}.png")
+        plt.savefig(f"{save_dir}/shapevar_{pc_name}.png")
         plt.show()
         
-    def plot_shape_variation_gif(self, pc_name, dark=True):
+    def plot_shape_variation_gif(self, pc_name, dark=True, save_dir=""):
         def init():
             """Local function to init space in animated plots"""
             ax.set_xlim(-600, 600)
@@ -274,7 +274,7 @@ class PlotShapeModes:
         )
         writer = PillowWriter(fps=5)
         ani.save(
-            f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/shapevar_{pc_name}.gif",
+            f"{save_dir}/shapevar_{pc_name}.gif",
             writer=writer,
         )
 
@@ -405,7 +405,7 @@ class PlotShapeModes:
             writer=writer,
         )
 
-def display_scree_plot(pca, dark=True):
+def display_scree_plot(pca, dark=True, save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
     """Display a scree plot for the pca"""
 
     scree = pca.explained_variance_ratio_ * 100
@@ -425,7 +425,7 @@ def display_scree_plot(pca, dark=True):
     plt.xlabel("Number of PCs")
     plt.ylabel("Percentage explained variance")
     plt.title("Scree plot")   
-    plt.savefig("C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/PCA_scree.jpg")
+    plt.savefig(f"{save_dir}/PCA_scree.jpg")
 
     # plt.hlines(y=70, xmin = 0, xmax = len(scree), linestyles='dashed', alpha=0.5)
     # plt.vlines(x=np.argmax(scree.cumsum()>70), ymin = 0, ymax = 100, linestyles='dashed', alpha=0.5)
