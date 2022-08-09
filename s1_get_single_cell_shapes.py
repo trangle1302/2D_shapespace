@@ -30,6 +30,8 @@ from skimage.segmentation import clear_border
 from tqdm import tqdm
 import multiprocessing
 from joblib import Parallel, delayed
+import cv2
+from skimage.morphology import erosion, square
 
 def bbox_iou(boxA, boxB):
 	# determine the (x, y)-coordinates of the intersection rectangle
@@ -189,6 +191,51 @@ def get_cell_nuclei_masks2(encoded_image_id):
     protein = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_green.png')
     return cell_mask, nuclei_mask, protein
 
+def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytooutline.png", nuclei_mask_extension = "w2nucleioutline.png"):
+    parent_dir = "/data/2Dshapespace/S-BIAD34/Files/HPA040393"
+    cyto = imageio.imread(f"{parent_dir}/{img_id}_{cell_mask_extension}")
+    cyto = cv2.cvtColor(cyto, cv2.COLOR_BGR2GRAY)
+    nu = imageio.imread(f"{parent_dir}/{img_id}_{nuclei_mask_extension}")
+    nu = cv2.cvtColor(nu, cv2.COLOR_BGR2GRAY)
+    cell_mask_ = erosion(nu, square(3)) + cyto
+
+    # Discard bordered cells because they have incomplete shapes
+    nuclei_mask_0, _ = watershed_lab(nu, marker=None, rm_border=True)
+    #nuclei_regionprops = skimage.measure.regionprops(nuclei_mask_0)
+        
+    #marker = np.zeros_like(nuclei_mask_0)
+    #marker[nuclei_mask_0 > 0] = nuclei_mask_0[nuclei_mask_0 > 0]  # foreground
+    cell_mask_0 = watershed_lab2(cell_mask_, marker=nuclei_mask_0)
+    cell_regionprops_0 = skimage.measure.regionprops(cell_mask_0)
+    print(np.unique(nuclei_mask_0))
+    print(np.unique(cell_mask_0))
+    """
+    # Relabel
+    nuclei_mask = np.zeros_like(cell_mask_)
+    cell_mask = cell_mask_.copy()
+    for region in cell_regionprops:
+        new_label = region.label
+        bbox_new = region.bbox
+        old_label = None
+        #if new_label == 8:
+        #    breakme
+        for r in cell_regionprops_0:
+            bbox_old = r.bbox
+            if bbox_iou(bbox_old, bbox_new) > 0.5:
+                old_label = r.label
+                print(new_label,old_label)
+        if old_label == None:
+            # If don't find any corresponding cell/nuclei, delete this mask
+            print(f'Dont find cell {new_label}')
+            cell_mask[cell_mask_ == new_label] = 0
+        else:
+            # If find something, update nuclei mask to the same index
+            nuclei_mask[nuclei_mask_0 == old_label] = new_label
+    assert set(np.unique(nuclei_mask)) == set(np.unique(cell_mask))
+    """
+    protein = imageio.imread(f"{parent_dir}/{img_id}_w4_Rescaled.tif")
+    return cell_mask_0, nuclei_mask_0, protein
+
 def get_single_cell_mask2(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, plot=False):
     regions_c = skimage.measure.regionprops(cell_mask)
     regions_n = skimage.measure.regionprops(nuclei_mask)
@@ -289,18 +336,32 @@ def pilot_U2OS_kaggle2021test():
         except:
             error_list += [img_id] 
 
-def process_img(img_id, im_df, mask_dir, image_dir, save_dir, log_dir):
+def process_img(img_id, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cellmask.png", nuclei_mask_extension = "nucleimask.png"):
     df_img = im_df[im_df.ID == img_id]
     cell_idx = df_img.maskid.to_list()
     try:
-        cell_mask = imageio.imread(f"{mask_dir}/{img_id}_cellmask.png")
-        nuclei_mask = imageio.imread(f"{mask_dir}/{img_id}_nucleimask.png")
+        cell_mask = imageio.imread(f"{mask_dir}/{img_id}_{cell_mask_extension}")
+        nuclei_mask = imageio.imread(f"{mask_dir}/{img_id}_{nuclei_mask_extension}")
         protein = imageio.imread(f"{image_dir}/{img_id}_green.png")
         save_path = f"{save_dir}/{img_id}_"
         get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, plot=False)
         with open(f'{log_dir}/images_done.pkl', 'wb') as success_list:
             pickle.dump(img_id, success_list)
     except:
+        with open(f'{log_dir}/images_failed.pkl', 'wb') as error_list:
+            pickle.dump(img_id, error_list)
+
+def process_img_ccd(img_id, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cellmask.png", nuclei_mask_extension = "nucleimask.png"):
+    if True:#try:
+        cell_mask, nuclei_mask, protein = get_cell_nuclei_masks_ccd(mask_dir, img_id)
+        imageio.imwrite(f"{save_dir}/cellmask.png", cell_mask)
+        imageio.imwrite(f"{save_dir}/nuclei_mask.png", nuclei_mask)
+        save_path = f"{save_dir}/{img_id}_"
+        cell_idx = np.unique(cell_mask)
+        get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, plot=False)
+        with open(f'{log_dir}/images_done.pkl', 'wb') as success_list:
+            pickle.dump(img_id, success_list)
+    if False:#except:
         with open(f'{log_dir}/images_failed.pkl', 'wb') as error_list:
             pickle.dump(img_id, error_list)
 
@@ -337,14 +398,53 @@ def publicHPA():
     imlist = set(im_df.ID.unique()).intersection(set(ifimages.ID))
     print(f"...Found {len(imlist)} images with masks")
     imlist = list(imlist.difference(finished_imlist))
-    print(f"...Processing {len(imlist)} images with masks in {num_cores}")
+    print(f"...Processing {len(imlist)} ab x 5 img each with masks in {num_cores}")
     inputs = tqdm(imlist)
-    processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir) for i in inputs)
+    processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cytooutline.png", nuclei_mask_extension = "cytooutline.png") for i in inputs)
     with open(f'{log_dir}/processedlist.pkl', 'wb') as f:
         pickle.dump(processed_list, f)
 
 
+def cellcycle():
+    base_url = "/data/2Dshapespace/S-BIAD34/Files"
+    image_dir = "/data/2Dshapespace/S-BIAD34/Files"
+    mask_dir = "/data/2Dshapespace/S-BIAD34/Files"
+    
+    cell_line = "U-2 OS"
+    save_dir = "/data/2Dshapespace/S-BIAD34/cell_masks"
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
+    
+    log_dir = "/data/2Dshapespace/S-BIAD34/logs"
+    if not os.path.isdir(log_dir):
+        os.makedirs(log_dir)
+
+    # Load 
+    finished_imlist = []
+    if os.path.exists(f"{log_dir}/images_done.pkl"):
+        with open(f"{log_dir}/images_done.pkl", "rb") as f:
+            while True:
+                try:
+                    finished_imlist.append(pickle.load(f))
+                except EOFError:
+                    break        
+    print(f"{len(finished_imlist)} images done, processing the rest ...")
+    num_cores = multiprocessing.cpu_count() -1 # save 1 core for some other processes
+    ifimages = pd.read_csv(f"{base_url}/experimentB-processed.txt", sep="\t")
+    ablist = ifimages["Antibody id"].unique()
+    print(f"...Found {len(ablist)} antibody folder with masks")
+    print(f"...Processing {len(ablist)} images with masks in {num_cores}")
+    abid = "HPA040393"
+    process_img_ccd("5977_C02_s1", 
+        os.path.join(mask_dir,abid), 
+        os.path.join(image_dir,abid), save_dir, log_dir, cell_mask_extension = "w2cytooutline.png", nuclei_mask_extension = "w2nucleioutline.png")
+    #inputs = tqdm(ablist)
+    #processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir) for i in inputs)
+    with open(f'{log_dir}/processedlist.pkl', 'wb') as f:
+        pickle.dump(processed_list, f)
+
 if __name__ == "__main__":   
     np.random.seed(42)  # for reproducibility
     #pilot_U2OS_kaggle2021test()
-    publicHPA()
+    #publicHPA()
+    cellcycle()
