@@ -193,51 +193,46 @@ def get_cell_nuclei_masks2(encoded_image_id):
     return cell_mask, nuclei_mask, protein
 
 def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytooutline.png", nuclei_mask_extension = "w2nucleioutline.png"):
-    parent_dir = "/data/2Dshapespace/S-BIAD34/Files/HPA040393"
+    #parent_dir = "/data/2Dshapespace/S-BIAD34/Files/HPA040393"
     cyto = imageio.imread(f"{parent_dir}/{img_id}_{cell_mask_extension}")
     cyto = cv2.cvtColor(cyto, cv2.COLOR_BGR2GRAY)
     nu = imageio.imread(f"{parent_dir}/{img_id}_{nuclei_mask_extension}")
     nu = cv2.cvtColor(nu, cv2.COLOR_BGR2GRAY)
-    """
-    # Discard bordered cells because they have incomplete shapes
-    #nuclei_mask_0, _ = watershed_lab(nu, marker=None, rm_border=True)
-    #nuclei_regionprops = skimage.measure.regionprops(nuclei_mask_0)
-        
-    #marker = np.zeros_like(nuclei_mask_0)
-    #marker[nuclei_mask_0 > 0] = nuclei_mask_0[nuclei_mask_0 > 0]  # foreground
-    cell_mask_0 = watershed_lab2(cell_mask_, marker=nuclei_mask_0)
-    cell_regionprops_0 = skimage.measure.regionprops(cell_mask_0)
-    print(np.unique(nuclei_mask_0))
-    print(np.unique(cell_mask_0))
-    """
+
     # Relabel the cytosol region based on nuclei labels
     cell_mask = np.zeros_like(cyto)
     nuclei_mask = nu.copy()
     nu_regionprops = skimage.measure.regionprops(nu)
     cyto_regionprops = skimage.measure.regionprops(cyto)
+    matched_ID = []
     for region in nu_regionprops:
         new_label = region.label
         match = dict()
         x1 = [str(x) for x in region.coords]
         for r in cyto_regionprops:
+            if r.label in matched_ID:
+                continue
             x2 = [str(x) for x in r.coords]
             overlap_px = set(x1).intersection(x2)
             if len(overlap_px)> 0:
-                match["r.label"] = len(overlap_px)
+                match[str(r.label)] = len(overlap_px)
         if len(match.keys())==0:
             # If don't find any corresponding cell/nuclei, delete this mask
             print(f'Dont find cell {new_label}')
             nuclei_mask[nu == new_label] = 0
-        elif len(match.keys()) == 1:
-            # If find exactly 1 match, update cyto mask to the same index
-            cell_mask[cyto == int(match.keys[0])] = new_label
+        #elif len(match.keys()) == 1:
+        #    # If find exactly 1 match, update cyto mask to the same index
+        #    print(match.keys()[0])
+        #    cell_mask[cyto == int(match.keys()[0])] = new_label
         else:
-            # if find multiple matches, pick the highest overlap:
+            # if find multiple matches, pick the highest overlap. This case include the case with only 1 match
             highest_match= max(match, key= lambda x: match[x])
+            print(highest_match, new_label)
             cell_mask[cyto == int(highest_match)] = new_label
+            matched_ID += [int(highest_match)]
     assert set(np.unique(nuclei_mask)) == set(np.unique(cell_mask))
     
-    cell_mask_ = erosion(nuclei_mask, square(3)) + cyto
+    cell_mask_ = erosion(nuclei_mask, square(3)) + cell_mask
     print(len(np.unique(cell_mask_)))
     protein = imageio.imread(f"{parent_dir}/{img_id}_w4_Rescaled.tif")
     return cell_mask_, nuclei_mask, protein
@@ -357,9 +352,17 @@ def process_img(img_id, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask
         with open(f'{log_dir}/images_failed.pkl', 'wb') as error_list:
             pickle.dump(img_id, error_list)
 
-def process_img_ccd(img_id, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cellmask.png", nuclei_mask_extension = "nucleimask.png"):
-    if True:#try:
-        cell_mask, nuclei_mask, protein = get_cell_nuclei_masks_ccd(mask_dir, img_id)
+def process_img_ccd(ab_id, mask_dir, save_dir, log_dir):
+    data_dir = os.path.join(mask_dir, ab_id)
+    save_dir = os.path.join(save_dir, ab_id)
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
+    img_ids = [os.path.basename(f).replace("_w3.TIF","") for f in glob.glob(f"{data_dir}/*_w3.TIF")]
+    if len(img_ids) == 0:
+        img_ids = [os.path.basename(f).replace("_w3.tif","") for f in glob.glob(f"{data_dir}/*_w3.tif")]
+    print(img_ids)
+    for img_id in img_ids: #if True:#try:
+        cell_mask, nuclei_mask, protein = get_cell_nuclei_masks_ccd(data_dir, img_id)
         imageio.imwrite(f"{save_dir}/cellmask.png", cell_mask)
         imageio.imwrite(f"{save_dir}/nuclei_mask.png", nuclei_mask)
         save_path = f"{save_dir}/{img_id}_"
@@ -440,14 +443,15 @@ def cellcycle():
     ablist = ifimages["Antibody id"].unique()
     print(f"...Found {len(ablist)} antibody folder with masks")
     print(f"...Processing {len(ablist)} images with masks in {num_cores}")
-    abid = "HPA040393"
-    process_img_ccd("5977_C02_s1", 
-        os.path.join(mask_dir,abid), 
-        os.path.join(image_dir,abid), save_dir, log_dir, cell_mask_extension = "w2cytooutline.png", nuclei_mask_extension = "w2nucleioutline.png")
-    #inputs = tqdm(ablist)
-    #processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir) for i in inputs)
+    #abid = "HPA040393"
+    #process_img_ccd(abid, mask_dir, save_dir, log_dir)
+    inputs = tqdm(ablist[:10])
+    import time
+    s = time.time()
+    processed_list = Parallel(n_jobs=num_cores)(delayed(process_img_ccd)(i, mask_dir, save_dir, log_dir) for i in inputs)
     with open(f'{log_dir}/processedlist.pkl', 'wb') as f:
         pickle.dump(processed_list, f)
+    print(f"Finished in {(time.time() - s)/3600}h")
 
 if __name__ == "__main__":   
     np.random.seed(42)  # for reproducibility
