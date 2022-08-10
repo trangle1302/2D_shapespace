@@ -1,6 +1,7 @@
 import os
 import io
 import json
+from pickletools import uint8
 import numpy as np
 import math
 from scipy import ndimage as ndi
@@ -490,3 +491,27 @@ def get_location_counts(locations_list, all_locations):
             for l in sc_locations:
                 label_counts[l] += 1
     return label_counts
+
+
+def rgb_2_gray_unique(image, channel_last=True):
+    """ Function to convert RGB into gray image, but each unique rgb pixel is a unique pixel number in gray image
+
+    Args:
+        image: RGB image (width,height,3)
+        channel_last: position of the channel axis
+    Returns: (width,height)
+    """
+    if not channel_last:
+        image = np.moveaxis(image, 0, -1)
+
+    flat_img = image.reshape(-1,3)
+    unique_px = np.unique(flat_img, axis=0) # [0,0,0] always the first unique px value
+    gray = np.zeros((image.shape[0]* image.shape[1]), dtype=np.uint8) # (width*height,)
+    for i, px_val in enumerate(unique_px):
+        indexes = np.where((flat_img == px_val).sum(axis=-1) == 3)[0]
+        gray[indexes] = i
+    gray = gray.reshape((image.shape[0], image.shape[1]))
+    assert len(unique_px) == len(np.unique(gray))
+    #print(f"before: {len(unique_px)} unique px, after: {len(np.unique(gray))} unique values")
+    #print(gray.shape, gray.dtype)
+    return gray
