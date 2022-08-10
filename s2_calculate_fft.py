@@ -46,8 +46,7 @@ elif fun == "wavelet":
     get_coef_fun = coefs.wavelet_coefs
     inverse_func = coefs.inverse_wavelet
 
-if __name__ == "__main__": 
-    s_t = time.time()
+def calculate_fft_hpa():
     cell_line = "U-2 OS"
     save_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/cell_masks"
     d = Path(save_dir)
@@ -58,11 +57,53 @@ if __name__ == "__main__":
 
     imlist= glob.glob(f"{save_dir}/*.npy")
     
-    num_cores = multiprocessing.cpu_count() - 4 # save 1 core for some other processes
+    num_cores = multiprocessing.cpu_count() - 4 # save 4 core for some other processes
     inputs = tqdm(imlist)
     print(f"Processing {len(imlist)} in {num_cores} cores")
     processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun) for i in inputs)
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
         pickle.dump(processed_list, success_list)
 
+def calculate_fft_hpa():
+    cell_line = "U-2 OS"
+    save_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/cell_masks"
+    d = Path(save_dir)
+    save_path = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/fftcoefs")
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
+
+    imlist= glob.glob(f"{save_dir}/*.npy")
+    
+    num_cores = multiprocessing.cpu_count() - 4 # save 4 core for some other processes
+    inputs = tqdm(imlist)
+    print(f"Processing {len(imlist)} in {num_cores} cores")
+    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun) for i in inputs)
+    with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
+        pickle.dump(processed_list, success_list)
+
+def calculate_fft_ccd():
+    dataset = "S-BIAD34"
+    d = f"/data/2Dshapespace/{dataset}"
+    sc_mask_dir = f"{d}/cell_masks"
+    save_path = f"{d}/fftcoefs"
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    log_dir = f"{d}/logs"
+
+    abids = os.listdir(sc_mask_dir)
+    imlist = [glob.glob(f"{sc_mask_dir}/{ab}/*.npy") for ab in abids]
+    imlist = [item for sublist in imlist for item in sublist]
+    
+    num_cores = multiprocessing.cpu_count() - 4 # save 4 core for some other processes
+    inputs = tqdm(imlist)
+    print(f"Processing {len(imlist)} in {num_cores} cores")
+    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun) for i in inputs)
+    with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
+        pickle.dump(processed_list, success_list)
+
+if __name__ == "__main__": 
+    s_t = time.time()
+    #calculate_fft_hpa()
+    calculate_fft_ccd()
     print(f"Done in {np.round((time.time()-s_t)/3600,2)} h.")
