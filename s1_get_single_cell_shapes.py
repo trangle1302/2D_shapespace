@@ -32,7 +32,8 @@ import multiprocessing
 from joblib import Parallel, delayed
 import cv2
 from skimage.morphology import erosion, square
-
+from sklearn.metrics import jaccard_similarity_score
+ 
 def bbox_iou(boxA, boxB):
 	# determine the (x, y)-coordinates of the intersection rectangle
 	xA = max(boxA[0], boxB[0])
@@ -197,10 +198,9 @@ def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytoo
     cyto = cv2.cvtColor(cyto, cv2.COLOR_BGR2GRAY)
     nu = imageio.imread(f"{parent_dir}/{img_id}_{nuclei_mask_extension}")
     nu = cv2.cvtColor(nu, cv2.COLOR_BGR2GRAY)
-    cell_mask_ = erosion(nu, square(3)) + cyto
-
+    """
     # Discard bordered cells because they have incomplete shapes
-    nuclei_mask_0, _ = watershed_lab(nu, marker=None, rm_border=True)
+    #nuclei_mask_0, _ = watershed_lab(nu, marker=None, rm_border=True)
     #nuclei_regionprops = skimage.measure.regionprops(nuclei_mask_0)
         
     #marker = np.zeros_like(nuclei_mask_0)
@@ -210,31 +210,37 @@ def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytoo
     print(np.unique(nuclei_mask_0))
     print(np.unique(cell_mask_0))
     """
-    # Relabel
-    nuclei_mask = np.zeros_like(cell_mask_)
-    cell_mask = cell_mask_.copy()
-    for region in cell_regionprops:
+    # Relabel the cytosol region based on nuclei labels
+    cell_mask = np.zeros_like(cyto)
+    nuclei_mask = nu.copy()
+    nu_regionprops = skimage.measure.regionprops(nu)
+    cyto_regionprops = skimage.measure.regionprops(cyto)
+    for region in nu_regionprops:
         new_label = region.label
-        bbox_new = region.bbox
-        old_label = None
-        #if new_label == 8:
-        #    breakme
-        for r in cell_regionprops_0:
-            bbox_old = r.bbox
-            if bbox_iou(bbox_old, bbox_new) > 0.5:
-                old_label = r.label
-                print(new_label,old_label)
-        if old_label == None:
+        match = dict()
+        x1 = [str(x) for x in region.coords]
+        for r in cyto_regionprops:
+            x2 = [str(x) for x in r.coords]
+            overlap_px = set(x1).intersection(x2)
+            if len(overlap_px)> 0:
+                match["r.label"] = len(overlap_px)
+        if len(match.keys())==0:
             # If don't find any corresponding cell/nuclei, delete this mask
             print(f'Dont find cell {new_label}')
-            cell_mask[cell_mask_ == new_label] = 0
+            nuclei_mask[nu == new_label] = 0
+        elif len(match.keys()) == 1:
+            # If find exactly 1 match, update cyto mask to the same index
+            cell_mask[cyto == int(match.keys[0])] = new_label
         else:
-            # If find something, update nuclei mask to the same index
-            nuclei_mask[nuclei_mask_0 == old_label] = new_label
+            # if find multiple matches, pick the highest overlap:
+            highest_match= max(match, key= lambda x: match[x])
+            cell_mask[cyto == int(highest_match)] = new_label
     assert set(np.unique(nuclei_mask)) == set(np.unique(cell_mask))
-    """
+    
+    cell_mask_ = erosion(nuclei_mask, square(3)) + cyto
+    print(len(np.unique(cell_mask_)))
     protein = imageio.imread(f"{parent_dir}/{img_id}_w4_Rescaled.tif")
-    return cell_mask_0, nuclei_mask_0, protein
+    return cell_mask_, nuclei_mask, protein
 
 def get_single_cell_mask2(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, plot=False):
     regions_c = skimage.measure.regionprops(cell_mask)
