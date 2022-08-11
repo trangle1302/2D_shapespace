@@ -48,9 +48,9 @@ elif fun == "wavelet":
 
 if __name__ == "__main__": 
     n_coef = 128
-    n_samples = 1000
-    n_cv = 10
-    cell_line = "U-2 OS"
+    n_samples = -1#1000
+    n_cv = 1
+    cell_line = "S-BIAD34"#"U-2 OS"
     project_dir = "/data/2Dshapespace"
     log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
     fft_dir = f"{project_dir}/{cell_line.replace(' ','_')}/fftcoefs"
@@ -58,9 +58,12 @@ if __name__ == "__main__":
     with open(fft_path) as f:
         count = sum(1 for _ in f)
         for i in range(n_cv):
-            with open(fft_path) as file:
+            with open(fft_path, "r") as file:
                 lines = dict()
-                specified_lines = random.sample(range(count), n_samples) # 10k cells/ CV
+                if n_samples ==-1:
+                    specified_lines = range(count)
+                else:
+                    specified_lines = random.sample(range(count), n_samples) # 10k cells/ CV
                 # loop over lines in a file
                 for pos, l_num in enumerate(file):
                     # check if the line number is specified in the lines to read array
@@ -75,11 +78,12 @@ if __name__ == "__main__":
 
             df = pd.DataFrame(lines).transpose()
             print(df.shape)
+            print(df)
             df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
-
-            shape_mode_path = f"{project_dir}/shapemode/{i}"
+            shape_mode_path = f"{project_dir}/shapemode/{cell_line}/{i}"
             if not os.path.isdir(shape_mode_path):
                 os.makedirs(shape_mode_path)
+            
             use_complex = False
             if fun == "fft":
                 if not use_complex:
