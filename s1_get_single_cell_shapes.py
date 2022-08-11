@@ -20,6 +20,7 @@ from utils.helpers import (
     geojson_to_masks,
     watershed_lab,
     watershed_lab2,
+    rgb_2_gray_unique
 )
 import requests
 from requests.auth import HTTPBasicAuth
@@ -31,7 +32,7 @@ from tqdm import tqdm
 import multiprocessing
 from joblib import Parallel, delayed
 import cv2
-from skimage.morphology import erosion, square
+from skimage.morphology import erosion, square, dilation
 from sklearn.metrics import jaccard_similarity_score
  
 def bbox_iou(boxA, boxB):
@@ -99,7 +100,7 @@ def get_cell_nuclei_masks(image_id, cell_json, base_url):
 
     return cell_mask2, nuclei_mask, protein
     
-def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, rm_border=True, plot=True):
+def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, rm_border=True, remove_size=100, plot=True):
     if rm_border:
         nuclei_mask = clear_border(nuclei_mask)
         keep_value = np.unique(nuclei_mask)
@@ -111,6 +112,8 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_p
     ):  
         if region_c.label not in keep_cell_list:
             continue
+        if region_c.area < remove_size:
+            continue
         # draw rectangle around segmented cell and
         # apply a binary mask to the selected region, to eliminate signals from surrounding cell
         minr, minc, maxr, maxc = region_c.bbox
@@ -118,6 +121,10 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_p
         mask = cell_mask[minr:maxr, minc:maxc].astype(np.uint8)
         mask[mask != region_c.label] = 0
         mask[mask == region_c.label] = 1
+        if True: #erose and dilate to remove the small line
+            mask = erosion(mask,square(5))
+            mask = dilation(mask,square(5))
+            #mask = dilation(mask,square(3))
 
         mask_n = nuclei_mask[minr:maxr, minc:maxc].astype(np.uint8)
         mask_n[mask_n != region_n.label] = 0
@@ -195,13 +202,13 @@ def get_cell_nuclei_masks2(encoded_image_id):
 def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytooutline.png", nuclei_mask_extension = "w2nucleioutline.png"):
     #parent_dir = "/data/2Dshapespace/S-BIAD34/Files/HPA040393"
     cyto = imageio.imread(f"{parent_dir}/{img_id}_{cell_mask_extension}")
-    cyto = cv2.cvtColor(cyto, cv2.COLOR_BGR2GRAY)
+    cyto = rgb_2_gray_unique(cyto)
     nu = imageio.imread(f"{parent_dir}/{img_id}_{nuclei_mask_extension}")
-    nu = cv2.cvtColor(nu, cv2.COLOR_BGR2GRAY)
+    nu = rgb_2_gray_unique(nu)
 
     # Relabel the cytosol region based on nuclei labels
     cell_mask = np.zeros_like(cyto)
-    nuclei_mask = nu.copy()
+    nuclei_mask = np.zeros_like(nu) #nu.copy()
     nu_regionprops = skimage.measure.regionprops(nu)
     cyto_regionprops = skimage.measure.regionprops(cyto)
     matched_ID = []
@@ -219,21 +226,20 @@ def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytoo
         if len(match.keys())==0:
             # If don't find any corresponding cell/nuclei, delete this mask
             print(f'Dont find cell {new_label}')
-            nuclei_mask[nu == new_label] = 0
-        #elif len(match.keys()) == 1:
-        #    # If find exactly 1 match, update cyto mask to the same index
-        #    print(match.keys()[0])
-        #    cell_mask[cyto == int(match.keys()[0])] = new_label
+            #nuclei_mask[nu == new_label] = 0
         else:
             # if find multiple matches, pick the highest overlap. This case include the case with only 1 match
             highest_match= max(match, key= lambda x: match[x])
-            print(highest_match, new_label)
+            #print(highest_match, new_label)
             cell_mask[cyto == int(highest_match)] = new_label
+            nuclei_mask[nu == new_label] = new_label
             matched_ID += [int(highest_match)]
     assert set(np.unique(nuclei_mask)) == set(np.unique(cell_mask))
     
     cell_mask_ = erosion(nuclei_mask, square(3)) + cell_mask
-    print(len(np.unique(cell_mask_)))
+    # remove small patches
+    cell_mask_ = erosion(cell_mask_, square(5))
+    cell_mask_ = dilation(cell_mask_, square(5))
     protein = imageio.imread(f"{parent_dir}/{img_id}_w4_Rescaled.tif")
     return cell_mask_, nuclei_mask, protein
 
@@ -360,14 +366,14 @@ def process_img_ccd(ab_id, mask_dir, save_dir, log_dir):
     img_ids = [os.path.basename(f).replace("_w3.TIF","") for f in glob.glob(f"{data_dir}/*_w3.TIF")]
     if len(img_ids) == 0:
         img_ids = [os.path.basename(f).replace("_w3.tif","") for f in glob.glob(f"{data_dir}/*_w3.tif")]
-    print(img_ids)
+    #print(img_ids)
     for img_id in img_ids: #if True:#try:
         cell_mask, nuclei_mask, protein = get_cell_nuclei_masks_ccd(data_dir, img_id)
         imageio.imwrite(f"{save_dir}/cellmask.png", cell_mask)
         imageio.imwrite(f"{save_dir}/nuclei_mask.png", nuclei_mask)
         save_path = f"{save_dir}/{img_id}_"
         cell_idx = np.unique(cell_mask)
-        get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, plot=False)
+        get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, remove_size=20, plot=False)
         with open(f'{log_dir}/images_done.pkl', 'wb') as success_list:
             pickle.dump(img_id, success_list)
     if False:#except:
