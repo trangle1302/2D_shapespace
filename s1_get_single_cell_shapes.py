@@ -100,7 +100,7 @@ def get_cell_nuclei_masks(image_id, cell_json, base_url):
 
     return cell_mask2, nuclei_mask, protein
     
-def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, rm_border=True, remove_size=100, plot=True):
+def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, rm_border=True, remove_size=100, plot=False):
     if rm_border:
         nuclei_mask = clear_border(nuclei_mask)
         keep_value = np.unique(nuclei_mask)
@@ -358,7 +358,7 @@ def process_img(img_id, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask
         with open(f'{log_dir}/images_failed.pkl', 'wb') as error_list:
             pickle.dump(img_id, error_list)
 
-def process_img_ccd(ab_id, mask_dir, save_dir, log_dir):
+def process_img_ccd(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "w2cytooutline.png", nuclei_mask_extension = "w2nucleioutline.png"):
     data_dir = os.path.join(mask_dir, ab_id)
     save_dir = os.path.join(save_dir, ab_id)
     if not os.path.isdir(save_dir):
@@ -366,15 +366,27 @@ def process_img_ccd(ab_id, mask_dir, save_dir, log_dir):
     img_ids = [os.path.basename(f).replace("_w3.TIF","") for f in glob.glob(f"{data_dir}/*_w3.TIF")]
     if len(img_ids) == 0:
         img_ids = [os.path.basename(f).replace("_w3.tif","") for f in glob.glob(f"{data_dir}/*_w3.tif")]
+    #check if these images have nuclei mask, cytosol mask and protein channel
+    img_ids_filtered = []
+    for img_id in img_ids:
+        if os.path.exists(f"{data_dir}/{img_id}_{cell_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_{cell_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_{cell_mask_extension}"):
+            img_ids_filtered += [img_id]
     #print(img_ids)
-    for img_id in img_ids: #if True:#try:
+    for img_id in img_ids_filtered: #if True:#try:
         cell_mask, nuclei_mask, protein = get_cell_nuclei_masks_ccd(data_dir, img_id)
         imageio.imwrite(f"{save_dir}/cellmask.png", cell_mask)
         imageio.imwrite(f"{save_dir}/nuclei_mask.png", nuclei_mask)
         save_path = f"{save_dir}/{img_id}_"
         cell_idx = np.unique(cell_mask)
-        get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, remove_size=20, plot=False)
-        with open(f'{log_dir}/images_done.pkl', 'wb') as success_list:
+        cell_idx_finished = glob.glob(f"{save_path}*.npy")
+        cell_idx_finished = [int(f.replace(save_path,"").replace(".npy","")) for f in cell_idx_finished]
+        #print(cell_idx)
+        #print(cell_idx_finished)
+        cell_idx = list(set(cell_idx).difference(set(cell_idx_finished)))
+        #print(cell_idx)
+        if len(cell_idx) > 0:
+            get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, remove_size=20, plot=False)
+        with open(f'{log_dir}/images_done.pkl', 'ab') as success_list:
             pickle.dump(img_id, success_list)
     if False:#except:
         with open(f'{log_dir}/images_failed.pkl', 'wb') as error_list:
@@ -444,14 +456,16 @@ def cellcycle():
                 except EOFError:
                     break        
     print(f"{len(finished_imlist)} images done, processing the rest ...")
-    num_cores = multiprocessing.cpu_count() -1 # save 1 core for some other processes
+    num_cores = multiprocessing.cpu_count() - 14 # save 1 core for some other processes
     ifimages = pd.read_csv(f"{base_url}/experimentB-processed.txt", sep="\t")
     ablist = ifimages["Antibody id"].unique()
     print(f"...Found {len(ablist)} antibody folder with masks")
     print(f"...Processing {len(ablist)} images with masks in {num_cores}")
     #abid = "HPA040393"
     #process_img_ccd(abid, mask_dir, save_dir, log_dir)
-    inputs = tqdm(ablist[:10])
+    #done = pd.read_pickle(f'{log_dir}/images_done.pkl')
+    #ablist = list(set(ablist).difference(set(done))))
+    inputs = tqdm(ablist[50:300])
     import time
     s = time.time()
     processed_list = Parallel(n_jobs=num_cores)(delayed(process_img_ccd)(i, mask_dir, save_dir, log_dir) for i in inputs)
