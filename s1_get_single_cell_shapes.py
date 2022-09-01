@@ -369,7 +369,7 @@ def process_img_ccd(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "w
     #check if these images have nuclei mask, cytosol mask and protein channel
     img_ids_filtered = []
     for img_id in img_ids:
-        if os.path.exists(f"{data_dir}/{img_id}_{cell_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_{cell_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_{cell_mask_extension}"):
+        if os.path.exists(f"{data_dir}/{img_id}_{cell_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_{nuclei_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_w4_Rescaled.tif"):
             img_ids_filtered += [img_id]
     #print(img_ids)
     for img_id in img_ids_filtered: #if True:#try:
@@ -465,7 +465,7 @@ def cellcycle():
     #process_img_ccd(abid, mask_dir, save_dir, log_dir)
     #done = pd.read_pickle(f'{log_dir}/images_done.pkl')
     #ablist = list(set(ablist).difference(set(done))))
-    inputs = tqdm(ablist[50:300])
+    inputs = tqdm(ablist[200:])
     import time
     s = time.time()
     processed_list = Parallel(n_jobs=num_cores)(delayed(process_img_ccd)(i, mask_dir, save_dir, log_dir) for i in inputs)
