@@ -130,6 +130,7 @@ class PlotShapeModes:
         plt.plot(ix_c, iy_c,"m")
         plt.axis("scaled")
         plt.savefig(f"{save_dir}/Avg_cell.jpg")
+        plt.close()
 
     def get_equipoints(self):
         points = dict()
@@ -225,6 +226,7 @@ class PlotShapeModes:
             ax[i].axis("scaled")
         plt.savefig(f"{save_dir}/shapevar_{pc_name}.png")
         plt.show()
+        plt.close()
         
     def plot_shape_variation_gif(self, pc_name, dark=True, save_dir=""):
         def init():
@@ -277,9 +279,10 @@ class PlotShapeModes:
             f"{save_dir}/shapevar_{pc_name}.gif",
             writer=writer,
         )
+        plt.close()
 
 
-    def plot_protein_through_shape_variation_gif(self, pc_name, title='', dark=True):
+    def plot_protein_through_shape_variation_gif(self, pc_name, title='', dark=True, save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
         def init():
             """Local function to init space in animated plots"""
             ax.set_xlim(-600, 600)
@@ -401,9 +404,10 @@ class PlotShapeModes:
         ax.set_facecolor('#541352FF')
         writer = PillowWriter(fps=3)
         ani.save(
-            f"C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots/{title}_{pc_name}.gif",
+            f"{save_dir}/{title}_{pc_name}.gif",
             writer=writer,
         )
+        plt.close()
 
 def display_scree_plot(pca, dark=True, save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
     """Display a scree plot for the pca"""
@@ -432,7 +436,7 @@ def display_scree_plot(pca, dark=True, save_dir="C:/Users/trang.le/Desktop/2D_sh
     # plt.hlines(y=80, xmin = 0, xmax = len(scree), linestyles='dashed', alpha=0.5)
     # plt.vlines(x=np.argmax(scree.cumsum()>80), ymin = 0, ymax = 100, linestyles='dashed', alpha=0.5)
     plt.show(block=False)
-    
+    plt.close()
 
 def plot_interpolations(shape_path, pro_path,shift_dict, save_path, ori_fft, reduced_fft, n_coef, inverse_func):
     
@@ -472,6 +476,7 @@ def plot_interpolations(shape_path, pro_path,shift_dict, save_path, ori_fft, red
         ax[1,2].plot(xi, yi, "--")
     ax[1,2].axis("scaled")
     plt.savefig(save_path)
+    plt.close()
     
 def plot_interpolation2(shape_path, pro_path,shift_dict, save_path, ori_fft, reduced_fft, n_coef, inverse_func):
     
@@ -502,7 +507,7 @@ def plot_interpolation2(shape_path, pro_path,shift_dict, save_path, ori_fft, red
         ax[2].plot(xi, yi, "--")
     ax[2].axis("scaled")
     #plt.savefig(save_path)
-    
+    plt.close()
 
 def plot_interpolation3(shape_path, pro_path,shift_dict, save_path, ori_fft, reduced_fft, n_coef, inverse_func):
     
@@ -555,7 +560,7 @@ def plot_interpolation3(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     ax[3].set_facecolor('#191919')
     plt.tight_layout()
     plt.savefig(save_path)
-    
+    plt.close()
 
 def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func):
     
