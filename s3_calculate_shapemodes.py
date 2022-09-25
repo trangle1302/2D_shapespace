@@ -14,6 +14,8 @@ from tqdm import tqdm
 import random
 from ast import literal_eval
 import json
+import resource
+import sys
 
 LABEL_TO_ALIAS = {
   0: 'Nucleoplasm',
@@ -48,9 +50,22 @@ elif fun == "wavelet":
     get_coef_fun = coefs.wavelet_coefs
     inverse_func = coefs.inverse_wavelet
 
-if __name__ == "__main__": 
+def memory_limit():
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    resource.setrlimit(resource.RLIMIT_AS, (get_memory() * 1024 / 2, hard))
+
+def get_memory():
+    with open('/proc/meminfo', 'r') as mem:
+        free_memory = 0
+        for i in mem:
+            sline = i.split()
+            if str(sline[0]) in ('MemFree:', 'Buffers:', 'Cached:'):
+                free_memory += int(sline[1])
+    return free_memory
+
+def main():
     n_coef = 128
-    n_samples = 10000 #10000
+    n_samples = -1 #10000
     n_cv = 1#0
     cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
     project_dir = "/data/2Dshapespace"
@@ -159,7 +174,7 @@ if __name__ == "__main__":
             
             for PC, pc_cells in cells_assigned.items():
                 print("xxxx", len(pc_cells), len(pc_cells[0]))
-                shape = (21,n_coef*2)
+                shape = (21, n_coef*2)
                 intensities_pcX = []
                 counts = []
                 for ls in pc_cells:
@@ -187,3 +202,11 @@ if __name__ == "__main__":
         meta.columns = ["org"] +["".join(("n_bin",str(i))) for i in range(10)]
         print(meta)
         meta.to_csv(f"{project_dir}/shapemode/organelle/cells_per_bin.csv", index=False)
+
+if __name__ == "__main__": 
+    memory_limit() # Limitates maximun memory usage to half
+    try:
+        main()
+    except MemoryError:
+        sys.stderr.write('\n\nERROR: Memory Exception\n')
+        sys.exit(1)
