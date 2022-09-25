@@ -1,7 +1,7 @@
 import os
 from utils.parameterize import get_coordinates
 from utils import plotting, helpers, dimreduction, coefs, alignment
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, IncrementalPCA
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -13,30 +13,32 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 import random
 from ast import literal_eval
+import json
 
-LABEL_NAMES = {
+LABEL_TO_ALIAS = {
   0: 'Nucleoplasm',
-  1: 'Nuclear membrane',
+  1: 'NuclearM',
   2: 'Nucleoli',
-  3: 'Nucleoli fibrillar center',
-  4: 'Nuclear speckles',
-  5: 'Nuclear bodies',
-  6: 'Endoplasmic reticulum',
-  7: 'Golgi apparatus',
-  8: 'Intermediate filaments',
-  9: 'Actin filaments',
+  3: 'NucleoliFC',
+  4: 'NuclearS',
+  5: 'NuclearB',
+  6: 'EndoplasmicR',
+  7: 'GolgiA',
+  8: 'IntermediateF',
+  9: 'ActinF',
   10: 'Microtubules',
-  11: 'Mitotic spindle',
+  11: 'MitoticS',
   12: 'Centrosome',
-  13: 'Plasma membrane',
+  13: 'PlasmaM',
   14: 'Mitochondria',
   15: 'Aggresome',
   16: 'Cytosol',
-  17: 'Vesicles and punctate cytosolic patterns',
-  18: 'Negative',
+  17: 'VesiclesPCP',
+  19: 'Negative',
+  19:'Multi-Location',
 }
 
-all_locations = dict((v, k) for k,v in LABEL_NAMES.items())
+all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
 #%% Coefficients
 fun = "fft"
 if fun == "fft":
@@ -48,16 +50,27 @@ elif fun == "wavelet":
 
 if __name__ == "__main__": 
     n_coef = 128
-    n_samples = 10000
-    n_cv = 10
+    n_samples = 10000 #10000
+    n_cv = 1#0
     cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
     project_dir = "/data/2Dshapespace"
     log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
     fft_dir = f"{project_dir}/{cell_line.replace(' ','_')}/fftcoefs"
     fft_path = os.path.join(fft_dir,f"fftcoefs_{n_coef}.txt")
+    
+    sampled_intensity_dir = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
+
+    mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
+    #print(mappings.target.value_counts())
+    print(mappings.columns)
+    id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
+    mappings["Link"] =[f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
+    mappings = mappings[mappings.Link.isin(id_with_intensity)]
+    print(mappings.target.value_counts())
+
     with open(fft_path) as f:
         count = sum(1 for _ in f)
-        
+    
     for i in range(n_cv):
         with open(fft_path, "r") as file:
             lines = dict()
@@ -79,9 +92,8 @@ if __name__ == "__main__":
 
         df = pd.DataFrame(lines).transpose()
         print(df.shape)
-        print(df)
         df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
-        shape_mode_path = f"{project_dir}/shapemode/{cell_line}/{i}"
+        shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/{i}"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
         
@@ -91,7 +103,7 @@ if __name__ == "__main__":
                 df_ = pd.concat(
                     [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)], axis=1
                 )
-                pca = PCA()
+                pca = IncrementalPCA(whiten=True) #PCA()
                 pca.fit(df_)
                 plotting.display_scree_plot(pca, save_dir=shape_mode_path)
             else:
@@ -123,8 +135,55 @@ if __name__ == "__main__":
             inverse_func=inverse_func,
         )
         pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
+        cells_assigned = dict()
         for pc in pc_keep:
             pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
             pm.plot_pc_dist(pc)
             pm.plot_pc_hist(pc)
             pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
+
+            pc_indexes_assigned, bin_links = pm.assign_cells(pc) 
+            #print(pc_indexes_assigned, len(pc_indexes_assigned))
+            #print(bin_links, len(bin_links))
+            #print([len(b) for b in bin_links])
+            cells_assigned[pc] = [list(b) for b in bin_links]
+        
+        with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
+            json.dump(cells_assigned, fp)
+            
+        if not os.path.isdir(f"{project_dir}/shapemode/organelle"):
+            os.makedirs(f"{project_dir}/shapemode/organelle")
+        meta = []
+        for org in list(all_locations.keys())[:2]:
+            df_sl_Label = mappings[mappings.target == org]
+            
+            for PC, pc_cells in cells_assigned.items():
+                print("xxxx", len(pc_cells), len(pc_cells[0]))
+                shape = (21,n_coef*2)
+                intensities_pcX = []
+                counts = []
+                for ls in pc_cells:
+                    intensities = []
+                    i= 0
+                    for l in ls:
+                        l = str(sampled_intensity_dir) + "/"+ Path(l).stem + "_protein.npy"
+                        if l in list(df_sl_Label.Link):
+                            intensity = np.load(l)
+                            intensities += [intensity.flatten()]
+                            i +=1
+                    counts += [i]
+                    if len(intensities) == 0:
+                        print('No cell sample at this bin for Nucleoplasm')
+                        intensities_pcX += [np.zeros(shape)]
+                    else:
+                        print(len(intensities))
+                        intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
+                print(counts)
+                meta += [[org]+ counts]
+                pm.protein_intensities = intensities_pcX/np.array(intensities_pcX).max()
+                pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
+
+        meta = pd.DataFrame(meta)
+        meta.columns = ["org"] +["".join(("n_bin",str(i))) for i in range(10)]
+        print(meta)
+        meta.to_csv(f"{project_dir}/shapemode/organelle/cells_per_bin.csv", index=False)
