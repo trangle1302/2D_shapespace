@@ -9,29 +9,30 @@ import matplotlib.pyplot as plt
 from utils.parameterize import get_coordinates
 import json
 
-LABEL_NAMES = {
+LABEL_TO_ALIAS = {
   0: 'Nucleoplasm',
-  1: 'Nuclear membrane',
+  1: 'NuclearM',
   2: 'Nucleoli',
-  3: 'Nucleoli fibrillar center',
-  4: 'Nuclear speckles',
-  5: 'Nuclear bodies',
-  6: 'Endoplasmic reticulum',
-  7: 'Golgi apparatus',
-  8: 'Intermediate filaments',
-  9: 'Actin filaments',
+  3: 'NucleoliFC',
+  4: 'NuclearS',
+  5: 'NuclearB',
+  6: 'EndoplasmicR',
+  7: 'GolgiA',
+  8: 'IntermediateF',
+  9: 'ActinF',
   10: 'Microtubules',
-  11: 'Mitotic spindle',
+  11: 'MitoticS',
   12: 'Centrosome',
-  13: 'Plasma membrane',
+  13: 'PlasmaM',
   14: 'Mitochondria',
   15: 'Aggresome',
   16: 'Cytosol',
-  17: 'Vesicles and punctate cytosolic patterns',
-  18: 'Negative',
+  17: 'VesiclesPCP',
+  19: 'Negative',
+  19:'Multi-Location',
 }
 
-all_locations = dict((v, k) for k,v in LABEL_NAMES.items())
+all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
 
 def avg_matrix(bins, intensity_matrix):
     df = []
