@@ -62,3 +62,6 @@ U2OS_2
 fftcoefs
 shapespace_plots
 interpolations_plots
+
+# slurm output
+slurm-*
