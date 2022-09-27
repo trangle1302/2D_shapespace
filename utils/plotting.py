@@ -232,7 +232,7 @@ class PlotShapeModes:
         def init():
             """Local function to init space in animated plots"""
             ax.set_xlim(-600, 600)
-            ax.set_ylim(-600, 600)
+            ax.set_ylim(-650, 600)
 
         def update(p):
             cell_coef = self.midpoints.copy()
@@ -286,7 +286,7 @@ class PlotShapeModes:
         def init():
             """Local function to init space in animated plots"""
             ax.set_xlim(-600, 600)
-            ax.set_ylim(-600, 600)
+            ax.set_ylim(-650, 600)
 
         def update(p):
             i = np.where(self.stdpoints[pc_name] == p)[0][0]
