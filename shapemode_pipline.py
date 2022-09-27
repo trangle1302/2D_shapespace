@@ -6,8 +6,9 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.helpers import get_location_counts
+from utils.helpers import get_location_counts, interpolate_
 import argparse
+import imageio
 
 LABEL_NAMES = {
   0: 'Nucleoplasm',
@@ -522,4 +523,5 @@ COLORS = [
 ]
 
 for org in list(all_locations.keys())[:-1]:
-    imageio.imread(os.path.join(d.cwd(), f"shapespace_plots/U2OS_{org}.png"))
+    img = imageio.imread(os.path.join(d.cwd(), f"shapespace_plots/U2OS_{org}.png"))
+    img = interpolate_
