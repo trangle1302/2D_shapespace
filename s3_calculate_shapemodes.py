@@ -209,7 +209,7 @@ def main():
         meta.to_csv(f"{project_dir}/shapemode/organelle/cells_per_bin.csv", index=False)
 
 if __name__ == "__main__": 
-    memory_limit() # Limitates maximun memory usage to half
+    memory_limit() # Limitates maximun memory usage
     try:
         main()
     except MemoryError:
