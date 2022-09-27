@@ -188,6 +188,8 @@ def main():
                         l = str(sampled_intensity_dir) + "/"+ Path(l).stem + "_protein.npy"
                         if l in list(df_sl_Label.Link):
                             intensity = np.load(l)
+                            dummy_threshold = intensity.max() // 3
+                            intensity = np.where(intensity > dummy_threshold, 1, 0)
                             intensities += [intensity.flatten()]
                             i +=1
                     counts += [i]
@@ -202,7 +204,7 @@ def main():
                 intensities_pcX = np.array(intensities_pcX)
                 print(intensities_pcX.shape)
                 np.save(f"{project_dir}/shapemode/organelle/{org}_{PC}_intensity", intensities_pcX)
-                pm.protein_intensities = intensities_pcX/intensities_pcX.max(axis=0)
+                pm.protein_intensities = intensities_pcX/intensities_pcX.max()
                 pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
 
         meta = pd.DataFrame(meta)
