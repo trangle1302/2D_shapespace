@@ -448,6 +448,7 @@ def cellcycle():
 
     # Load 
     finished_imlist = []
+    """
     if os.path.exists(f"{log_dir}/images_done.pkl"):
         with open(f"{log_dir}/images_done.pkl", "rb") as f:
             while True:
@@ -455,6 +456,7 @@ def cellcycle():
                     finished_imlist.append(pickle.load(f))
                 except EOFError:
                     break        
+    """
     print(f"{len(finished_imlist)} images done, processing the rest ...")
     num_cores = multiprocessing.cpu_count() - 14 # save 1 core for some other processes
     ifimages = pd.read_csv(f"{base_url}/experimentB-processed.txt", sep="\t")
@@ -465,7 +467,7 @@ def cellcycle():
     #process_img_ccd(abid, mask_dir, save_dir, log_dir)
     #done = pd.read_pickle(f'{log_dir}/images_done.pkl')
     #ablist = list(set(ablist).difference(set(done))))
-    inputs = tqdm(ablist[200:])
+    inputs = tqdm(ablist[200:850])
     import time
     s = time.time()
     processed_list = Parallel(n_jobs=num_cores)(delayed(process_img_ccd)(i, mask_dir, save_dir, log_dir) for i in inputs)
