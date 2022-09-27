@@ -56,32 +56,8 @@ if __name__ == "__main__":
     f = open('cells_assigned_to_pc_bins.json')
     cells_assigned = json.load(f)
 
-    meta = []
-    for org in list(all_locations.keys())[:2]:
-        df_sl_Label = mappings[mappings.target == org]
-        
-        for PC, pc_cells in cells_assigned.items():
+    for PC, pc_cells in cells_assigned.items():
             print("xxxx", len(pc_cells), len(pc_cells[0]))
             shape = (21,n_coef*2)
             intensities_pcX = []
             counts = []
-            for ls in pc_cells:
-                intensities = []
-                i= 0
-                for l in ls:
-                    l = str(sampled_intensity_dir) + "/"+ Path(l).stem + "_protein.npy"
-                    if l in list(df_sl_Label.Link):
-                        intensity = np.load(l)
-                        intensities += [intensity.flatten()]
-                        i +=1
-                counts += [i]
-                if len(intensities) == 0:
-                    print('No cell sample at this bin for Nucleoplasm')
-                    intensities_pcX += [np.zeros(shape)]
-                else:
-                    print(len(intensities))
-                    intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
-            print(counts)
-            meta += [[org]+ counts]
-            pm.protein_intensities = intensities_pcX/np.array(intensities_pcX).max()
-            pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
