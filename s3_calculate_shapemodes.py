@@ -199,8 +199,10 @@ def main():
                         intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
                 print(counts)
                 meta += [[org]+ counts]
-                np.save(f"{project_dir}/shapemode/organelle/{org}_{PC}_intensity", np.array(intensities_pcX))
-                pm.protein_intensities = intensities_pcX/np.array(intensities_pcX).max()
+                intensities_pcX = np.array(intensities_pcX)
+                print(intensities_pcX.shape)
+                np.save(f"{project_dir}/shapemode/organelle/{org}_{PC}_intensity", intensities_pcX)
+                pm.protein_intensities = intensities_pcX/intensities_pcX.max(axis=0)
                 pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
 
         meta = pd.DataFrame(meta)
