@@ -282,7 +282,7 @@ class PlotShapeModes:
         plt.close()
 
 
-    def plot_protein_through_shape_variation_gif(self, pc_name, title='', dark=True, save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
+    def plot_protein_through_shape_variation_gif(self, pc_name, title='', dark=True, point_size=4,save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
         def init():
             """Local function to init space in animated plots"""
             ax.set_xlim(-600, 600)
@@ -371,27 +371,27 @@ class PlotShapeModes:
         (nu,) = plt.plot([], [], "b", lw=2)
         (cell,) = plt.plot([], [], "m", lw=2)
         if True:
-            ipoints0 = plt.scatter([], [], c=[], norm=norm, s=5)
-            ipoints1 = plt.scatter([], [], c=[], norm=norm, s=5)       
-            ipoints2 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints3 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints4 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints5 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints6 = plt.scatter([], [], c=[], norm=norm, s=5)      
-            ipoints7 = plt.scatter([], [], c=[], norm=norm, s=5)
-            ipoints8 = plt.scatter([], [], c=[], norm=norm, s=5)       
-            ipoints9 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints10 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints11 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints12 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints13 = plt.scatter([], [], c=[], norm=norm, s=5)      
-            ipoints14 = plt.scatter([], [], c=[], norm=norm, s=5)
-            ipoints15 = plt.scatter([], [], c=[], norm=norm, s=5)       
-            ipoints16 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints17 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints18 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints19 = plt.scatter([], [], c=[], norm=norm, s=5)            
-            ipoints20 = plt.scatter([], [], c=[], norm=norm, s=5)      
+            ipoints0 = plt.scatter([], [], c=[], norm=norm, s=point_size)
+            ipoints1 = plt.scatter([], [], c=[], norm=norm, s=point_size)       
+            ipoints2 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints3 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints4 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints5 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints6 = plt.scatter([], [], c=[], norm=norm, s=point_size)      
+            ipoints7 = plt.scatter([], [], c=[], norm=norm, s=point_size)
+            ipoints8 = plt.scatter([], [], c=[], norm=norm, s=point_size)       
+            ipoints9 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints10 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints11 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints12 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints13 = plt.scatter([], [], c=[], norm=norm, s=point_size)      
+            ipoints14 = plt.scatter([], [], c=[], norm=norm, s=point_size)
+            ipoints15 = plt.scatter([], [], c=[], norm=norm, s=point_size)       
+            ipoints16 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints17 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints18 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints19 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+            ipoints20 = plt.scatter([], [], c=[], norm=norm, s=point_size)      
             
         ani = FuncAnimation(
             fig,
