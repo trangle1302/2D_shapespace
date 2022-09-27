@@ -173,7 +173,7 @@ def main():
         if not os.path.isdir(f"{project_dir}/shapemode/organelle"):
             os.makedirs(f"{project_dir}/shapemode/organelle")
         meta = []
-        for org in list(all_locations.keys())[:2]:
+        for org in list(all_locations.keys())[:-1]:
             df_sl_Label = mappings[mappings.target == org]
             
             for PC, pc_cells in cells_assigned.items():
