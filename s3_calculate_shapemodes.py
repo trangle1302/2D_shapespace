@@ -177,7 +177,7 @@ def main():
             df_sl_Label = mappings[mappings.target == org]
             
             for PC, pc_cells in cells_assigned.items():
-                print("xxxx", len(pc_cells), len(pc_cells[0]))
+                print(org, PC, len(pc_cells), len(pc_cells[0]))
                 shape = (21, n_coef*2)
                 intensities_pcX = []
                 counts = []
@@ -192,13 +192,14 @@ def main():
                             i +=1
                     counts += [i]
                     if len(intensities) == 0:
-                        print('No cell sample at this bin for Nucleoplasm')
+                        print(f'No cell sample at this bin for {org}')
                         intensities_pcX += [np.zeros(shape)]
                     else:
                         print(len(intensities))
                         intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
                 print(counts)
                 meta += [[org]+ counts]
+                np.save(f"{project_dir}/shapemode/organelle/{org}_{PC}_intensity", np.array(intensities_pcX))
                 pm.protein_intensities = intensities_pcX/np.array(intensities_pcX).max()
                 pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
 
