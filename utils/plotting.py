@@ -131,6 +131,8 @@ class PlotShapeModes:
         plt.axis("scaled")
         plt.savefig(f"{save_dir}/Avg_cell.jpg")
         plt.close()
+        
+        np.savez(f"{save_dir}/Avg_cell.npz", ix_n=ix_n, iy_n=iy_n, ix_c=ix_c, iy_c=iy_c)
 
     def get_equipoints(self):
         points = dict()
