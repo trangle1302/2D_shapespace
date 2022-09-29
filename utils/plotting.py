@@ -314,6 +314,8 @@ class PlotShapeModes:
                 n_isos = [10,10], 
                 plot=False)
             
+            np.savez(f"{save_dir}/{title}_{pc_name}.npz", x=x_, y=y_)
+            
             ipoints0.set_offsets(np.c_[x_[0],y_[0]])
             ipoints0.set_array(self.protein_intensities[i][0])
             ipoints1.set_offsets(np.c_[x_[1],y_[1]])
