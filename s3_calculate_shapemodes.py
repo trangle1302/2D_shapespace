@@ -109,6 +109,11 @@ def main():
                     #data_dict = {data_dict[0]:data_dict[1:]}
                     lines[data_[0]]=data_[1:]
 
+        cell_nu_ratio = pd.read_csv(f"{project_dir}/cell_nu_ratio.txt")
+        cell_nu_ratio.columns = ["path","name","ratio"]
+        rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 10].name.to_list()
+        print(f"Cells to remove: {len(rm_cells)}") # 6264 cells for ratio 10, and 16410 for ratio 8
+        lines = {k:lines[k] for k in lines.keys() if os.path.basename(k).split(".")[0] not in rm_cells}
         df = pd.DataFrame(lines).transpose()
         print(df.shape)
         df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
