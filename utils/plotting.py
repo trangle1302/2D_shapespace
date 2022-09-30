@@ -123,6 +123,7 @@ class PlotShapeModes:
         else:
             plt.style.use('default')
         
+	np.savez(f"{save_dir}/Avg_cell.npz", ix_n=ix_n.real, iy_n=iy_n.real, ix_c=ix_c.real, iy_c=iy_c.real)
         ix_n, iy_n = equidistance(ix_n.real, iy_n.real, self.n * 10)
         ix_c, iy_c = equidistance(ix_c.real, iy_c.real, self.n * 10)
         plt.title("Avg cell")
@@ -132,8 +133,6 @@ class PlotShapeModes:
         plt.savefig(f"{save_dir}/Avg_cell.jpg")
         plt.close()
         
-        np.savez(f"{save_dir}/Avg_cell.npz", ix_n=ix_n, iy_n=iy_n, ix_c=ix_c, iy_c=iy_c)
-
     def get_equipoints(self):
         points = dict()
         for c in self.pc_keep:
