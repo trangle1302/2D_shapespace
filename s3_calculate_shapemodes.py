@@ -69,14 +69,14 @@ def main():
     n_samples = -1 #10000
     n_cv = 1#0
     cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
-    project_dir = "/scratch/users/tle1302" #"/data/2Dshapespace"
+    project_dir = "/scratch/users/tle1302/2Dshapespace" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
     #fft_dir = f"{project_dir}/{cell_line.replace(' ','_')}/fftcoefs"
-    log_dir = "/scratch/users/tle1302/2Dshapespace/logs"
-    fft_dir = "/scratch/users/tle1302/2Dshapespace/fftcoefs"
+    log_dir = f"{project_dir}/logs"
+    fft_dir = f"{project_dir}/fftcoefs"
     fft_path = os.path.join(fft_dir,f"fftcoefs_{n_coef}.txt")
     
-    sampled_intensity_dir = Path("/scratch/users/tle1302/2Dshapespace/sampled_intensity") #Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
+    sampled_intensity_dir = Path(f"{project_dir}/sampled_intensity") #Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
     
     mappings = pd.read_csv("/scratch/users/tle1302/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
     #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
