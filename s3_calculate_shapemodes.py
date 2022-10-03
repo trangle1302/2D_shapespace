@@ -111,7 +111,7 @@ def main():
 
         cell_nu_ratio = pd.read_csv(f"{project_dir}/cell_nu_ratio.txt")
         cell_nu_ratio.columns = ["path","name","ratio"]
-        rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 10].name.to_list()
+        rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].name.to_list()
         print(f"Cells to remove: {len(rm_cells)}") # 6264 cells for ratio 10, and 16410 for ratio 8
         lines = {k:lines[k] for k in lines.keys() if os.path.basename(k).split(".")[0] not in rm_cells}
         df = pd.DataFrame(lines).transpose()
@@ -127,7 +127,7 @@ def main():
                 df_ = pd.concat(
                     [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)], axis=1
                 )
-                pca = IncrementalPCA(whiten=True) #PCA()
+                pca = PCA()#IncrementalPCA(whiten=True) #PCA()
                 pca.fit(df_)
                 plotting.display_scree_plot(pca, save_dir=shape_mode_path)
             else:
