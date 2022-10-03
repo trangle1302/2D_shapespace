@@ -122,8 +122,8 @@ class PlotShapeModes:
             plt.rcParams['axes.facecolor'] ='#191919'
         else:
             plt.style.use('default')
-        
-	np.savez(f"{save_dir}/Avg_cell.npz", ix_n=ix_n.real, iy_n=iy_n.real, ix_c=ix_c.real, iy_c=iy_c.real)
+        np.savez(f"{save_dir}/Avg_cell.npz", ix_n=ix_n.real, iy_n=iy_n.real, ix_c=ix_c.real, iy_c=iy_c.real)
+
         ix_n, iy_n = equidistance(ix_n.real, iy_n.real, self.n * 10)
         ix_c, iy_c = equidistance(ix_c.real, iy_c.real, self.n * 10)
         plt.title("Avg cell")
@@ -149,8 +149,8 @@ class PlotShapeModes:
             midpoint = self.midpoints[c].copy()
             std_ = self.std[c].copy()
             p_std = []
-            #for k in np.arange(-1.5, 1.5, 1):
-            for k in np.arange(-1.5, 1.5, 0.3):
+            #for k in np.round(np.arange(-1.5, 1.5, 0.3),1):
+            for k in np.linspace(-1.5,1.5,11):
                 p_std += [midpoint + k * std_]
             points[c] = p_std
         self.stdpoints = points
