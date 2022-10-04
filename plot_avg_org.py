@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from utils import parameterize
 from skimage.morphology import dilation, square, erosion
 from imageio import imsave, imread
+import pandas as pd
 
 LABEL_TO_ALIAS = {
   0: 'Nucleoplasm',
@@ -182,31 +183,55 @@ def investigate_pc():
     None.
 
     """
+    shape_var_dir = "C:/Users/trang.le/Desktop/shapemode/U-2_OS/0"
     organelle_dir = "C:/Users/trang.le/Desktop/shapemode/organelle"
     save_dir = "C:/Users/trang.le/Desktop/shapemode/avg_cell"
     
-
+    # Plot all PCs for each organelle
     for org in all_locations.keys():
         fig,ax = plt.subplots(nrows=2, ncols=6)
         for i in range(1,13):
             intensities = np.load(f"{organelle_dir}/{org}_PC{i}_intensity.npy")  
-            coords = np.load(f"{organelle_dir}/{org}_PC{i}.npz")
+            #coords = np.load(f"{organelle_dir}/{org}_PC{i}.npz")
 
-            ax[i //6 -1, i % 6].imshow(intensities.mean(axis=2).T)
+            ax[(i-1) //6, (i-1) % 6].imshow(intensities.mean(axis=2).T)
             #plt.xticks(["nu_centroid","","","","","","","","","","nucleus","","","","","","","","","cell"])
             #X = np.zeros((21,10))
-            ax[i //6 -1, i % 6].set_title(f"PC{i}")
+            ax[(i-1) //6, (i-1) % 6].set_title(f"PC{i}")
+        fig.suptitle(org)
+        plt.tight_layout()
+        
+    
+    # Plot all organelles for each PC
+    for i in range(1,13):
+        fig,ax = plt.subplots(nrows=3, ncols=6, figsize=(25,20))
+        for org, k in all_locations.items():
+            intensities = np.load(f"{organelle_dir}/{org}_PC{i}_intensity.npy")  
+            #coords = np.load(f"{organelle_dir}/{org}_PC{i}.npz")
+
+            ax[k //6, k % 6].imshow(intensities.mean(axis=2).T)
+            #plt.xticks(["nu_centroid","","","","","","","","","","nucleus","","","","","","","","","cell"])
+            #X = np.zeros((21,10))
+            ax[k //6, k % 6].set_title(f"{org}", fontsize=30)
+        fig.suptitle(f"PC{i}")
         plt.axis("off")
         plt.tight_layout()
-        plt.title(org)
-        
+        breakme
+        """
+        plt.tight_layout()
             fig, ax = plt.subplots(10,1)
             for sp, intensity in enumerate(intensities):
                 ax[sp].imshow(intensity)          
             plt.axis("off")
             plt.tight_layout()
 
+        
+        img = plt.imread(f"{save_dir}/{org}.png")
+        """
+    n_cells_per_pc = pd.read_csv(f"{organelle_dir}/cells_per_bin.csv")
+    cell_nu_ratio = pd.read_csv(f"{shape_var_dir.rsplit('/',1)[0]}/cell_nu_ratio.txt", header=None)
+    cell_nu_ratio.columns=["path","name","ratio"]
+    plt.hist(cell_nu_ratio, bins=30)
     
-    img = plt.imread(f"{save_dir}/{org}.png")
 if __name__ == '__main__':
     main()
