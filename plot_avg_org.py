@@ -174,7 +174,7 @@ def sample_covar_matrix(mat1, mat2):
     """
     return corr
 
-def investigate_pc():
+def investigate_organell_pc_var():
     """
     Sam
 
@@ -200,7 +200,7 @@ def investigate_pc():
             ax[(i-1) //6, (i-1) % 6].set_title(f"PC{i}")
         fig.suptitle(org)
         plt.tight_layout()
-        
+        plt.savefig(f"{save_dir}/allPC_{org}.png")
     
     # Plot all organelles for each PC
     for i in range(1,13):
@@ -216,7 +216,7 @@ def investigate_pc():
         fig.suptitle(f"PC{i}")
         plt.axis("off")
         plt.tight_layout()
-        breakme
+        plt.savefig(f"{save_dir}/allorg_PC{i}.png")
         """
         plt.tight_layout()
             fig, ax = plt.subplots(10,1)
@@ -228,10 +228,12 @@ def investigate_pc():
         
         img = plt.imread(f"{save_dir}/{org}.png")
         """
+def cell_nu_ratio_cutoff():
     n_cells_per_pc = pd.read_csv(f"{organelle_dir}/cells_per_bin.csv")
     cell_nu_ratio = pd.read_csv(f"{shape_var_dir.rsplit('/',1)[0]}/cell_nu_ratio.txt", header=None)
     cell_nu_ratio.columns=["path","name","ratio"]
     plt.hist(cell_nu_ratio, bins=30)
+    
     
 if __name__ == '__main__':
     main()
