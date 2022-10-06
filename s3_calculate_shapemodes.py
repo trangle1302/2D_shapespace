@@ -69,7 +69,7 @@ def main():
     n_samples = -1 #10000
     n_cv = 1#0
     cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
-    project_dir = "/scratch/users/tle1302/2Dshapespace" #"/data/2Dshapespace"
+    project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
     #fft_dir = f"{project_dir}/{cell_line.replace(' ','_')}/fftcoefs"
     log_dir = f"{project_dir}/logs"
@@ -77,15 +77,6 @@ def main():
     fft_path = os.path.join(fft_dir,f"fftcoefs_{n_coef}.txt")
     
     sampled_intensity_dir = Path(f"{project_dir}/sampled_intensity") #Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
-    
-    mappings = pd.read_csv("/scratch/users/tle1302/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
-    #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
-    #print(mappings.target.value_counts())
-    print(mappings.columns)
-    id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
-    mappings["Link"] =[f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
-    mappings = mappings[mappings.Link.isin(id_with_intensity)]
-    print(mappings.target.value_counts())
 
     with open(fft_path) as f:
         count = sum(1 for _ in f)
@@ -117,7 +108,7 @@ def main():
         df = pd.DataFrame(lines).transpose()
         print(df.shape)
         df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
-        shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/{i}"
+        shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/ratio8"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
         
@@ -174,7 +165,16 @@ def main():
         
         with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
             json.dump(cells_assigned, fp)
-            
+        
+        mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+        #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+        #print(mappings.target.value_counts())
+        print(mappings.columns)
+        id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
+        mappings["Link"] =[f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
+        mappings = mappings[mappings.Link.isin(id_with_intensity)]
+        print(mappings.target.value_counts())
+
         if not os.path.isdir(f"{project_dir}/shapemode/organelle"):
             os.makedirs(f"{project_dir}/shapemode/organelle")
         meta = []
@@ -213,7 +213,7 @@ def main():
                 pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
 
         meta = pd.DataFrame(meta)
-        meta.columns = ["org"] +["".join(("n_bin",str(i))) for i in range(10)]
+        meta.columns = ["org"] +["".join(("n_bin",str(i))) for i in range(11)]
         print(meta)
         meta.to_csv(f"{project_dir}/shapemode/organelle/cells_per_bin.csv", index=False)
 
