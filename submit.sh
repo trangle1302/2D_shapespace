@@ -2,7 +2,7 @@
 #
 #SBATCH --job-name=pca
 #
-#SBATCH --time=4:00:00
+#SBATCH --time=5:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
 #SBATCH --mem-per-cpu=30G
