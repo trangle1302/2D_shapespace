@@ -86,7 +86,7 @@ def main():
     mappings["Link"] =[f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
     mappings = mappings[mappings.Link.isin(id_with_intensity)]
     print(mappings.target.value_counts())
-    
+
     with open(fft_path) as f:
         count = sum(1 for _ in f)
     
@@ -112,8 +112,12 @@ def main():
         cell_nu_ratio = pd.read_csv(f"{project_dir}/cell_nu_ratio.txt")
         cell_nu_ratio.columns = ["path","name","ratio"]
         rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].name.to_list()
-        print(f"Cells to remove: {len(rm_cells)}") # 6264 cells for ratio 10, and 16410 for ratio 8
+        print(f"Large cell-nu ratio cells to remove: {len(rm_cells)}") # 6264 cells for ratio 10, and 16410 for ratio 8
         lines = {k:lines[k] for k in lines.keys() if os.path.basename(k).split(".")[0] not in rm_cells}
+        print(len(lines))
+        keep_cells = [cell_id.split("_",1)[1] for cell_id in mappings.id]
+        print(f"Removing border cells leftover") 
+        lines = {k:lines[k] for k in lines.keys() if os.path.basename(k).split(".")[0] in keep_cells}
         df = pd.DataFrame(lines).transpose()
         print(df.shape)
         df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
