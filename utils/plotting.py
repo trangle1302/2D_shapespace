@@ -607,7 +607,7 @@ def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func):
     for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
         ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
         cell__ += [np.concatenate([ix__, iy__])]
-    x_,y_ = parameterize.get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [10,10], plot=False)
+    x_,y_ = parameterize.get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [10,20], plot=False)
 
     #Get intensity
     x = np.array(x_) + shift_dict["shift_c"][0]
