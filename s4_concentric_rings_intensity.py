@@ -55,7 +55,6 @@ if __name__ == "__main__":
     fourier_df = read_complex_df(fft_dir=fft_path, n_coef=128, n_cv=10, n_samples = 1000)
     """
     n_coef = 128
-    n_samples = 300000
     n_cv = 10
     cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
     project_dir = "/data/2Dshapespace"
@@ -90,13 +89,7 @@ if __name__ == "__main__":
                     break
                 else:
                     pass 
-            """
-            l_shift = f_shift.readline()
-            data_shifts = l_shift.strip().split(',')
-            while sc_path != data_shifts[0]:
-                l_shift = f_shift.readline()
-                data_shifts = l_shift.strip().split(',')
-            """
+
             if sc_path != data_shifts[0]:
                 continue
             assert sc_path == data_shifts[0]
