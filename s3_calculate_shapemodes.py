@@ -77,7 +77,16 @@ def main():
     fft_path = os.path.join(fft_dir,f"fftcoefs_{n_coef}.txt")
     
     sampled_intensity_dir = Path(f"{project_dir}/sampled_intensity") #Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
-
+    mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    mappings = mappings[mappings['atlas_name']=='U-2 OS']
+    #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    #print(mappings.target.value_counts())
+    print(mappings.columns)
+    id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
+    mappings["Link"] =[f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
+    mappings = mappings[mappings.Link.isin(id_with_intensity)]
+    print(mappings.target.value_counts())
+    
     with open(fft_path) as f:
         count = sum(1 for _ in f)
     
@@ -166,14 +175,6 @@ def main():
         with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
             json.dump(cells_assigned, fp)
         
-        mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-        #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-        #print(mappings.target.value_counts())
-        print(mappings.columns)
-        id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
-        mappings["Link"] =[f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
-        mappings = mappings[mappings.Link.isin(id_with_intensity)]
-        print(mappings.target.value_counts())
 
         if not os.path.isdir(f"{project_dir}/shapemode/organelle"):
             os.makedirs(f"{project_dir}/shapemode/organelle")
