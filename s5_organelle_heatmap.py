@@ -46,24 +46,14 @@ if __name__ == "__main__":
 
 	#mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
 	mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-	#print(mappings.target.value_counts())
 	print(mappings.columns)
 	id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
-	mappings["Link"] =[f"/data/2Dshapespace/U-2_OS/sampled_intensity/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
+	mappings["Link"] =[f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
 	mappings = mappings[mappings.Link.isin(id_with_intensity)]
 	print(mappings.target.value_counts())
 
 	f = open('cells_assigned_to_pc_bins.json')
 	cells_assigned = json.load(f)
-
-	for PC, pc_cells in cells_assigned.items():
-	print("xxxx", len(pc_cells), len(pc_cells[0]))
-	shape = (21,n_coef*2)
-	intensities_pcX = []
-	counts = []
-	for org in all_locations.items()[:-1]:
-		intensities = np.load()
-
 
 	if not os.path.isdir(f"{project_dir}/shapemode/organelle"):
 		os.makedirs(f"{project_dir}/shapemode/organelle")
