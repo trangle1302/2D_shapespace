@@ -1,8 +1,9 @@
 import os
+os.chdir("C:/Users/trang.le/Desktop/2D_shape_space")
 import numpy as np
 from PIL import Image, ImageSequence
 from matplotlib import pyplot as plt
-from utils import parameterize
+from utils import parameterize, plotting, helpers, dimreduction, coefs, alignment
 from skimage.morphology import dilation, square, erosion
 from imageio import imsave, imread
 import pandas as pd
@@ -232,8 +233,55 @@ def cell_nu_ratio_cutoff():
     n_cells_per_pc = pd.read_csv(f"{organelle_dir}/cells_per_bin.csv")
     cell_nu_ratio = pd.read_csv(f"{shape_var_dir.rsplit('/',1)[0]}/cell_nu_ratio.txt", header=None)
     cell_nu_ratio.columns=["path","name","ratio"]
-    plt.hist(cell_nu_ratio, bins=30)
-    
-    
+    plt.hist(cell_nu_ratio.ratio, bins=30, range=[0,25])
+    n_coef = 128 
+    inverse_func = coefs.inverse_fft 
+    # Different sample rate
+    d = "C:/Users/trang.le/Desktop/cellprows_mnt"
+    ids = ["410_E3_4_11","410_E3_4_12","410_E3_4_13","1377_F1_3_12"]
+    for im_id in ids:
+        #protein_path = imread(f"{d}/{im_id}_protein.png")
+        protein_path = f"{d}/{im_id}_protein.png"
+        cellshape_path = f"{d}/{im_id}.npy"
+        alignment.get_coefs_im(cellshape_path, save_dir, log_dir, n_coef=32, func=None, plot=False)
+        nuclei_coords = 
+        cell_coords = 
+        fcoef_n, e_n = coefs.fourier_coeffs(nuclei_coords, n=n_coef)
+        fcoef_c, e_c = coefs.fourier_coeffs(cell_coords, n=n_coef)
+        
+        shifts = find_line(txt_path, specific_text)
+        intensity = plotting.get_protein_intensity(
+            pro_path = protein_path, 
+            shift_dict = shifts[l],
+            ori_fft = ori_fft, 
+            n_coef = n_coef, 
+            inverse_func = inverse_func
+            )
+        
+def find_line(txt_path, specific_text):
+    """
+    Find line containing specific text in a large txt file
+
+    Parameters
+    ----------
+    txt_path : str
+        path to txt file.
+    specific_text : str
+        text to find.
+
+    Returns
+    -------
+    l : str
+        first line containing specific_text.
+    index : int
+        index of this line in the file
+    """
+    with open(txt_path, "r") as f:
+        lines = fp.readlines()
+        for l in lines:
+            if l.find(specific_text) != -1 :
+                return l, lines.index(l)
+            
+
 if __name__ == '__main__':
     main()
