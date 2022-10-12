@@ -160,6 +160,21 @@ def morph_representation_on_shape():
 
 
 def make_kernel(center, k=3):
+    """
+    Generate kernel of size kxk around center in cartesian coord
+
+    Parameters
+    ----------
+    center : int
+        center point of the kernel.
+    k : odd integer
+        kernel size. The default is 3.
+
+    Returns
+    -------
+    kernel : np.array of size (k,k)
+    
+    """
     assert k % 2 !=0 #assert k is odd
     step = k//2
     kernel = []
