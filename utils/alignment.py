@@ -12,6 +12,28 @@ import pickle
 import os
 
 def align_cell_nuclei_centroids(data, protein_ch, plot=False):
+    """
+    Alignment of cells based on cell-nucleus centroid vector
+
+    Parameters
+    ----------
+    data : npy array of size (2,x,y)
+        numpy array of cell and nuclei masks.
+    protein_ch : array of size (x,y)
+        protein channels.
+    plot : bool, optional
+        Whether to plot the original and aligned masks. The default is False.
+
+    Returns
+    -------
+    nuclei : 2D array 
+        aligned nuclei.
+    cell : 2D array 
+        aligned cell.
+    theta : float
+        ° angle to rotate.
+
+    """
     nuclei = data[1, :, :]
     cell = data[0, :, :]
 
