@@ -179,7 +179,7 @@ def main():
         with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
             json.dump(cells_assigned, fp)
         
-
+        """
         if not os.path.isdir(f"{project_dir}/shapemode/organelle"):
             os.makedirs(f"{project_dir}/shapemode/organelle")
         meta = []
@@ -221,7 +221,8 @@ def main():
         meta.columns = ["org"] +["".join(("n_bin",str(i))) for i in range(11)]
         print(meta)
         meta.to_csv(f"{project_dir}/shapemode/organelle/cells_per_bin.csv", index=False)
-
+        """
+        
 if __name__ == "__main__": 
     memory_limit() # Limitates maximun memory usage
     try:
