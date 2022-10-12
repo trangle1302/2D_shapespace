@@ -220,7 +220,10 @@ class PlotShapeModes:
 
             # ix_n, iy_n = self.inverse_fun(fcoef[0:self.n], fcoef[2*self.n:3*self.n])
             # ix_c, iy_c = self.inverse_fun(fcoef[self.n:2*self.n], fcoef[3*self.n:])
-
+            
+            np.savez(f"{save_dir}/shapevar_{pc_name}.npz", 
+                nuc=np.concatenate([ix_n.real, iy_n.real]), 
+                mem=np.concatenate([ix_c.real, iy_c.real]))
             # ax[i].title(f'Cell at {}std')
             ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
             ax[i].plot(ix_c.real, iy_c.real, "m")
@@ -616,3 +619,153 @@ def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func):
     m_normed = m#/m.max()
     return m_normed
     
+
+def _plot_protein_through_shape_variation_gif(pc_name, nu_ix_iy, cell_ix_iy, protein_intensities, title='', dark=True, point_size=4,save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
+    def init():
+        """Local function to init space in animated plots"""
+        ax.set_xlim(-600, 600)
+        ax.set_ylim(-650, 600)
+
+    def update(p):
+        n_coef = len(nu_ix_iy)//2
+        ix_n = nu_ix_iy[:n_coef]
+        iy_n = nu_ix_iy[n_coef:]
+        ix_c = cell_ix_iy[:n_coef]
+        iy_c = cell_ix_iy[n_coef:]
+        nu.set_data(ix_n, iy_n)
+        cell.set_data(ix_c, iy_c)
+
+        x_,y_ = parameterize.get_coordinates(
+            np.concatenate([ix_n.real, iy_n.real]), 
+            np.concatenate([ix_c.real, iy_c.real]), 
+            [0,0], 
+            n_isos = [10,10], 
+            plot=False)
+        
+        np.savez(f"{save_dir}/{title}_{pc_name}.npz", x=x_, y=y_)
+        ### i = np.where(self.stdpoints[pc_name] == p)[0][0]
+        ipoints0.set_offsets(np.c_[x_[0],y_[0]])
+        ipoints0.set_array(protein_intensities[i][0])
+        ipoints1.set_offsets(np.c_[x_[1],y_[1]])
+        ipoints1.set_array(protein_intensities[i][1])
+        ipoints2.set_offsets(np.c_[x_[2],y_[2]])
+        ipoints2.set_array(protein_intensities[i][2])
+        ipoints3.set_offsets(np.c_[x_[3],y_[3]])
+        ipoints3.set_array(protein_intensities[i][3])
+        ipoints4.set_offsets(np.c_[x_[4],y_[4]])
+        ipoints4.set_array(protein_intensities[i][4])
+        ipoints5.set_offsets(np.c_[x_[5],y_[5]])
+        ipoints5.set_array(protein_intensities[i][5])
+        ipoints6.set_offsets(np.c_[x_[6],y_[6]])
+        ipoints6.set_array(protein_intensities[i][6])
+        ipoints7.set_offsets(np.c_[x_[7],y_[7]])
+        ipoints7.set_array(protein_intensities[i][7])
+        ipoints8.set_offsets(np.c_[x_[8],y_[8]])
+        ipoints8.set_array(protein_intensities[i][8])
+        ipoints9.set_offsets(np.c_[x_[9],y_[9]])
+        ipoints9.set_array(protein_intensities[i][9])
+        ipoints10.set_offsets(np.c_[x_[10],y_[10]])
+        ipoints10.set_array(protein_intensities[i][10])
+        ipoints10_2.set_offsets(np.c_[(x_[10]+x_[11])/2, (y_[10]+y_[11])/2])
+        ipoints10_2.set_array((protein_intensities[i][10]+protein_intensities[i][11])/2)
+        ipoints11.set_offsets(np.c_[x_[11],y_[11]])
+        ipoints11.set_array(protein_intensities[i][11])
+        ipoints11_2.set_offsets(np.c_[(x_[11]+x_[12])/2, (y_[11]+y_[12])/2])
+        ipoints11_2.set_array((protein_intensities[i][11]+protein_intensities[i][12])/2)
+        ipoints12.set_offsets(np.c_[x_[12],y_[12]])
+        ipoints12.set_array(protein_intensities[i][12])
+        ipoints12_2.set_offsets(np.c_[(x_[12]+x_[13])/2, (y_[12]+y_[13])/2])
+        ipoints12_2.set_array((protein_intensities[i][12]+protein_intensities[i][13])/2)
+        ipoints13.set_offsets(np.c_[x_[13],y_[13]])
+        ipoints13.set_array(protein_intensities[i][13])            
+        ipoints13_2.set_offsets(np.c_[(x_[13]+x_[14])/2, (y_[13]+y_[14])/2])
+        ipoints13_2.set_array((protein_intensities[i][13]+protein_intensities[i][14])/2)
+        ipoints14.set_offsets(np.c_[x_[14],y_[14]])
+        ipoints14.set_array(protein_intensities[i][14])
+        ipoints14_2.set_offsets(np.c_[(x_[14]+x_[15])/2, (y_[14]+y_[15])/2])
+        ipoints14_2.set_array((protein_intensities[i][14]+protein_intensities[i][15])/2)
+        ipoints15.set_offsets(np.c_[x_[15],y_[15]])
+        ipoints15.set_array(self.protein_intensities[i][15])
+        ipoints15_2.set_offsets(np.c_[(x_[15]+x_[16])/2, (y_[15]+y_[16])/2])
+        ipoints15_2.set_array((protein_intensities[i][15]+protein_intensities[i][16])/2)
+        ipoints16.set_offsets(np.c_[x_[16],y_[16]])
+        ipoints16.set_array(protein_intensities[i][16])
+        ipoints16_2.set_offsets(np.c_[(x_[16]+x_[17])/2, (y_[16]+y_[17])/2])
+        ipoints16_2.set_array((protein_intensities[i][16]+protein_intensities[i][17])/2)
+        ipoints17.set_offsets(np.c_[x_[17],y_[17]])
+        ipoints17.set_array(protein_intensities[i][17])
+        ipoints17_2.set_offsets(np.c_[(x_[17]+x_[18])/2, (y_[17]+y_[18])/2])
+        ipoints17_2.set_array((protein_intensities[i][17]+protein_intensities[i][18])/2)
+        ipoints18.set_offsets(np.c_[x_[18],y_[18]])
+        ipoints18.set_array(protein_intensities[i][18])
+        ipoints18_2.set_offsets(np.c_[(x_[18]+x_[19])/2, (y_[18]+y_[19])/2])
+        ipoints18_2.set_array((protein_intensities[i][18]+protein_intensities[i][19])/2)
+        ipoints19.set_offsets(np.c_[x_[19],y_[19]])
+        ipoints19.set_array(protein_intensities[i][19])
+        ipoints19_2.set_offsets(np.c_[(x_[19]+x_[20])/2, (y_[19]+y_[20])/2])
+        ipoints19_2.set_array((protein_intensities[i][19]+protein_intensities[i][20])/2)
+        ipoints20.set_offsets(np.c_[x_[20],y_[20]])
+        ipoints20.set_array(protein_intensities[i][20])
+    
+    
+    if dark:
+        plt.style.use('dark_background')
+        plt.rcParams['savefig.facecolor'] = '#191919'
+        plt.rcParams['figure.facecolor'] ='#191919'
+        plt.rcParams['axes.facecolor'] = '#191919'
+    else:
+        plt.style.use('default')
+    norm = plt.Normalize(vmin=0, vmax=1)
+    fig, ax = plt.subplots()
+    fig.suptitle(pc_name)
+    (nu,) = plt.plot([], [], "b", lw=2, alpha=0.3)
+    (cell,) = plt.plot([], [], "m", lw=2, alpha=0.3)
+    if True:
+        ipoints0 = plt.scatter([], [], c=[], norm=norm, s=point_size)
+        ipoints1 = plt.scatter([], [], c=[], norm=norm, s=point_size)       
+        ipoints2 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+        ipoints3 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+        ipoints4 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+        ipoints5 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+        ipoints6 = plt.scatter([], [], c=[], norm=norm, s=point_size)      
+        ipoints7 = plt.scatter([], [], c=[], norm=norm, s=point_size)
+        ipoints8 = plt.scatter([], [], c=[], norm=norm, s=point_size)       
+        ipoints9 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+        ipoints10 = plt.scatter([], [], c=[], norm=norm, s=point_size)           
+        ipoints10_2 = plt.scatter([], [], c=[], norm=norm, s=point_size)
+        ipoints11 = plt.scatter([], [], c=[], norm=norm, s=point_size)         
+        ipoints11_2 = plt.scatter([], [], c=[], norm=norm, s=point_size)             
+        ipoints12 = plt.scatter([], [], c=[], norm=norm, s=point_size)        
+        ipoints12_2 = plt.scatter([], [], c=[], norm=norm, s=point_size)              
+        ipoints13 = plt.scatter([], [], c=[], norm=norm, s=point_size)        
+        ipoints13_2 = plt.scatter([], [], c=[], norm=norm, s=point_size)        
+        ipoints14 = plt.scatter([], [], c=[], norm=norm, s=point_size)        
+        ipoints14_2 = plt.scatter([], [], c=[], norm=norm, s=point_size)  
+        ipoints15 = plt.scatter([], [], c=[], norm=norm, s=point_size)        
+        ipoints15_2 = plt.scatter([], [], c=[], norm=norm, s=point_size)         
+        ipoints16 = plt.scatter([], [], c=[], norm=norm, s=point_size)          
+        ipoints16_2 = plt.scatter([], [], c=[], norm=norm, s=point_size)            
+        ipoints17 = plt.scatter([], [], c=[], norm=norm, s=point_size)         
+        ipoints17_2 = plt.scatter([], [], c=[], norm=norm, s=point_size)             
+        ipoints18 = plt.scatter([], [], c=[], norm=norm, s=point_size)           
+        ipoints18_2 = plt.scatter([], [], c=[], norm=norm, s=point_size)           
+        ipoints19 = plt.scatter([], [], c=[], norm=norm, s=point_size)         
+        ipoints19_2 = plt.scatter([], [], c=[], norm=norm, s=point_size)             
+        ipoints20 = plt.scatter([], [], c=[], norm=norm, s=point_size)      
+    
+    n_bins = protein_intensities.shape[0]
+    steps = list(range(n_bins))
+    ani = FuncAnimation(
+        fig,
+        update,
+        steps + steps[::-1],
+        init_func=init,
+    )
+    ax.axis("scaled")
+    ax.set_facecolor('#541352FF')
+    writer = PillowWriter(fps=3)
+    ani.save(
+        f"{save_dir}/{title}_{pc_name}.gif",
+        writer=writer,
+    )
+    plt.close()
