@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import argparse
-from utils import plotting
+from utils import plotting, parameterize
 import glob
 import matplotlib.pyplot as plt
 from utils.parameterize import get_coordinates
@@ -41,6 +41,7 @@ if __name__ == "__main__":
     log_dir = f"{project_dir}/logs"
     fftcoefs_dir = f"{project_dir}/fftcoefs"
     fft_path = os.path.join(fftcoefs_dir,f"fftcoefs_{n_coef}.txt")
+    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/ratio8"
 
     sampled_intensity_dir = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
 
@@ -89,9 +90,11 @@ if __name__ == "__main__":
                 intensities_pcX = np.array(intensities_pcX)
                 print(intensities_pcX.shape)
                 np.save(f"{project_dir}/shapemode/organelle/{org}_{PC}_intensity", intensities_pcX)
-                pm.protein_intensities = intensities_pcX/intensities_pcX.max()
-                pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
-
+                #pm.protein_intensities = intensities_pcX/intensities_pcX.max()
+                #pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
+                data = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
+                #x_,y_ = parameterize.get_coordinates(data["nuc"], data["mem"], [0,0], n_isos = [10,10], plot=False)
+                plotting._plot_protein_through_shape_variation_gif(PC, data["nuc"], data["mem"], intensities_pcX/intensities_pcX.max(), title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
         meta = pd.DataFrame(meta)
         meta.columns = ["org"] +["".join(("n_bin",str(i))) for i in range(11)]
         print(meta)
