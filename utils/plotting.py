@@ -626,26 +626,10 @@ def _plot_protein_through_shape_variation_gif(pc_name, x_, y_, protein_intensiti
         ax.set_xlim(-600, 600)
         ax.set_ylim(-650, 600)
 
-    def update(p):
-        """
-        n_coef = len(nu_ix_iy)//2
-        ix_n = nu_ix_iy[:n_coef]
-        iy_n = nu_ix_iy[n_coef:]
-        ix_c = cell_ix_iy[:n_coef]
-        iy_c = cell_ix_iy[n_coef:]
-        nu.set_data(ix_n, iy_n)
-        cell.set_data(ix_c, iy_c)
+    def update(i):
+        nu.set_data(x_[10],y_[10])
+        cell.set_data(x_[-1],y_[-1])
 
-        x_,y_ = parameterize.get_coordinates(
-            np.concatenate([ix_n.real, iy_n.real]), 
-            np.concatenate([ix_c.real, iy_c.real]), 
-            [0,0], 
-            n_isos = [10,10], 
-            plot=False)
-        
-        np.savez(f"{save_dir}/{title}_{pc_name}.npz", x=x_, y=y_)
-        """
-        ### i = np.where(self.stdpoints[pc_name] == p)[0][0]
         ipoints0.set_offsets(np.c_[x_[0],y_[0]])
         ipoints0.set_array(protein_intensities[i][0])
         ipoints1.set_offsets(np.c_[x_[1],y_[1]])
