@@ -201,6 +201,8 @@ class PlotShapeModes:
         else:
             plt.style.use('default')
         fig, ax = plt.subplots(1, len(self.stdpoints[pc_name]), figsize=(15, 4),sharex=True, sharey=True)
+        nuc = []
+        mem = []
         for i, p in enumerate(self.stdpoints[pc_name]):
             # for i, p in enumerate(self.equipoints[pc_name]):
             # for i, p in enumerate(self.lmpoints[pc_name]):
@@ -220,17 +222,18 @@ class PlotShapeModes:
 
             # ix_n, iy_n = self.inverse_fun(fcoef[0:self.n], fcoef[2*self.n:3*self.n])
             # ix_c, iy_c = self.inverse_fun(fcoef[self.n:2*self.n], fcoef[3*self.n:])
-            
-            np.savez(f"{save_dir}/shapevar_{pc_name}.npz", 
-                nuc=np.concatenate([ix_n.real, iy_n.real]), 
-                mem=np.concatenate([ix_c.real, iy_c.real]))
-            # ax[i].title(f'Cell at {}std')
+            nuc += [np.concatenate([ix_n.real, iy_n.real])]
+            mem += [np.concatenate([ix_c.real, iy_c.real])]
             ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
             ax[i].plot(ix_c.real, iy_c.real, "m")
             ax[i].axis("scaled")
         plt.savefig(f"{save_dir}/shapevar_{pc_name}.png")
         plt.show()
         plt.close()
+        
+        np.savez(f"{save_dir}/shapevar_{pc_name}.npz", 
+            nuc=np.array(nuc), 
+            mem=np.array(mem))
         
     def plot_shape_variation_gif(self, pc_name, dark=True, save_dir=""):
         def init():
@@ -620,16 +623,16 @@ def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func):
     return m_normed
     
 
-def _plot_protein_through_shape_variation_gif(pc_name, x_, y_, protein_intensities, title='', dark=True, point_size=4,save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
+def _plot_protein_through_shape_variation_gif(pc_name, nu_coords, mem_coords, protein_intensities, title='', dark=True, point_size=4,save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
     def init():
         """Local function to init space in animated plots"""
         ax.set_xlim(-600, 600)
         ax.set_ylim(-650, 600)
 
     def update(i):
+        x_,y_ = parameterize.get_coordinates(nu_coords[i], mem_coords[i], [0,0], n_isos = [10,10], plot=False)
         nu.set_data(x_[10],y_[10])
         cell.set_data(x_[-1],y_[-1])
-
         ipoints0.set_offsets(np.c_[x_[0],y_[0]])
         ipoints0.set_array(protein_intensities[i][0])
         ipoints1.set_offsets(np.c_[x_[1],y_[1]])
