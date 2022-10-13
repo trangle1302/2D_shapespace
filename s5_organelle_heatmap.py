@@ -35,6 +35,12 @@ LABEL_TO_ALIAS = {
 all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--org", help="Organelle class",
+                    type=str)
+    args = parser.parse_args()
+    print(args.org)
+
     n_coef = 128
     cell_line = "U-2 OS"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
@@ -46,8 +52,8 @@ if __name__ == "__main__":
     sampled_intensity_dir = f"{project_dir}/sampled_intensity"
 
     #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
-    #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-    mappings = pd.read_csv("/scratch/users/tle1302/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
+    mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    #mappings = pd.read_csv("/scratch/users/tle1302/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
     print(mappings.columns)
     id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
     mappings["Link"] =[f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
@@ -57,11 +63,12 @@ if __name__ == "__main__":
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json")
     cells_assigned = json.load(f)
     print(cells_assigned.keys())
-    save_dir = f"{project_dir}/shapemode/organelle"
+    save_dir = f"{project_dir}/shapemode/organelle2"
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
     meta = []
-    for org in list(all_locations.keys())[:-1]:
+    org = args.org
+    if True: #for org in list(all_locations.keys())[:-1]:
         df_sl_Label = mappings[mappings.target == org]
         
         for PC, pc_cells in cells_assigned.items():
@@ -95,10 +102,11 @@ if __name__ == "__main__":
             #pm.protein_intensities = intensities_pcX/intensities_pcX.max()
             #pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
             data = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
-            x_,y_ = parameterize.get_coordinates(data["nuc"], data["mem"], [0,0], n_isos = [10,10], plot=False)
-            print(f"saving to {save_dir}")
-            plotting._plot_protein_through_shape_variation_gif(PC, x_, y_, intensities_pcX/intensities_pcX.max(), title=org, dark=True, save_dir=save_dir)
+            print(data["nuc"].shape, data["mem"].shape)
+            #x_,y_ = parameterize.get_coordinates(data["nuc"], data["mem"], [0,0], n_isos = [10,10], plot=False)
+            #print(f"saving to {save_dir}")
+            plotting._plot_protein_through_shape_variation_gif(PC, data["nuc"], data["mem"], intensities_pcX/intensities_pcX.max(), title=org, dark=True, save_dir=save_dir)
     meta = pd.DataFrame(meta)
     meta.columns = ["org"] +["".join(("n_bin",str(i))) for i in range(11)]
     print(meta)
-    meta.to_csv(f"{project_dir}/shapemode/organelle/cells_per_bin.csv", index=False)
+    meta.to_csv(f"{project_dir}/shapemode/organelle/{org}cells_per_bin.csv", index=False)
