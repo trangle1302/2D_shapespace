@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-#SBATCH --job-name=pca
+#SBATCH --job-name=organelle
 #
 #SBATCH --time=5:00:00
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=2
-#SBATCH --mem-per-cpu=30G
+#SBATCH --ntasks=3
+#SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=20G
 
 module load python/3.6.1
 module load py-pandas/1.0.3_py36
@@ -16,4 +16,6 @@ module load py-scikit-image/0.17.2_py36
 pip install tqdm
 pip install more-itertools
 # python3 s3_calculate_shapemodes.py
-python3 s5_organelle_heatmap.py
+srun -n 1 python3 s5_organelle_heatmap.py --org ActinF
+srun -n 1 python3 s5_organelle_heatmap.py --org Aggresome
+srun -n 1 python3 s5_organelle_heatmap.py --org IntermediateF
