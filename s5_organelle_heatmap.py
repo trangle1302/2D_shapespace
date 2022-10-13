@@ -43,7 +43,7 @@ if __name__ == "__main__":
     fft_path = os.path.join(fftcoefs_dir,f"fftcoefs_{n_coef}.txt")
     shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/ratio8"
 
-    sampled_intensity_dir = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
+    sampled_intensity_dir = f"{project_dir}/sampled_intensity"
 
     #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
     #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
@@ -54,8 +54,9 @@ if __name__ == "__main__":
     mappings = mappings[mappings.Link.isin(id_with_intensity)]
     print(mappings.target.value_counts())
 
-    f = open('cells_assigned_to_pc_bins.json')
+    f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json")
     cells_assigned = json.load(f)
+    print(cells_assigned.keys())
     save_dir = f"{project_dir}/shapemode/organelle"
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
