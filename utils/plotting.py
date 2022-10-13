@@ -671,7 +671,7 @@ def _plot_protein_through_shape_variation_gif(pc_name, x_, y_, protein_intensiti
         ipoints14_2.set_offsets(np.c_[(x_[14]+x_[15])/2, (y_[14]+y_[15])/2])
         ipoints14_2.set_array((protein_intensities[i][14]+protein_intensities[i][15])/2)
         ipoints15.set_offsets(np.c_[x_[15],y_[15]])
-        ipoints15.set_array(self.protein_intensities[i][15])
+        ipoints15.set_array(protein_intensities[i][15])
         ipoints15_2.set_offsets(np.c_[(x_[15]+x_[16])/2, (y_[15]+y_[16])/2])
         ipoints15_2.set_array((protein_intensities[i][15]+protein_intensities[i][16])/2)
         ipoints16.set_offsets(np.c_[x_[16],y_[16]])
