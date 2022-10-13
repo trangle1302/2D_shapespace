@@ -46,7 +46,8 @@ if __name__ == "__main__":
     sampled_intensity_dir = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
 
     #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
-    mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    mappings = pd.read_csv("/scratch/users/tle1302/publicHPA_umap/results/webapp/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
     print(mappings.columns)
     id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
     mappings["Link"] =[f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
@@ -55,9 +56,9 @@ if __name__ == "__main__":
 
     f = open('cells_assigned_to_pc_bins.json')
     cells_assigned = json.load(f)
-
-    if not os.path.isdir(f"{project_dir}/shapemode/organelle"):
-        os.makedirs(f"{project_dir}/shapemode/organelle")
+    save_dir = f"{project_dir}/shapemode/organelle"
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
         meta = []
         for org in list(all_locations.keys())[:-1]:
             df_sl_Label = mappings[mappings.target == org]
@@ -89,12 +90,13 @@ if __name__ == "__main__":
                 meta += [[org]+ counts]
                 intensities_pcX = np.array(intensities_pcX)
                 print(intensities_pcX.shape)
-                np.save(f"{project_dir}/shapemode/organelle/{org}_{PC}_intensity", intensities_pcX)
+                np.save(f"{save_dir}/{org}_{PC}_intensity", intensities_pcX)
                 #pm.protein_intensities = intensities_pcX/intensities_pcX.max()
                 #pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
                 data = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
-                #x_,y_ = parameterize.get_coordinates(data["nuc"], data["mem"], [0,0], n_isos = [10,10], plot=False)
-                plotting._plot_protein_through_shape_variation_gif(PC, data["nuc"], data["mem"], intensities_pcX/intensities_pcX.max(), title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
+                x_,y_ = parameterize.get_coordinates(data["nuc"], data["mem"], [0,0], n_isos = [10,10], plot=False)
+                print(f"saving to {save_dir}")
+                plotting._plot_protein_through_shape_variation_gif(PC, x_, y_, intensities_pcX/intensities_pcX.max(), title=org, dark=True, save_dir=save_dir)
         meta = pd.DataFrame(meta)
         meta.columns = ["org"] +["".join(("n_bin",str(i))) for i in range(11)]
         print(meta)
