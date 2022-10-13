@@ -620,13 +620,14 @@ def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func):
     return m_normed
     
 
-def _plot_protein_through_shape_variation_gif(pc_name, nu_ix_iy, cell_ix_iy, protein_intensities, title='', dark=True, point_size=4,save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
+def _plot_protein_through_shape_variation_gif(pc_name, x_, y_, protein_intensities, title='', dark=True, point_size=4,save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
     def init():
         """Local function to init space in animated plots"""
         ax.set_xlim(-600, 600)
         ax.set_ylim(-650, 600)
 
     def update(p):
+        """
         n_coef = len(nu_ix_iy)//2
         ix_n = nu_ix_iy[:n_coef]
         iy_n = nu_ix_iy[n_coef:]
@@ -643,6 +644,7 @@ def _plot_protein_through_shape_variation_gif(pc_name, nu_ix_iy, cell_ix_iy, pro
             plot=False)
         
         np.savez(f"{save_dir}/{title}_{pc_name}.npz", x=x_, y=y_)
+        """
         ### i = np.where(self.stdpoints[pc_name] == p)[0][0]
         ipoints0.set_offsets(np.c_[x_[0],y_[0]])
         ipoints0.set_array(protein_intensities[i][0])
