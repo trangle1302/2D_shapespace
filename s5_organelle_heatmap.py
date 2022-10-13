@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
     #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-    mappings = pd.read_csv("/scratch/users/tle1302/publicHPA_umap/results/webapp/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
+    mappings = pd.read_csv("/scratch/users/tle1302/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
     print(mappings.columns)
     id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
     mappings["Link"] =[f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
