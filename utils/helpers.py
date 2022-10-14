@@ -515,3 +515,14 @@ def rgb_2_gray_unique(image, channel_last=True):
     #print(f"before: {len(unique_px)} unique px, after: {len(np.unique(gray))} unique values")
     #print(gray.shape, gray.dtype)
     return gray
+
+def flatten_list(list_of_lists):
+    """ 
+    Function to flatten list of lists, element can be 1 item of a list of items
+
+    Args:
+        list_of_lists: list of lists
+    Returns: list containing all sub-items
+    """
+    l = [item for sublist in list_of_lists for item in sublist]
+    return l
