@@ -108,4 +108,4 @@ if __name__ == "__main__":
     meta = pd.DataFrame(meta)
     meta.columns = ["org"] +["".join(("n_bin",str(i))) for i in range(11)]
     print(meta)
-    meta.to_csv(f"{psave_dir}/{org}cells_per_bin.csv", index=False)
+    meta.to_csv(f"{save_dir}/{org}cells_per_bin.csv", index=False)
