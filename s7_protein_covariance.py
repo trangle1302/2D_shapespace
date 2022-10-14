@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import argparse
-from utils import helper
+from utils import helpers
 import glob
 import matplotlib.pyplot as plt
 from utils.parameterize import get_coordinates
@@ -12,10 +12,10 @@ import json
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--org", help="Organelle class",
+    parser.add_argument("--PC", help="shape mode",
                     type=str)
     args = parser.parse_args()
-    print(args.org)
+    print(args.PC)
 
     n_coef = 128
     cell_line = "U-2 OS"
@@ -41,34 +41,41 @@ if __name__ == "__main__":
         os.makedirs(save_dir)
     meta = []
     merged_bins = [[0,1,2,3],[4,5,6],[7,8,9,10]]
-    for PC, pc_cells in cells_assigned.items():
-        print(org, PC, len(pc_cells), len(pc_cells[0]))
+    PC = args.PC
+    pc_cells = cells_assigned[f"PC{PC}"]
+    if True: #for PC, pc_cells in cells_assigned.items():
         shape = (21, n_coef*2)
         intensities_pcX = []
         counts = []
-        for bin_ in merged_bins:
+        for i, bin_ in enumerate(merged_bins):
             intensities = []
+            ensembl_ids = []
             ls = [pc_cells[b] for b in bin_]
-            ls = helper.flatten_list(ls)
-            df_sl_Label = mappings[mappings.Link.isin(ls)]
-        for ls in pc_cells:
-            intensities = []
-            i= 0
-            
-            for l in ls:
-                intensity = np.load(l)
+            ls = helpers.flatten_list(ls)
+            ls = [f"{sampled_intensity_dir}/{os.path.basename(l)}".replace(".npy","_protein.npy") for l in ls]
+            print(ls[:3])
+            print(mappings.Link)
+            df_sl = mappings[mappings.Link.isin(ls)]
+            print(f"PC{PC}: Number of cells {df_sl.shape[0]}, Number of gene: {df_sl.ensembl_ids.nunique()}")
+            for _, row in df_sl.iterrows():
+                intensity = np.load(row.Link)
                 dummy_threshold = intensity.max() // 3
                 intensity = np.where(intensity > dummy_threshold, 1, 0)
                 intensities += [intensity.flatten()]
-                i +=1
-            counts += [i]
-            if len(intensities) == 0:
-                print(f'No cell sample at this bin for {org}')
-                intensities_pcX += [np.zeros(shape)]
-            else:
-                print(len(intensities))
-                intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
-        print(counts) 
-    np.cov(intensities)  
-    np.corrcoef(xarr, yarr, rowvar=False) #row-wise correlation
-    np.corrcoef(xarr, yarr, rowvar=False) #column-wise correlation
+                ensembl_ids += [row.ensembl_ids]
+            intensities = pd.DataFrame(intensities)
+            intensities["ensembl_ids"] = ensembl_ids
+            intensities = intensities.groupby('ensembl_ids').agg("mean")
+            intensities.to_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
+            """
+            #intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
+            covar_mat = np.corrcoef(np.array(intensities.drop(["ensembl_ids"], axis=1)))
+            covar_mat = pd.DataFrame(covar_mat)
+            covar_mat.column = ensembl_ids
+            covar_mat.index = ensembl_ids
+            covar_mat.to_csv(f"{save_dir}/{}.csv")
+            """
+            covar_mat = intensities.corr()
+            covar_mat.to_csv(f"{save_dir}/PC{PC}_{i}.csv")
+    #np.corrcoef(xarr, yarr, rowvar=False) #row-wise correlation
+    #np.corrcoef(xarr, yarr, rowvar=False) #column-wise correlation
