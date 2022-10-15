@@ -8,7 +8,8 @@ import glob
 import matplotlib.pyplot as plt
 from utils.parameterize import get_coordinates
 import json
-
+import scipy.cluster.hierarchy as spc
+import seaborn as sns
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -48,34 +49,53 @@ if __name__ == "__main__":
         intensities_pcX = []
         counts = []
         for i, bin_ in enumerate(merged_bins):
-            intensities = []
-            ensembl_ids = []
-            ls = [pc_cells[b] for b in bin_]
-            ls = helpers.flatten_list(ls)
-            ls = [f"{sampled_intensity_dir}/{os.path.basename(l)}".replace(".npy","_protein.npy") for l in ls]
-            print(ls[:3])
-            print(mappings.Link)
-            df_sl = mappings[mappings.Link.isin(ls)]
-            print(f"PC{PC}: Number of cells {df_sl.shape[0]}, Number of gene: {df_sl.ensembl_ids.nunique()}")
-            for _, row in df_sl.iterrows():
-                intensity = np.load(row.Link)
-                dummy_threshold = intensity.max() // 3
-                intensity = np.where(intensity > dummy_threshold, 1, 0)
-                intensities += [intensity.flatten()]
-                ensembl_ids += [row.ensembl_ids]
-            intensities = pd.DataFrame(intensities)
-            intensities["ensembl_ids"] = ensembl_ids
-            intensities = intensities.groupby('ensembl_ids').agg("mean")
-            intensities.to_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
-            """
-            #intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
-            covar_mat = np.corrcoef(np.array(intensities.drop(["ensembl_ids"], axis=1)))
-            covar_mat = pd.DataFrame(covar_mat)
-            covar_mat.column = ensembl_ids
-            covar_mat.index = ensembl_ids
-            covar_mat.to_csv(f"{save_dir}/{}.csv")
-            """
-            covar_mat = intensities.corr()
+            if os.path.exists(f"{save_dir}/PC{PC}_{i}_intensities.csv"):
+                intensities = pd.read_csv()
+            else:
+                intensities = []
+                ensembl_ids = []
+                ls = [pc_cells[b] for b in bin_]
+                ls = helpers.flatten_list(ls)
+                ls = [f"{sampled_intensity_dir}/{os.path.basename(l)}".replace(".npy","_protein.npy") for l in ls]
+                print(ls[:3])
+                print(mappings.Link)
+                df_sl = mappings[mappings.Link.isin(ls)]
+                print(f"PC{PC}: Number of cells {df_sl.shape[0]}, Number of gene: {df_sl.ensembl_ids.nunique()}")
+                for _, row in df_sl.iterrows():
+                    intensity = np.load(row.Link)
+                    dummy_threshold = intensity.max() // 3
+                    intensity = np.where(intensity > dummy_threshold, 1, 0)
+                    intensities += [intensity.flatten()]
+                    ensembl_ids += [row.ensembl_ids]
+                intensities = pd.DataFrame(intensities)
+                intensities["ensembl_ids"] = ensembl_ids
+                intensities = intensities.groupby('ensembl_ids').agg("mean")
+                intensities.to_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
+                """
+                #intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
+                covar_mat = np.corrcoef(np.array(intensities.drop(["ensembl_ids"], axis=1)))
+                covar_mat = pd.DataFrame(covar_mat)
+                covar_mat.column = ensembl_ids
+                covar_mat.index = ensembl_ids
+                covar_mat.to_csv(f"{save_dir}/{}.csv")
+                """
+            iintensities.index = intensities.ensembl_ids
+            iintensities = intensities.drop("ensembl_ids",axis=1)
+            covar_mat = intensities.transpose().corr()
             covar_mat.to_csv(f"{save_dir}/PC{PC}_{i}.csv")
+
+            corr = covar_mat.values
+            pdist = spc.distance.pdist(corr)
+            linkage = spc.linkage(pdist, method='complete')
+            idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
+            cluster_assignation = {"assignation": idx,
+                                    "ensembl_ids": covar_mat.columns.to_list()}
+            with open(f"{save_dir}/PC{PC}_{i}_cluster_assignation.json", "w") as fp:
+                json.dump(cluster_assignation, fp)
+            
+            # Plot
+            p = sns.clustermap(covar_mat, method="complete", cmap='RdBu', annot=True, 
+               annot_kws={"size": 3}, vmin=-1, vmax=1, figsize=(20,20))
+            p.figure.savefig(f"{save_dir}/PC{PC}_{i}.png"))
     #np.corrcoef(xarr, yarr, rowvar=False) #row-wise correlation
     #np.corrcoef(xarr, yarr, rowvar=False) #column-wise correlation
