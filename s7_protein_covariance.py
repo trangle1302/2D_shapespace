@@ -50,7 +50,7 @@ if __name__ == "__main__":
         counts = []
         for i, bin_ in enumerate(merged_bins):
             if os.path.exists(f"{save_dir}/PC{PC}_{i}_intensities.csv"):
-                intensities = pd.read_csv()
+                intensities = pd.read_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
             else:
                 intensities = []
                 ensembl_ids = []
@@ -79,8 +79,8 @@ if __name__ == "__main__":
                 covar_mat.index = ensembl_ids
                 covar_mat.to_csv(f"{save_dir}/{}.csv")
                 """
-            iintensities.index = intensities.ensembl_ids
-            iintensities = intensities.drop("ensembl_ids",axis=1)
+            intensities.index = intensities.ensembl_ids
+            intensities = intensities.drop("ensembl_ids",axis=1)
             covar_mat = intensities.transpose().corr()
             covar_mat.to_csv(f"{save_dir}/PC{PC}_{i}.csv")
 
@@ -96,6 +96,6 @@ if __name__ == "__main__":
             # Plot
             p = sns.clustermap(covar_mat, method="complete", cmap='RdBu', annot=True, 
                annot_kws={"size": 3}, vmin=-1, vmax=1, figsize=(20,20))
-            p.figure.savefig(f"{save_dir}/PC{PC}_{i}.png"))
+            p.figure.savefig(f"{save_dir}/PC{PC}_{i}.png")
     #np.corrcoef(xarr, yarr, rowvar=False) #row-wise correlation
     #np.corrcoef(xarr, yarr, rowvar=False) #column-wise correlation
