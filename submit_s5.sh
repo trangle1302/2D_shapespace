@@ -15,14 +15,14 @@ module load viz
 module load py-scikit-image/0.17.2_py36
 pip install tqdm
 pip install more-itertools
-srun -N 1 python3 s5_organelle_heatmap.py --org Nucleoplasm
-srun -N 1 python3 s5_organelle_heatmap.py --org NuclearM
-srun -N 1 python3 s5_organelle_heatmap.py --org Nucleoli
-srun -N 1 python3 s5_organelle_heatmap.py --org NucleoliFC
-srun -N 1 python3 s5_organelle_heatmap.py --org NuclearS
-srun -N 1 python3 s5_organelle_heatmap.py --org NuclearB
-srun -N 1 python3 s5_organelle_heatmap.py --org Microtubules
-srun -N 1 python3 s5_organelle_heatmap.py --org MitoticS
-srun -N 1 python3 s5_organelle_heatmap.py --org Centrosome
-srun -N 1 python3 s5_organelle_heatmap.py --org PlasmaM
-srun -N 1 python3 s5_organelle_heatmap.py --org Cytosol
+srun -n 1 python3 s5_organelle_heatmap.py --org Nucleoplasm
+srun -n 1 python3 s5_organelle_heatmap.py --org NuclearM
+srun -n 1 python3 s5_organelle_heatmap.py --org Nucleoli
+srun -n 1 python3 s5_organelle_heatmap.py --org NucleoliFC
+srun -n 1 python3 s5_organelle_heatmap.py --org NuclearS
+srun -n 1 python3 s5_organelle_heatmap.py --org NuclearB
+srun -n 1 python3 s5_organelle_heatmap.py --org Microtubules
+srun -n 1 python3 s5_organelle_heatmap.py --org MitoticS
+srun -n 1 python3 s5_organelle_heatmap.py --org Centrosome
+srun -n 1 python3 s5_organelle_heatmap.py --org PlasmaM
+srun -n 1 python3 s5_organelle_heatmap.py --org Cytosol
