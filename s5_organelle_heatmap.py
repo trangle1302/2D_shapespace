@@ -71,7 +71,7 @@ if __name__ == "__main__":
     df_sl_Label = mappings[mappings.target == org]
     
     for PC, pc_cells in cells_assigned.items():
-        if os.path.exist(f"{save_dir}/{org}_{PC}_intensity.npz"):
+        if os.path.exists(f"{save_dir}/{org}_{PC}_intensity.npz"):
             continue
         print(org, PC, len(pc_cells), len(pc_cells[0]))
         shape = (21, n_coef*2)
@@ -103,7 +103,7 @@ if __name__ == "__main__":
         #pm.protein_intensities = intensities_pcX/intensities_pcX.max()
         #pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
         #data = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
-        print(data["nuc"].shape, data["mem"].shape)
+        #print(data["nuc"].shape, data["mem"].shape)
         #x_,y_ = parameterize.get_coordinates(data["nuc"], data["mem"], [0,0], n_isos = [10,10], plot=False)
         #print(f"saving to {save_dir}")
         #plotting._plot_protein_through_shape_variation_gif(PC, data["nuc"], data["mem"], intensities_pcX/intensities_pcX.max(), title=org, dark=True, save_dir=save_dir)
