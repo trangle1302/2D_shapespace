@@ -81,18 +81,27 @@ if __name__ == "__main__":
                 """
             intensities.index = intensities.ensembl_ids
             intensities = intensities.drop("ensembl_ids",axis=1)
-            covar_mat = intensities.transpose().corr()
+            intensities = intensities.transpose().astype("float32")
+            intensities.to_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
+            covar_mat = intensities.corr()
+            covar_mat = covar_mat.astype("float32") 
             covar_mat.to_csv(f"{save_dir}/PC{PC}_{i}.csv")
-
-            """
+            
             corr = covar_mat.values
             pdist = spc.distance.pdist(corr)
+            if pdist.dtype == "float64":
+                pdist = pdist.astype("float32")
             linkage = spc.linkage(pdist, method='complete')
-            idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
-            cluster_assignation = {"assignation": list(idx),
-                                    "ensembl_ids": covar_mat.columns.to_list()}
+            idx = spc.fcluster(linkage, 0.3 * pdist.max(), 'distance')
+            cluster_assignation = {"assignation": [int(i) for i in idx],
+                                    "ensembl_ids": covar_mat.columns.tolist()}
             with open(f"{save_dir}/PC{PC}_{i}_cluster_assignation.json", "w") as fp:
-                json.dumps(cluster_assignation, fp)
+                json.dump(cluster_assignation, fp)
+            
+            for ii in np.unique(idx):
+                p = sns.heatmap(covar_mat.iloc[np.where(idx==ii)[0],np.where(idx==ii)[0]], 
+                            cmap='RdBu', vmin=-1, vmax=1)
+                p.savefig(f"{save_dir}/PC{PC}_bin{i}_cluster{ii}.png")
             """
             # Plot
             p = sns.clustermap(covar_mat, method="complete", cmap='RdBu', annot=True, 
@@ -106,6 +115,7 @@ if __name__ == "__main__":
             dendogram["clusters"] = clusters.tolist()  #" ".join([str(elem) for elem in clusters]) 
             dendogram["clusters_reordered"] = list(clusters.astype('int')[p.dendrogram_col.reordered_ind])
             with open(f"{save_dir}/PC{PC}_{i}_cluster_assignation.json", "w", encoding='utf-8') as fp:
-                json.dump(dendogram, fp, cls=helpers.npEncoder)
+                json.dump(dendogram, fp, cls=npEncoder)
+            """
     #np.corrcoef(xarr, yarr, rowvar=False) #row-wise correlation
     #np.corrcoef(xarr, yarr, rowvar=False) #column-wise correlation
