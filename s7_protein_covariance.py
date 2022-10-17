@@ -84,18 +84,28 @@ if __name__ == "__main__":
             covar_mat = intensities.transpose().corr()
             covar_mat.to_csv(f"{save_dir}/PC{PC}_{i}.csv")
 
+            """
             corr = covar_mat.values
             pdist = spc.distance.pdist(corr)
             linkage = spc.linkage(pdist, method='complete')
             idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
-            cluster_assignation = {"assignation": idx,
+            cluster_assignation = {"assignation": list(idx),
                                     "ensembl_ids": covar_mat.columns.to_list()}
             with open(f"{save_dir}/PC{PC}_{i}_cluster_assignation.json", "w") as fp:
-                json.dump(cluster_assignation, fp)
-            
+                json.dumps(cluster_assignation, fp)
+            """
             # Plot
             p = sns.clustermap(covar_mat, method="complete", cmap='RdBu', annot=True, 
                annot_kws={"size": 3}, vmin=-1, vmax=1, figsize=(20,20))
-            p.figure.savefig(f"{save_dir}/PC{PC}_{i}.png")
+            p.savefig(f"{save_dir}/PC{PC}_{i}.png")
+            # covar matrix is symmetric, so getting row dendogram is the same as col dendogram
+            dendogram = p.dendrogram_row.dendrogram
+            Z = p.dendrogram_col.linkage
+            max_d = 0.3 * np.max(spc.distance.pdist(p.dendrogram_col.array))
+            clusters = spc.fcluster(Z, max_d, criterion='distance') # original order!
+            dendogram["clusters"] = clusters.tolist()  #" ".join([str(elem) for elem in clusters]) 
+            dendogram["clusters_reordered"] = list(clusters.astype('int')[p.dendrogram_col.reordered_ind])
+            with open(f"{save_dir}/PC{PC}_{i}_cluster_assignation.json", "w", encoding='utf-8') as fp:
+                json.dump(dendogram, fp, cls=helpers.npEncoder)
     #np.corrcoef(xarr, yarr, rowvar=False) #row-wise correlation
     #np.corrcoef(xarr, yarr, rowvar=False) #column-wise correlation
