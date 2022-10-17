@@ -526,3 +526,13 @@ def flatten_list(list_of_lists):
     """
     l = [item for sublist in list_of_lists for item in sublist]
     return l
+
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
