@@ -7,6 +7,8 @@ from utils import parameterize, plotting, helpers, dimreduction, coefs, alignmen
 from skimage.morphology import dilation, square, erosion
 from imageio import imsave, imread
 import pandas as pd
+import scipy.cluster.hierarchy as spc
+import seaborn as sns
 
 LABEL_TO_ALIAS = {
   0: 'Nucleoplasm',
@@ -117,15 +119,15 @@ def coordinates_to_image(x, y, intensity, binarize=False, shift_x = None, shift_
     return img
 
 def main(plot=False):
-    shape_var_dir = "C:/Users/trang.le/Desktop/shapemode/U-2_OS/0"
+    shape_var_dir = "C:/Users/trang.le/Desktop/shapemode/U-2_OS/PCA_ratio8"
     organelle_dir = "C:/Users/trang.le/Desktop/shapemode/organelle"
     save_dir = "C:/Users/trang.le/Desktop/shapemode/avg_cell"
     avg_coords = np.load(f"{shape_var_dir}/Avg_cell.npz")
     print(avg_coords.files)
-    ix_n = [avg_coords["ix_n"][i] for i in range(0,1280,5)]
-    iy_n = [avg_coords["iy_n"][i] for i in range(0,1280,5)]
-    ix_c = [avg_coords["ix_c"][i] for i in range(0,1280,5)]
-    iy_c = [avg_coords["iy_c"][i] for i in range(0,1280,5)]
+    ix_n = avg_coords["ix_n"] #[avg_coords["ix_n"][i] for i in range(0,1280,5)]
+    iy_n = avg_coords["iy_n"] #[avg_coords["iy_n"][i] for i in range(0,1280,5)]
+    ix_c = avg_coords["ix_c"] #[avg_coords["ix_c"][i] for i in range(0,1280,5)]
+    iy_c = avg_coords["iy_c"] #[avg_coords["iy_c"][i] for i in range(0,1280,5)]
     x_,y_ = parameterize.get_coordinates(
                 np.concatenate([ix_n, iy_n]), 
                 np.concatenate([ix_c, iy_c]), 
@@ -133,10 +135,12 @@ def main(plot=False):
                 n_isos = [10,10], 
                 plot=False)
     
+    avg_organelle_intensity = []
     norm = plt.Normalize(vmin=0, vmax=1)
     for org in all_locations.keys():
         intensities = np.load(f"{organelle_dir}/{org}_PC1_intensity.npy")       
         intensities = intensities[4:6].sum(axis=0) #avg 2 slice in the middle
+        avg_organelle_intensity += [[org] + intensities.flatten().tolist()]
         img = coordinates_to_image(np.asarray(x_), np.asarray(y_), intensities)
         imsave(f"{save_dir}/{org}.png",img)
         #img = coordinates_to_image(np.asarray(x_), np.asarray(y_), intensities, binarize=True)
@@ -145,7 +149,15 @@ def main(plot=False):
         plt.axis("off")
         plt.savefig(f"{save_dir}/{org}.jpg", bbox_inches="tight")
         plt.close()
-
+    avg_organelle_intensity = pd.DataFrame(avg_organelle_intensity)
+    avg_organelle_intensity.index = avg_organelle_intensity.iloc[:,0]
+    avg_organelle_intensity.drop([0], axis=1, inplace=True)
+    # No mitotic spindle in the average cells (which makes sense!) so remove the org
+    covar_mat = avg_organelle_intensity.transpose().drop(["MitoticS"],axis=1).corr()
+    sns.heatmap(covar_mat, cmap="RdBu", vmin=-1, vmax=1)
+    sns.clustermap(covar_mat, method="complete", cmap='RdBu', annot=True, 
+               annot_kws={"size": 12}, vmin=-1, vmax=1, figsize=(10,10))
+    
     if plot:
         for org,org_color in COLORS_MAP.items():
             intensities = np.load(f"{organelle_dir}/{org}_PC1_intensity.npy")       
