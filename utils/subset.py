@@ -29,15 +29,15 @@ def find_line(txt_path, specific_text):
             if l.find(specific_text) != -1 :
                 return l, lines.index(l)
 
-def subset_file(fft_path, imlist, n_coef=128):
+def subset_file(fft_path, imlist, check_len = True, n_coef = 128):
     result_lines = dict()
     file = open(fft_path, "r") 
     lines = file.readlines()
     for l in lines:
         data_ = l.strip().split(',')
-        #if len(data_[1:]) != n_coef*4:
-        #    continue
-        print(data_[0])
+        if check_len:
+            if len(data_[1:]) != n_coef*4:
+                continue
         if data_[0] in imlist:
             result_lines[data_[0]]=data_[1:]
     return pd.DataFrame(result_lines)
@@ -67,10 +67,12 @@ def get_subset_masks_coefs(project_dir, n_sample=1000):
             print(img,f"{save_dir}/cell_masks/{os.path.basename(img)}")
             shutil.copy(img,f"{save_dir}/cell_masks/{os.path.basename(img)}")
 
-    #df_fft = subset_file(f"{coefs_dir}/fftcoefs_128.txt", sub_imlist)
-    #df_fft.to_csv(f"{save_dir}/fftcoefs/fftcoefs_128.csv")
+    df_fft = subset_file(f"{coefs_dir}/fftcoefs_128.txt", sub_imlist, check_len = True)
+    df_fft = df_fft.transpose()
+    df_fft.to_csv(f"{save_dir}/fftcoefs/fftcoefs_128.csv")
     print(f"{coefs_dir}/shift_error_meta_fft128.txt")
-    df_meta = subset_file(f"{coefs_dir}/shift_error_meta_fft128.txt", sub_imlist)
+    df_meta = subset_file(f"{coefs_dir}/shift_error_meta_fft128.txt", sub_imlist, check_len = False)
+    df_meta = df_meta.transpose()
     df_meta.to_csv(f"{save_dir}/fftcoefs/shift_error_meta_fft128.csv")
 
 def main():
