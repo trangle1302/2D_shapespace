@@ -77,7 +77,7 @@ if __name__ == "__main__":
             print(mappings.Link)
             gene_list = mappings[mappings.Link.isin(ls)].ensembl_ids.unique()
             print(f"{org}-PC{PC}: Number of cells {len(pc_cells[i])}, Number of gene: {len(gene_list)}")
-            enr = gseapy.enrichr(gene_list=gl, description='pathway', gene_sets=databases,
+            enr = gseapy.enrichr(gene_list=gene_list, description='pathway', gene_sets=databases,
             outdir=f'{save_dir}/{PC}', background='hsapiens_gene_ensembl', cutoff=0.1, format='pdf')
             print(enr.results.head(5))
 
