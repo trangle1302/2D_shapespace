@@ -98,7 +98,9 @@ if __name__ == "__main__":
             linkage = spc.linkage(pdist, method='complete')
             idx = spc.fcluster(linkage, 0.3 * pdist.max(), 'distance')
             cluster_assignation = {"assignation": [int(i) for i in idx],
-                                    "ensembl_ids": covar_mat.columns.tolist()}
+                                    "ensembl_ids": covar_mat.columns.tolist(),
+                                    "max_intensity":intensities.max(axis=0),
+                                    "mean_intensity":intensities.mean(axis=0)}
             with open(f"{save_dir}/PC{PC}_{i}_cluster_assignation.json", "w") as fp:
                 json.dump(cluster_assignation, fp)
             
