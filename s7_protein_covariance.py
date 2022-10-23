@@ -91,7 +91,7 @@ if __name__ == "__main__":
                 covar_mat = covar_mat.astype("float32") 
                 covar_mat.to_csv(f"{save_dir}/PC{PC}_{i}.csv")
             
-            corr = covar_mat.values
+            corr = covar_mat.drop("ensemble_ids", axis=1).values
             pdist = spc.distance.pdist(corr)
             if pdist.dtype == "float64":
                 pdist = pdist.astype("float32")
@@ -99,8 +99,8 @@ if __name__ == "__main__":
             idx = spc.fcluster(linkage, 0.3 * pdist.max(), 'distance')
             cluster_assignation = {"assignation": [int(i) for i in idx],
                                     "ensembl_ids": covar_mat.columns.tolist(),
-                                    "max_intensity":intensities.max(axis=0),
-                                    "mean_intensity":intensities.mean(axis=0)}
+                                    "max_intensity": intensities.max(axis=0),
+                                    "mean_intensity": intensities.mean(axis=0)}
             with open(f"{save_dir}/PC{PC}_{i}_cluster_assignation.json", "w") as fp:
                 json.dump(cluster_assignation, fp)
             
