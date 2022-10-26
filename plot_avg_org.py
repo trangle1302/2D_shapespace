@@ -156,7 +156,7 @@ def main(plot=False):
     covar_mat = avg_organelle_intensity.transpose().drop(["MitoticS"],axis=1).corr()
     sns.heatmap(covar_mat, cmap="RdBu", vmin=-1, vmax=1)
     sns.clustermap(covar_mat, method="complete", cmap='RdBu', annot=True, 
-               annot_kws={"size": 12}, vmin=-1, vmax=1, figsize=(10,10))
+               annot_kws={"size": 12}, vmin=-1, vmax=1, figsize=(15,15))
     
     if plot:
         for org,org_color in COLORS_MAP.items():
@@ -288,7 +288,7 @@ def find_line(txt_path, specific_text):
     index : int
         index of this line in the file
     """
-    with open(txt_path, "r") as f:
+    with open(txt_path, "r") as fp:
         lines = fp.readlines()
         for l in lines:
             if l.find(specific_text) != -1 :
