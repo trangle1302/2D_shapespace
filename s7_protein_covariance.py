@@ -79,29 +79,36 @@ if __name__ == "__main__":
                 covar_mat.index = ensembl_ids
                 covar_mat.to_csv(f"{save_dir}/{}.csv")
                 """
-            intensities.index = intensities.ensembl_ids
-            intensities = intensities.drop("ensembl_ids",axis=1)
-            intensities = intensities.transpose().astype("float32")
-            intensities.to_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
-            covar_mat = intensities.corr()
-            covar_mat = covar_mat.astype("float32") 
-            covar_mat.to_csv(f"{save_dir}/PC{PC}_{i}.csv")
             
-            corr = covar_mat.values
+                intensities.index = intensities.ensembl_ids
+                intensities = intensities.drop("ensembl_ids",axis=1)
+                intensities = intensities.transpose().astype("float32")
+                intensities.to_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
+            if os.path.exists(f"{save_dir}/PC{PC}_{i}.csv"):
+                covar_mat = pd.read_csv(f"{save_dir}/PC{PC}_{i}.csv")
+            else:
+                covar_mat = intensities.corr()
+                covar_mat = covar_mat.astype("float32") 
+                covar_mat.to_csv(f"{save_dir}/PC{PC}_{i}.csv")
+            
+            corr = covar_mat.drop("ensemble_ids", axis=1).values
             pdist = spc.distance.pdist(corr)
             if pdist.dtype == "float64":
                 pdist = pdist.astype("float32")
             linkage = spc.linkage(pdist, method='complete')
             idx = spc.fcluster(linkage, 0.3 * pdist.max(), 'distance')
             cluster_assignation = {"assignation": [int(i) for i in idx],
-                                    "ensembl_ids": covar_mat.columns.tolist()}
+                                    "ensembl_ids": covar_mat.columns.tolist(),
+                                    "max_intensity": intensities.max(axis=0),
+                                    "mean_intensity": intensities.mean(axis=0)}
             with open(f"{save_dir}/PC{PC}_{i}_cluster_assignation.json", "w") as fp:
                 json.dump(cluster_assignation, fp)
             
             for ii in np.unique(idx):
                 p = sns.heatmap(covar_mat.iloc[np.where(idx==ii)[0],np.where(idx==ii)[0]], 
                             cmap='RdBu', vmin=-1, vmax=1)
-                p.savefig(f"{save_dir}/PC{PC}_bin{i}_cluster{ii}.png")
+                p.get_figure().savefig(f"{save_dir}/PC{PC}_bin{i}_cluster{ii}.png")
+                plt.close()
             """
             # Plot
             p = sns.clustermap(covar_mat, method="complete", cmap='RdBu', annot=True, 
