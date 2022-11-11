@@ -190,3 +190,49 @@ def wavelet_coefs(shape, n=64):
     """
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
     return coeffs, error
+
+import pyefd
+def forward_efd(xy, n=64):
+    """
+    Calculate elliptic fourier descriptors for a closed contour (2D)
+
+    Parameters
+    ----------
+    xy : list of tuples
+        coordinates/array of all points in contour, N x 2.
+    n : int, optional
+        order of fourier coeffs to calculate. The default is 64.
+
+    Returns
+    -------
+    coeffs : ndarray of n x 4
+        n x 4 of [a_n, b_n, c_n, d_n].
+    a0, c0 : float
+        A_0, C_0 coefficients.
+
+    """
+    coeffs = pyefd.elliptic_fourier_descriptors(xy, order=n)
+    a0, c0 = pyefd.calculate_dc_coefficients(xy)
+    return coeffs, a0, c0
+
+def backward_efd(coeffs, a0=0, c0=0, n_points=64):
+    """
+    Reconstruct shape based on elliptic fourier descriptors
+
+    Parameters
+    ----------
+    coeffs : ndarray of n x 4
+        elliptical fourier descriptors array.     
+    a0, c0 : float
+        elliptic locus in [#a]_ and [#b]_.
+    n_points : int
+        number of points.
+
+    Returns
+    -------
+    xy_t : [n_points, 2]
+        A list of x,y coordinates for the reconstructed contour.
+
+    """
+    xy_t = pyefd.reconstruct_contour(coeffs, locus=(a0,c0), num_points = n_points)
+    return xy_t
