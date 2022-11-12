@@ -115,10 +115,12 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
             cell = np.zeros((cell_.shape[0]+2, cell_.shape[1]+2))
             cell[1:1+cell_.shape[0],1:1+cell_.shape[1]] = cell_
             
-            nuclei_coords_ = find_contours(nuclei, 0, fully_connected='high') #find_contours(nuclei)
+            nuclei_coords_ = find_contours(nuclei, 0, fully_connected='high') 
             nuclei_coords_ = nuclei_coords_[0] - centroid
 
-            cell_coords_ = find_contours(cell, 0, fully_connected='high') # find_contours(cell)
+            cell_coords_ = find_contours(cell, 0, fully_connected='high') 
+            if len(cell_contour) > 1:
+                cell_contour = np.vstack(cell_contour)
             cell_coords_ = cell_coords_[0] - centroid
 
             if min(cell_coords_[:, 0]) > 0 or min(cell_coords_[:, 1]) > 0:
@@ -170,16 +172,18 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
         centroid = center_of_mass(nuclei_)
         # centroid = center_of_mass(cell)
         
-        # Padd surrounding with 0 so no contour touch the border. This help matching squares algo not failing
+        # Padd surrounding with 0 so no contour touch the border. This help matching squares algo not failing (as much)
         nuclei = np.zeros((nuclei_.shape[0]+2, nuclei_.shape[1]+2))
         nuclei[1:1+nuclei_.shape[0],1:1+nuclei_.shape[1]] = nuclei_
         cell = np.zeros((cell_.shape[0]+2, cell_.shape[1]+2))
         cell[1:1+cell_.shape[0],1:1+cell_.shape[1]] = cell_
         
-        nuclei_coords_ = find_contours(nuclei, 0, fully_connected='high') #find_contours(nuclei)
+        nuclei_coords_ = find_contours(nuclei, 0, fully_connected='high')
         nuclei_coords_ = nuclei_coords_[0] - centroid
 
-        cell_coords_ = find_contours(cell, 0, fully_connected='high') # find_contours(cell)
+        cell_coords_ = find_contours(cell, 0, fully_connected='high')
+        if len(cell_contour) > 1: # concatenate fragmented contour lines, original point could be ambiguous! (attempt to re-align original point in coefs.XXX_fourier_coefs())
+            cell_contour = np.vstack(cell_contour)
         cell_coords_ = cell_coords_[0] - centroid
 
         if min(cell_coords_[:, 0]) > 0 or min(cell_coords_[:, 1]) > 0:
@@ -215,7 +219,7 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
 
         with open(f"{save_dir}/shift_error_meta_fft{n_coef}.txt", "a") as F:
             # Saving: image_name, theta_alignment_rotation, shift_centroid, reconstruct_err_c, reconstruct_err_n
-            F.write(",".join(map(str,[im, theta, centroid, e_c, e_n])) + '\n')
+            F.write(";".join(map(str,[im, theta, centroid, e_c, e_n])) + '\n')
         return im, 1
     except:
         with open(f'{log_dir}/images_fft_failed.pkl', 'wb') as error_list:
