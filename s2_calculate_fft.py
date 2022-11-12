@@ -38,37 +38,22 @@ LABEL_NAMES = {
 
 all_locations = dict((v, k) for k,v in LABEL_NAMES.items())
 #%% Coefficients
-fun = "fft"
+fun = "efd"
 if fun == "fft":
-    get_coef_fun = coefs.fourier_coeffs  # coefs.wavelet_coefs  #
-    inverse_func = coefs.inverse_fft  # coefs.inverse_wavelet
+    get_coef_fun = coefs.fourier_coeffs 
+    inverse_func = coefs.inverse_fft 
 elif fun == "wavelet":
     get_coef_fun = coefs.wavelet_coefs
     inverse_func = coefs.inverse_wavelet
+elif fun == "efd":
+    get_coef_fun = coefs.elliptical_fourier_coeffs
+    inverse_func = coefs.backward_efd
 
 def calculate_fft_hpa():
     cell_line = "U-2 OS"
     save_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/cell_masks"
     d = Path(save_dir)
-    save_path = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/fftcoefs")
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-    log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
-
-    imlist= glob.glob(f"{save_dir}/*.npy")
-    
-    num_cores = multiprocessing.cpu_count() - 4 # save 4 core for some other processes
-    inputs = tqdm(imlist)
-    print(f"Processing {len(imlist)} in {num_cores} cores")
-    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun) for i in inputs)
-    with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
-        pickle.dump(processed_list, success_list)
-
-def calculate_fft_hpa():
-    cell_line = "U-2 OS"
-    save_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/cell_masks"
-    d = Path(save_dir)
-    save_path = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/fftcoefs")
+    save_path = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/fftcoefs/{fun}")
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
