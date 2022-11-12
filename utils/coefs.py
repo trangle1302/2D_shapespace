@@ -2,7 +2,7 @@ import numpy as np
 import pywt
 from utils.helpers import equidistance, find_nearest, find_centroid
 import matplotlib.pyplot as plt
-
+import pyefd
 
 def forward_fft(x, y, n=64, hamming=False, repeat=False):
     """Fuction to convert coordinates to fft coefs
@@ -191,7 +191,6 @@ def wavelet_coefs(shape, n=64):
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
     return coeffs, error
 
-import pyefd
 def forward_efd(xy, n=64):
     """
     Calculate elliptic fourier descriptors for a closed contour (2D)
@@ -215,7 +214,7 @@ def forward_efd(xy, n=64):
     a0, c0 = pyefd.calculate_dc_coefficients(xy)
     return coeffs, a0, c0
 
-def backward_efd(coeffs, a0=0, c0=0, n_points=64):
+def backward_efd(a0_c0_coeffs, n_points=64):
     """
     Reconstruct shape based on elliptic fourier descriptors
 
@@ -234,6 +233,9 @@ def backward_efd(coeffs, a0=0, c0=0, n_points=64):
         A list of x,y coordinates for the reconstructed contour.
 
     """
+    coeffs = a0_c0_coeffs[:2]
+    a0 = a0_c0_coeffs[0]
+    c0 = a0_c0_coeffs[1]
     xy_t = pyefd.reconstruct_contour(coeffs, locus=(a0,c0), num_points = n_points)
     return xy_t
 
