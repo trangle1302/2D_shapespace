@@ -236,3 +236,26 @@ def backward_efd(coeffs, a0=0, c0=0, n_points=64):
     """
     xy_t = pyefd.reconstruct_contour(coeffs, locus=(a0,c0), num_points = n_points)
     return xy_t
+
+def elliptical_fourier_coeffs(shape_coords, n=64, plot=False):
+    coords = shape_coords
+    # elliptical fourier descriptors are rotation invariant, so no need to align start point of contour
+
+    e_coefs, a0, c0 = forward_efd(coords, n=n)  # returns [n x 4], a0, c0
+    coeffs = [a0] + [c0] + [e_coefs]
+
+    i_coords = backward_efd(coeffs[2:].reshape((n,4)), a0=coeffs[0], c0=coeffs[1], n_points=len(shape_coords))
+    if plot:
+        fig, ax = plt.subplots(1, 3, figsize=(6, 3))
+        ax[0].plot(coords[:,0], coords[:,1], c= "b", label="original")
+        ax[0].axis("scaled")
+        ax[2].scatter(coords[0,0], coords[0,1], c="r")
+        ax[1].legend()
+        ax[2].plot(i_coords[:,0], i_coords[:,1], c= "orange", label="reconstructed")
+        ax[2].scatter(i_coords[0,0], i_coords[0,1], c="r")
+        ax[2].axis("scaled")
+        plt.tight_layout()
+
+    error = np.mean(abs(coords - i_coords))
+
+    return coeffs, error
