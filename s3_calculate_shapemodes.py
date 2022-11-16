@@ -42,13 +42,16 @@ LABEL_TO_ALIAS = {
 
 all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
 #%% Coefficients
-fun = "fft"
+fun = "efd"
 if fun == "fft":
-    get_coef_fun = coefs.fourier_coeffs  # coefs.wavelet_coefs  #
-    inverse_func = coefs.inverse_fft  # coefs.inverse_wavelet
+    get_coef_fun = coefs.fourier_coeffs 
+    inverse_func = coefs.inverse_fft 
 elif fun == "wavelet":
     get_coef_fun = coefs.wavelet_coefs
     inverse_func = coefs.inverse_wavelet
+elif fun == "efd":
+    get_coef_fun = coefs.elliptical_fourier_coeffs
+    inverse_func = coefs.backward_efd
 
 def memory_limit():
     soft, hard = resource.getrlimit(resource.RLIMIT_AS)
@@ -66,20 +69,21 @@ def get_memory():
 
 def main():
     n_coef = 128
-    n_samples = -1 #10000
-    n_cv = 1#0
+    n_samples = 10000
+    n_cv = 2#0
     cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
-    project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
+    project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
+    #project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
     #fft_dir = f"{project_dir}/{cell_line.replace(' ','_')}/fftcoefs"
     log_dir = f"{project_dir}/logs"
-    fft_dir = f"{project_dir}/fftcoefs"
-    fft_path = os.path.join(fft_dir,f"fftcoefs_{n_coef}.txt")
+    fft_dir = f"{project_dir}/fftcoefs/{fun}"
+    fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
     
     sampled_intensity_dir = Path(f"{project_dir}/sampled_intensity") #Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
-    mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
     mappings = mappings[mappings['atlas_name']=='U-2 OS']
-    #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
     #print(mappings.target.value_counts())
     print(mappings.columns)
     id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
@@ -104,13 +108,16 @@ def main():
                 if pos in specified_lines:
                     # print the required line number
                     data_ = l_num.strip().split(',')
-                    if len(data_[1:]) != n_coef*4:
-                        continue
+                    if fun == "efd":
+                        if len(data_[1:]) != (n_coef*4+2)*2:
+                            continue
+                    elif len(data_[1:]) != n_coef*4:
+                            continue
                     #data_dict = {data_dict[0]:data_dict[1:]}
                     lines[data_[0]]=data_[1:]
 
         cell_nu_ratio = pd.read_csv(f"{project_dir}/cell_nu_ratio.txt")
-        cell_nu_ratio.columns = ["path","name","ratio"]
+        cell_nu_ratio.columns = ["path", "name", "nu_area","cell_area", "ratio"]
         rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].name.to_list()
         print(f"Large cell-nu ratio cells to remove: {len(rm_cells)}") # 6264 cells for ratio 10, and 16410 for ratio 8
         lines = {k:lines[k] for k in lines.keys() if os.path.basename(k).split(".")[0] not in rm_cells}
@@ -118,10 +125,13 @@ def main():
         keep_cells = [cell_id.split("_",1)[1] for cell_id in mappings.id]
         print(f"Removing border cells leftover") 
         lines = {k:lines[k] for k in lines.keys() if os.path.basename(k).split(".")[0] in keep_cells}
+        print(lines.keys())
         df = pd.DataFrame(lines).transpose()
         print(df.shape)
-        df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
-        shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/ratio8"
+        print(df.iloc[0][0])
+        if fun == "fft":
+            df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
+        shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/{fun}"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
         
@@ -141,6 +151,12 @@ def main():
                 plotting.display_scree_plot(pca, save_dir=shape_mode_path)
         elif fun == "wavelet":
             df_ = df
+            pca = PCA(n_components=df_.shape[1])
+            pca.fit(df_)
+            plotting.display_scree_plot(pca, save_dir=shape_mode_path)
+        elif fun == "efd":
+            df_ = df
+            print(df_.head())
             pca = PCA(n_components=df_.shape[1])
             pca.fit(df_)
             plotting.display_scree_plot(pca, save_dir=shape_mode_path)
