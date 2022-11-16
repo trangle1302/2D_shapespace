@@ -71,7 +71,7 @@ def calculate_fft_ccd():
     dataset = "S-BIAD34"
     d = f"/data/2Dshapespace/{dataset}"
     sc_mask_dir = f"{d}/cell_masks"
-    save_path = f"{d}/fftcoefs"
+    save_path = f"{d}/fftcoefs/{fun}"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     log_dir = f"{d}/logs"
