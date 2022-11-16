@@ -182,8 +182,8 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
         nuclei_coords_ = nuclei_coords_[0] - centroid
 
         cell_coords_ = find_contours(cell, 0, fully_connected='high')
-        if len(cell_contour) > 1: # concatenate fragmented contour lines, original point could be ambiguous! (attempt to re-align original point in coefs.XXX_fourier_coefs())
-            cell_contour = np.vstack(cell_contour)
+        if len(cell_coords_) > 1: # concatenate fragmented contour lines, original point could be ambiguous! (attempt to re-align original point in coefs.XXX_fourier_coefs())
+            cell_coords_ = np.vstack(cell_coords_)
         cell_coords_ = cell_coords_[0] - centroid
 
         if min(cell_coords_[:, 0]) > 0 or min(cell_coords_[:, 1]) > 0:
@@ -213,7 +213,7 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
 
         fcoef_n, e_n = func(nuclei_coords, n=n_coef)
         fcoef_c, e_c = func(cell_coords, n=n_coef)
-
+        #print(f"Saving to {save_dir}/fftcoefs_{n_coef}.txt")
         with open(f"{save_dir}/fftcoefs_{n_coef}.txt", "a") as F:
             F.write(",".join(map(str,[im]+np.concatenate([fcoef_c, fcoef_n]).ravel().tolist())) + '\n')
 
