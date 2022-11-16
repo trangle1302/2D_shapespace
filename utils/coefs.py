@@ -233,8 +233,9 @@ def backward_efd(a0_c0_coeffs, n_points=64):
         A list of x,y coordinates for the reconstructed contour.
 
     """
-    n_terms = len(a0_c0_coeffs[:2])//4
-    coeffs = a0_c0_coeffs[:2].reshape((n_terms,4))
+    n_terms = len(a0_c0_coeffs[2:])//4
+    #print(len(a0_c0_coeffs), n_terms)
+    coeffs = np.array(a0_c0_coeffs[2:]).reshape((n_terms,4))
     a0 = a0_c0_coeffs[0]
     c0 = a0_c0_coeffs[1]
     xy_t = pyefd.reconstruct_contour(coeffs, locus=(a0,c0), num_points = n_points)
@@ -245,9 +246,9 @@ def elliptical_fourier_coeffs(shape_coords, n=64, plot=False):
     # elliptical fourier descriptors are rotation invariant, so no need to align start point of contour
 
     e_coefs, a0, c0 = forward_efd(coords, n=n)  # returns [n x 4], a0, c0
-    coeffs = [a0] + [c0] + [e_coefs.ravel()]
-
-    i_coords = backward_efd(coeffs[2:].reshape((n,4)), a0=coeffs[0], c0=coeffs[1], n_points=len(shape_coords))
+    coeffs = [a0] + [c0] + e_coefs.ravel().tolist()
+    #print(coeffs[:4])
+    i_coords = backward_efd(coeffs, n_points=len(shape_coords))
     if plot:
         fig, ax = plt.subplots(1, 3, figsize=(6, 3))
         ax[0].plot(coords[:,0], coords[:,1], c= "b", label="original")
