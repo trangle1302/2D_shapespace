@@ -2,7 +2,7 @@ import numpy as np
 import pywt
 from utils.helpers import equidistance, find_nearest, find_centroid
 import matplotlib.pyplot as plt
-
+import pyefd
 
 def forward_fft(x, y, n=64, hamming=False, repeat=False):
     """Fuction to convert coordinates to fft coefs
@@ -189,4 +189,77 @@ def wavelet_coefs(shape, n=64):
     plt.tight_layout()
     """
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
+    return coeffs, error
+
+def forward_efd(xy, n=64):
+    """
+    Calculate elliptic fourier descriptors for a closed contour (2D)
+
+    Parameters
+    ----------
+    xy : list of tuples
+        coordinates/array of all points in contour, N x 2.
+    n : int, optional
+        order of fourier coeffs to calculate. The default is 64.
+
+    Returns
+    -------
+    coeffs : ndarray of n x 4
+        n x 4 of [a_n, b_n, c_n, d_n].
+    a0, c0 : float
+        A_0, C_0 coefficients.
+
+    """
+    coeffs = pyefd.elliptic_fourier_descriptors(xy, order=n)
+    a0, c0 = pyefd.calculate_dc_coefficients(xy)
+    return coeffs, a0, c0
+
+def backward_efd(a0_c0_coeffs, n_points=64):
+    """
+    Reconstruct shape based on elliptic fourier descriptors
+
+    Parameters
+    ----------
+    coeffs : ndarray of n_terms x 4
+        elliptical fourier descriptors array.     
+    a0, c0 : float
+        elliptic locus in [#a]_ and [#b]_.
+    n_points : int
+        number of points for reconstructed contour.
+
+    Returns
+    -------
+    xy_t : [n_points, 2]
+        A list of x,y coordinates for the reconstructed contour.
+
+    """
+    n_terms = len(a0_c0_coeffs[2:])//4
+    #print(len(a0_c0_coeffs), n_terms)
+    coeffs = np.array(a0_c0_coeffs[2:]).reshape((n_terms,4))
+    a0 = a0_c0_coeffs[0]
+    c0 = a0_c0_coeffs[1]
+    xy_t = pyefd.reconstruct_contour(coeffs, locus=(a0,c0), num_points = n_points)
+    return xy_t
+
+def elliptical_fourier_coeffs(shape_coords, n=64, plot=False):
+    coords = shape_coords
+    # elliptical fourier descriptors are rotation invariant, so no need to align start point of contour
+
+    e_coefs, a0, c0 = forward_efd(coords, n=n)  # returns [n x 4], a0, c0
+    coeffs = [a0] + [c0] + e_coefs.ravel().tolist()
+    #print(coeffs[:4])
+    i_coords = backward_efd(coeffs, n_points=len(shape_coords))
+    if plot:
+        fig, ax = plt.subplots(1, 3, figsize=(6, 3))
+        ax[0].plot(coords[:,0], coords[:,1], c= "b", label="original")
+        ax[0].axis("scaled")
+        ax[2].scatter(coords[0,0], coords[0,1], c="r")
+        ax[1].legend()
+        ax[2].plot(i_coords[:,0], i_coords[:,1], c= "orange", label="reconstructed")
+        ax[2].scatter(i_coords[0,0], i_coords[0,1], c="r")
+        ax[2].axis("scaled")
+        plt.tight_layout()
+
+    error = np.mean(abs(coords - i_coords))
+
     return coeffs, error

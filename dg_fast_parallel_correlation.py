@@ -3,14 +3,18 @@ import numpy as np
 import pandas as pd
 import deepgraph as dg
 import multiprocessing
+import time
+
 
 # parameters (change these to control RAM usage)
-step_size = 1e3
+step_size = 1e4
 n_processes = multiprocessing.cpu_count() - 2
 
 d = "/scratch/users/tle1302/shapemode/covar_sc"
-#d = "/mnt/c/Users/trang.le/Desktop/shapemode/covar_sc"
-X = np.load(f'{d}/samples.npy', mmap_mode='r')[:4000]
+# d = "/mnt/c/Users/trang.le/Desktop/shapemode/covar_sc"
+X = np.load(f'{d}/samples.npy', mmap_mode='r')
+X = (X - X.mean(axis=1, keepdims=True)) / X.std(axis=1, keepdims=True)
+X = X[:4000,:]
 #X = X.transpose()
 n_samples, n_features = X.shape
 print(f"Number of samples: {n_samples}, number of features: {n_features}")
@@ -22,7 +26,7 @@ v = pd.DataFrame({'index': range(X.shape[0])})
 def corr(index_s, index_t):
     features_s = X[index_s]
     features_t = X[index_t]
-    print(len(index_t), len(index_s), features_s.shape, features_t.shape)
+    # print(len(index_t), len(index_s), features_s.shape, features_t.shape)
     corr = np.einsum('ij,ij->i', features_s, features_t) / n_samples
     return corr
 
@@ -47,7 +51,7 @@ def create_ei(i):
     
 # computation
 if __name__ == '__main__':
-    
+    s = time.time()
     os.makedirs(f"{d}/correlations", exist_ok=True)
     indices = np.arange(0, n_processes - 1)
     p = multiprocessing.Pool()
@@ -62,3 +66,4 @@ if __name__ == '__main__':
         et = pd.read_pickle(f'{d}/correlations/{f}')
         store.append('e', et, format='t', data_columns=True, index=False)
     store.close()
+    print(f"Finished in {(time.time()-s)/3600}h")
