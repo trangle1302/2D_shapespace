@@ -10,8 +10,8 @@ import time
 step_size = 1e4
 n_processes = multiprocessing.cpu_count() - 2
 
-# d = "/scratch/users/tle1302/shapemode/covar_sc"
-d = "/mnt/c/Users/trang.le/Desktop/shapemode/covar_sc"
+d = "/scratch/users/tle1302/shapemode/covar_sc"
+# d = "/mnt/c/Users/trang.le/Desktop/shapemode/covar_sc"
 X = np.load(f'{d}/samples.npy', mmap_mode='r')
 X = (X - X.mean(axis=1, keepdims=True)) / X.std(axis=1, keepdims=True)
 X = X[:4000,:]
