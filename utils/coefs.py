@@ -239,7 +239,7 @@ def backward_efd(a0_c0_coeffs, n_points=64):
     a0 = a0_c0_coeffs[0]
     c0 = a0_c0_coeffs[1]
     xy_t = pyefd.reconstruct_contour(coeffs, locus=(a0,c0), num_points = n_points)
-    return xy_t
+    return xy_t[:,0], xy_t[:,1]
 
 def elliptical_fourier_coeffs(shape_coords, n=64, plot=False):
     coords = shape_coords
