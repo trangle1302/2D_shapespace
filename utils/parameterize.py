@@ -145,20 +145,6 @@ def get_interpolators(
     return coeffs_interpolator, centroids_interpolator, lmax
 
 
-def get_mapping_coordinates():
-
-    return coords
-
-
-def cellular_mapping():
-
-    return mapping
-
-
-def morph_representation_on_shape():
-    return img
-
-
 def make_kernel(center, k=3):
     """
     Generate kernel of size kxk around center in cartesian coord

@@ -11,7 +11,7 @@ import glob
 import multiprocessing
 from joblib import Parallel, delayed
 from tqdm import tqdm
-import h5py
+#import h5py
 
 LABEL_NAMES = {
   0: 'Nucleoplasm',
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     n_cv = 10
     cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
     project_dir = "/data/2Dshapespace"
-    protein_dir = f"{project_dir}/{cell_line.replace(' ','_')}/sampled_intensity"
+    protein_dir = f"{project_dir}/{cell_line.replace(' ','_')}/sampled_intensity2"
     if not os.path.exists(protein_dir):
         os.makedirs(protein_dir)
 
