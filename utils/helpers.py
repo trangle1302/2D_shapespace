@@ -10,8 +10,8 @@ import skimage
 from skimage.filters import threshold_otsu, gaussian, sobel
 from skimage.measure import regionprops
 from skimage.feature import peak_local_max
-from skimage.morphology import watershed, closing, square
-from skimage.segmentation import clear_border
+from skimage.morphology import closing, square
+from skimage.segmentation import clear_border, watershed
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 #from aicsshparam import shtools
