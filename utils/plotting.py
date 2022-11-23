@@ -19,6 +19,7 @@ class PlotShapeModes:
         pc_keep,
         scaler=None,
         complex_type=True,
+        fourier_algo = 'fft',
         inverse_func=coefs.inverse_wavelet,
     ):
         self.pca = pca
@@ -27,6 +28,7 @@ class PlotShapeModes:
         self.n = n_coef
         self.pc_keep = pc_keep
         self.complex = complex_type
+        self.fourier_algo = fourier_algo
         self.inverse_func = inverse_func
         self.midpoints = None
         self.std = None
@@ -104,16 +106,25 @@ class PlotShapeModes:
     def plot_avg_cell(self, dark=True, save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
         midpoint = self.midpoints.copy()
         fcoef = self.pca.inverse_transform(midpoint)
-        if not self.complex:
-            real = fcoef[: len(fcoef) // 2]
-            imag = fcoef[len(fcoef) // 2 :]
-            fcoef = [complex(r, i) for r, i in zip(real, imag)]
-        if self.sc != None:
-            fcoef = self.sc.inverse_transform(fcoef)
-        fcoef_c = fcoef[0 : self.n * 2]
-        fcoef_n = fcoef[self.n * 2 :]
-        ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
-        ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+        if self.fourier_algo == "fft":
+            if not self.complex:
+                real = fcoef[: len(fcoef) // 2]
+                imag = fcoef[len(fcoef) // 2 :]
+                fcoef = [complex(r, i) for r, i in zip(real, imag)]
+            if self.sc != None:
+                fcoef = self.sc.inverse_transform(fcoef)
+            fcoef_c = fcoef[0 : self.n * 2]
+            fcoef_n = fcoef[self.n * 2 :]
+
+            ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
+            ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+        elif self.fourier_algo == "efd":
+            fcoef_c = fcoef[: len(fcoef) // 2]
+            fcoef_n = fcoef[len(fcoef) // 2 :]
+            print(len(fcoef), len(fcoef_n), len(fcoef_c))
+            ix_n, iy_n = self.inverse_func(fcoef_n, n_points=self.n*2)
+            print(len(ix_n), len(iy_n))
+            ix_c, iy_c = self.inverse_func(fcoef_c, n_points=self.n*2)
 
         if dark:
             plt.style.use('dark_background')
@@ -211,14 +222,20 @@ class PlotShapeModes:
             fcoef = self.pca.inverse_transform(cell_coef)
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
-            if not self.complex:
-                real = fcoef[: len(fcoef) // 2]
-                imag = fcoef[len(fcoef) // 2 :]
-                fcoef = [complex(r, i) for r, i in zip(real, imag)]
-            fcoef_c = fcoef[0 : self.n * 2]
-            fcoef_n = fcoef[self.n * 2 :]
-            ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
-            ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+            if self.fourier_algo == "fft":
+                if not self.complex:
+                    real = fcoef[: len(fcoef) // 2]
+                    imag = fcoef[len(fcoef) // 2 :]
+                    fcoef = [complex(r, i) for r, i in zip(real, imag)]
+                fcoef_c = fcoef[0 : self.n * 2]
+                fcoef_n = fcoef[self.n * 2 :]
+                ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
+                ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+            elif self.fourier_algo == "efd":
+                fcoef_c = fcoef[: len(fcoef) // 2]
+                fcoef_n = fcoef[len(fcoef) // 2 :]
+                ix_n, iy_n = self.inverse_func(fcoef_n, n_points=self.n*2)
+                ix_c, iy_c = self.inverse_func(fcoef_c, n_points=self.n*2)
 
             # ix_n, iy_n = self.inverse_fun(fcoef[0:self.n], fcoef[2*self.n:3*self.n])
             # ix_c, iy_c = self.inverse_fun(fcoef[self.n:2*self.n], fcoef[3*self.n:])
@@ -247,14 +264,21 @@ class PlotShapeModes:
             fcoef = self.pca.inverse_transform(cell_coef)
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
-            if not self.complex:
-                real = fcoef[: len(fcoef) // 2]
-                imag = fcoef[len(fcoef) // 2 :]
-                fcoef = [complex(r, i) for r, i in zip(real, imag)]
-            fcoef_c = fcoef[0 : self.n * 2]
-            fcoef_n = fcoef[self.n * 2 :]
-            ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
-            ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+            
+            if self.fourier_algo == "fft":
+                if not self.complex:
+                    real = fcoef[: len(fcoef) // 2]
+                    imag = fcoef[len(fcoef) // 2 :]
+                    fcoef = [complex(r, i) for r, i in zip(real, imag)]
+                fcoef_c = fcoef[0 : self.n * 2]
+                fcoef_n = fcoef[self.n * 2 :]
+                ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
+                ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+            elif self.fourier_algo == "efd":
+                fcoef_c = fcoef[: len(fcoef) // 2]
+                fcoef_n = fcoef[len(fcoef) // 2 :]
+                ix_n, iy_n = self.inverse_func(fcoef_n, n_points=self.n*2)
+                ix_c, iy_c = self.inverse_func(fcoef_c, n_points=self.n*2)
 
             nu.set_data(ix_n.real, iy_n.real)
             cell.set_data(ix_c.real, iy_c.real)
@@ -302,14 +326,21 @@ class PlotShapeModes:
             fcoef = self.pca.inverse_transform(cell_coef)
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
-            if not self.complex:
-                real = fcoef[: len(fcoef) // 2]
-                imag = fcoef[len(fcoef) // 2 :]
-                fcoef = [complex(r, i) for r, i in zip(real, imag)]
-            fcoef_c = fcoef[0 : self.n * 2]
-            fcoef_n = fcoef[self.n * 2 :]
-            ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
-            ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+
+            if self.fourier_algo == "fft":
+                if not self.complex:
+                    real = fcoef[: len(fcoef) // 2]
+                    imag = fcoef[len(fcoef) // 2 :]
+                    fcoef = [complex(r, i) for r, i in zip(real, imag)]
+                fcoef_c = fcoef[0 : self.n * 2]
+                fcoef_n = fcoef[self.n * 2 :]
+                ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
+                ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+            elif self.fourier_algo == "efd":
+                fcoef_c = fcoef[: len(fcoef) // 2]
+                fcoef_n = fcoef[len(fcoef) // 2 :]
+                ix_n, iy_n = self.inverse_func(fcoef_n, n_points=self.n*2)
+                ix_c, iy_c = self.inverse_func(fcoef_c, n_points=self.n*2)
 
             nu.set_data(ix_n.real, iy_n.real)
             cell.set_data(ix_c.real, iy_c.real)
@@ -601,7 +632,7 @@ def plot_interpolation3(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     plt.savefig(save_path)
     plt.close()
 
-def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func):
+def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func, fourier_algo = "fft"):
     
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
     #shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
@@ -610,8 +641,12 @@ def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func):
     #protein_ch[protein_ch < thresh] = 0 
     
     cell__ = []
-    for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]: 
-        ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
+    if fourier_algo =="fft":
+        n_coef_= n_coef*2
+    elif fourier_algo == "efd":
+        n_coef_= n_coef*4 + 2
+    for fcoef in [ori_fft[: n_coef_*2], ori_fft[n_coef_*2 :]]: 
+        ix__, iy__ = inverse_func(fcoef[:n_coef_], fcoef[n_coef_:])
         cell__ += [np.concatenate([ix__, iy__])]
     x_,y_ = parameterize.get_coordinates(cell__[1].real, cell__[0].real, [0,0], n_isos = [10,20], plot=False)
 

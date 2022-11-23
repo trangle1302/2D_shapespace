@@ -69,7 +69,7 @@ def get_memory():
 
 def main():
     n_coef = 128
-    n_samples = 10000
+    n_samples = 5000
     n_cv = 2#0
     cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
     project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
@@ -125,10 +125,9 @@ def main():
         keep_cells = [cell_id.split("_",1)[1] for cell_id in mappings.id]
         print(f"Removing border cells leftover") 
         lines = {k:lines[k] for k in lines.keys() if os.path.basename(k).split(".")[0] in keep_cells}
-        print(lines.keys())
+
         df = pd.DataFrame(lines).transpose()
-        print(df.shape)
-        print(df.iloc[0][0])
+
         if fun == "fft":
             df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
         shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/{fun}"
@@ -156,7 +155,7 @@ def main():
             plotting.display_scree_plot(pca, save_dir=shape_mode_path)
         elif fun == "efd":
             df_ = df
-            print(df_.head())
+            print(f"Number of samples {df_.shape[0]}, number of coefs {df_.shape[1]}")
             pca = PCA(n_components=df_.shape[1])
             pca.fit(df_)
             plotting.display_scree_plot(pca, save_dir=shape_mode_path)
@@ -168,7 +167,7 @@ def main():
         df_trans.columns = pc_names
         df_trans.index = df.index
         df_trans[list(set(pc_names) - set(pc_keep))] = 0
-
+        print(matrix_of_features_transform.shape, df_trans.shape)
         pm = plotting.PlotShapeModes(
             pca,
             df_trans,
@@ -176,6 +175,7 @@ def main():
             pc_keep,
             scaler=None,
             complex_type=use_complex,
+            fourier_algo="efd",
             inverse_func=inverse_func,
         )
         pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
