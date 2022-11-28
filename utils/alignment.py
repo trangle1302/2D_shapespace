@@ -10,7 +10,9 @@ from pathlib import Path
 from imageio import imread
 import pickle
 import os
-from coefs import find_nearest, find_centroid
+import sys
+sys.path.append("..") 
+from utils.coefs import find_nearest, find_centroid
 
 def align_cell_nuclei_centroids(data, protein_ch, plot=False):
     """
