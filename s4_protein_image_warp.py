@@ -40,8 +40,8 @@ def main():
         ix_n, iy_n = helpers.equidistance(ix_n, iy_n, n_points=n_landmarks)
         ix_c, iy_c = helpers.equidistance(ix_n, iy_n, n_points=n_landmarks)
     pts_avg = np.vstack([nu_centroid,
-                        np.stack([ix_n, iy_n]).T, 
-                        np.stack([ix_c, iy_c]).T])
+                        alignment.realign_contour_startpoint(np.stack([ix_n, iy_n]).T),
+                        alignment.realign_contour_startpoint(np.stack([ix_c, iy_c]).T)])
     print(pts_avg.max(), pts_avg.min())
     
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "a") as F:
