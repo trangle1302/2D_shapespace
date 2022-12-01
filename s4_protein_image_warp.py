@@ -16,14 +16,15 @@ def main():
     shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/0"  
     fft_dir = f"{project_dir}/fftcoefs"  
     data_dir = f"{project_dir}/cell_masks" 
-    save_dir = f"{project_dir}/U-2_OS/morphed_protein_avg" 
-    plot_dir = f"{project_dir}/U-2_OS/morphed_protein_avg_plots" 
+    save_dir = f"{project_dir}/morphed_protein_avg" 
+    plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
     n_landmarks = 32 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     if not os.path.exists(plot_dir):
         os.makedirs(plot_dir)
+
     # Load average cell
     avg_cell = np.load(f"{shape_mode_path}/Avg_cell.npz")
     nu_centroid = [0,0]
@@ -85,10 +86,10 @@ def main():
             print(shift_c)
             cell_shape = np.load(f"{data_dir}/{img_id}.npy")
             img = imread(f"{data_dir}/{img_id}_protein.png")
-            print(cell_shape.shape, img.shape)
+            print(cell_shape.shape, img.shape, img.max())
             img = rotate(img, theta)
-            nu_ = rotate(cell_shape[0,:,:], theta)
-            cell_ = rotate(cell_shape[1,:,:], theta)
+            nu_ = rotate(cell_shape[1,:,:], theta)
+            cell_ = rotate(cell_shape[0,:,:], theta)
             img_resized = resize(img, (shape_x, shape_y))
             nu_resized = resize(nu_, (shape_x, shape_y))
             cell_resized = resize(cell_, (shape_x, shape_y))
@@ -105,19 +106,20 @@ def main():
             warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
             imwrite(f"{save_dir}/{img_id}.png",warped)
             fig, ax = plt.subplots(1,4, figsize=(15,30))
-            ax[0].imshow(nu_, alpha = 0.2)
-            ax[0].imshow(cell_, alpha = 0.2)
-            ax[0].imshow(img)
+            ax[0].imshow(nu_, alpha = 0.15)
+            ax[0].imshow(cell_, alpha = 0.15)
+            ax[0].imshow(img, alpha=0.3)
             ax[0].set_title('original shape+protein')
-            ax[1].imshow(img)
+            ax[1].imshow(img_resized)
             ax[1].scatter(pts_ori[:,1], pts_ori[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
             ax[1].set_title('resized protein channel')
             ax[2].imshow(warped1)
-            ax[2].scatter(pts_ori[:,1], pts_ori[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+            ax[2].scatter(pts_convex[:,1], pts_convex[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
             ax[2].set_title('ori_shape to midpoint')
             ax[3].imshow(warped)
             ax[3].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
             ax[3].set_title('midpoint to avg_shape')
+            plt.tight_layout()
             fig.savefig(f"{plot_dir}/{img_id}.png")
 
 if __name__ == '__main__':
