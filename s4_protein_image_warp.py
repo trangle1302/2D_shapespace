@@ -71,10 +71,13 @@ def main():
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
         lines = F.readlines()
     for i, bin_ in enumerate(merged_bins):
+        if i!=1:
+            continue
         ls = [pc_cells[b] for b in bin_]
         ls = helpers.flatten_list(ls)
         ls = [os.path.basename(l).replace(".npy","") for l in ls]
         # df_sl = mappings[mappings.cell_idx.isin(ls)]
+        print(f"processing {len(ls)} cells")
         print(ls[:3])
         for img_id in ls:
             for line in lines:
@@ -83,30 +86,32 @@ def main():
                     break
             theta = np.float(vals[1])
             shift_c = (np.float(vals[2].strip('(')),(np.float(vals[3].strip(')'))))
-            print(shift_c)
+            
             cell_shape = np.load(f"{data_dir}/{img_id}.npy")
             img = imread(f"{data_dir}/{img_id}_protein.png")
-            print(cell_shape.shape, img.shape, img.max())
-            # TODO: fix lossy conversion of protein signal
+            #print(np.unique(cell_shape), img.dtype, img.max())
+            
             img = rotate(img, theta)
             nu_ = rotate(cell_shape[1,:,:], theta)
             cell_ = rotate(cell_shape[0,:,:], theta)
-            img_resized = resize(img, (shape_x, shape_y))
-            nu_resized = resize(nu_, (shape_x, shape_y))
-            cell_resized = resize(cell_, (shape_x, shape_y))
-            print(f"rotated nu max: {nu_.max()}, resized nu max: {nu_resized.max()}, rotated nu max: {cell_.max()}, resized nu max: {cell_resized.max()}")
+            img_resized = resize(img, (shape_x, shape_y), mode='constant')
+            nu_resized = resize(nu_, (shape_x, shape_y), mode='constant') * 255
+            cell_resized = resize(cell_, (shape_x, shape_y), mode='constant') * 255
+            #print(f"rotated img max: {img.max()}, resized img max: {img_resized.max()}")
+            #print(f"rotated nu max: {nu_.max()}, resized nu max: {nu_resized.max()}, rotated cell max: {cell_.max()}, resized cell max: {cell_resized.max()}")
             pts_ori = image_warp.find_landmarks(nu_resized, cell_resized, n_points=32, border_points = False)
             
             """ TODO: fix convex hull
-            convex_hull_nu = convex_hull_image(cell_shape_resized[:,:,2])
-            convex_hull_cell = convex_hull_image(cell_shape_resized[:,:,0])
+            convex_hull_nu = convex_hull_image(nu_resized)
+            convex_hull_cell = convex_hull_image(cell_resized)
             pts_convex = image_warp.find_landmarks(convex_hull_nu, convex_hull_cell, n_points=32, border_points = False)
             """
             pts_convex = (pts_avg + pts_ori) / 2
             # TODO: how to preserve spotty pattern?
             warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
             warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
-            imwrite(f"{save_dir}/{img_id}.png", warped)
+            imwrite(f"{save_dir}/{img_id}.png", (warped*255).astype(np.uint8))
+            #print(warped.max(), warped.dtype)
             fig, ax = plt.subplots(1,4, figsize=(15,30))
             ax[0].imshow(nu_, alpha = 0.15)
             ax[0].imshow(cell_, alpha = 0.15)
