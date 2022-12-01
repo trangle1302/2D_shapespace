@@ -64,8 +64,8 @@ def main():
     #mappings = mappings[mappings.atlas_name=="U-2 OS"]
     pc_cells = cells_assigned['PC1']
     merged_bins = [[0,1,2,3],[4,5,6],[7,8,9,10]]
-    imlist = pc_cells[5]
-    print(imlist[:3])
+    #imlist = pc_cells[5]
+    #print(imlist[:3])
 
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
         lines = F.readlines()
@@ -75,7 +75,7 @@ def main():
         ls = [os.path.basename(l).replace(".npy","") for l in ls]
         # df_sl = mappings[mappings.cell_idx.isin(ls)]
         print(ls[:3])
-        for img_id in imlist:
+        for img_id in ls:
             for line in lines:
                 if line.find(img_id) != -1 :
                     vals = line.strip().split(',')
@@ -89,15 +89,18 @@ def main():
             print(img.shape)
             img_resized = resize(img, (shape_x, shape_y))
             cell_shape_resized = resize(cell_shape, (shape_x, shape_y))
+            print(cell_shape_resized[:,:,2].max(), cell_shape_resized[:,:,0].max())
             pts_ori = image_warp.find_landmarks(cell_shape_resized[:,:,2], cell_shape_resized[:,:,0], n_points=32, border_points = False)
             
+            """ TODO: fix convex hull
             convex_hull_nu = convex_hull_image(cell_shape_resized[:,:,2])
             convex_hull_cell = convex_hull_image(cell_shape_resized[:,:,0])
             pts_convex = image_warp.find_landmarks(convex_hull_nu, convex_hull_cell, n_points=32, border_points = False)
-            
-            warped1 = TPSpline.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
-            warped = TPSpline.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
-            imwrite(warped, f"{save_dir}/{img_id}.png")
+            """
+            pts_convex = (pts_avg + pts_ori) / 2
+            warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
+            warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
+            imwrite(f"{save_dir}/{img_id}.png",warped)
             fig, ax = plt.subplots(1,4, figsize=(15,30))
             ax[0].imshow(cell_shape, alpha = 0.2)
             ax[0].imshow(img)
