@@ -63,9 +63,10 @@ def main():
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
-    #mappings = pd.read_csv("/data/kaggle-dataset/publicHPA_umap/results/umap/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-    #mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
-    #mappings = mappings[mappings.atlas_name=="U-2 OS"]
+    mappings = pd.read_csv("/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    mappings = mappings[mappings.atlas_name=="U-2 OS"]
+    mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
+    
     pc_cells = cells_assigned['PC1']
     merged_bins = [[0,1,2,3],[4,5,6],[7,8,9,10]]
     #imlist = pc_cells[5]
@@ -80,6 +81,7 @@ def main():
         ls = helpers.flatten_list(ls)
         ls = [os.path.basename(l).replace(".npy","") for l in ls]
         # df_sl = mappings[mappings.cell_idx.isin(ls)]
+        # print(df_sl.target.value_counts())
         print(f"processing {len(ls)} cells")
 
         for img_id in tqdm(ls):
