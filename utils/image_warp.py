@@ -55,8 +55,8 @@ def warp_image(pts_from, pts_to, img, midpoint=False, plot=True, save_dir=""):
     y_max = img.shape[1]
     if midpoint:
         midpoint = (pts_from + pts_to) /2
-        transform1 = TPSpline._make_inverse_warp(pts_from, midpoint, (0, 0, y_max, x_max), approximate_grid=4)
-        transform2 = TPSpline._make_inverse_warp(midpoint, pts_to, (0, 0, y_max, x_max), approximate_grid=4)
+        transform1 = TPSpline._make_inverse_warp(pts_from, midpoint, (0, 0, x_max, y_max), approximate_grid=4)
+        transform2 = TPSpline._make_inverse_warp(midpoint, pts_to, (0, 0, x_max, y_max), approximate_grid=4)
         warped1 = cv2.remap(img, transform1[1].astype('float32'), transform1[0].astype('float32'), cv2.INTER_LINEAR)
         warped = cv2.remap(warped1, transform2[1].astype('float32'), transform2[0].astype('float32'), cv2.INTER_LINEAR)
         if plot:
@@ -71,6 +71,6 @@ def warp_image(pts_from, pts_to, img, midpoint=False, plot=True, save_dir=""):
             ax[2].scatter(pts_to[:,1], pts_to[:,0], c=np.arange(len(pts_to)),cmap='Reds')
             ax[2].set_title('midpoint to avg_shape')
     else:
-        transform = TPSpline._make_inverse_warp(pts_from, pts_to, (0, 0, y_max, x_max), approximate_grid=4)
+        transform = TPSpline._make_inverse_warp(pts_from, pts_to, (0, 0, x_max, y_max), approximate_grid=4)
         warped = cv2.remap(img, transform[1].astype('float32'), transform[0].astype('float32'), cv2.INTER_LINEAR)
     return warped
