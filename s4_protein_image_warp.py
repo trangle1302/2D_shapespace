@@ -9,18 +9,18 @@ from utils import TPSpline
 
 def main():   
     cell_line = 'U-2 OS'
-    project_dir = f"/data/2Dshapespace/"
+    project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/0"  
-    fft_dir = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft"  
+    fft_dir = f"{project_dir}/fftcoefs"  
     data_dir = f"{project_dir}/cell_masks" 
-    save_dir = f"{project_dir}/organelle" 
+    save_dir = f"{project_dir}/U-2_OS/morphed_protein_avg" 
     n_landmarks = 32 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
     # Load average cell
-    avg_cell= np.load(f"{shape_mode_path}/Avg_cell.npz")
+    avg_cell = np.load(f"{shape_mode_path}/Avg_cell.npz")
     nu_centroid = [0,0]
     ix_n = avg_cell['ix_n']
     iy_n = avg_cell['iy_n']
@@ -30,22 +30,29 @@ def main():
     # Move average shape from zero-centered coords to min=[0,0]
     min_x = np.min(ix_c)
     min_y = np.min(iy_c)
-    nu_centroid += (min_x, min_y)
-    ix_n += min_x
-    iy_n += min_y
-    ix_c += min_x
-    ix_c += min_x
+    print(min_x,min_y)
+    nu_centroid[0] -= min_x
+    nu_centroid[1] -= min_y
+    ix_n -= min_x
+    iy_n -= min_y
+    ix_c -= min_x
+    iy_c -= min_y
 
     if len(ix_n) != n_landmarks:
         ix_n, iy_n = helpers.equidistance(ix_n, iy_n, n_points=n_landmarks)
-        ix_c, iy_c = helpers.equidistance(ix_n, iy_n, n_points=n_landmarks)
-    pts_avg = np.vstack([nu_centroid,
-                        alignment.realign_contour_startpoint(np.stack([ix_n, iy_n]).T),
-                        alignment.realign_contour_startpoint(np.stack([ix_c, iy_c]).T)])
+        ix_c, iy_c = helpers.equidistance(ix_c, iy_c, n_points=n_landmarks)
+    nu_contour = np.stack([ix_n, iy_n]).T
+    cell_contour = np.stack([ix_c, iy_c]).T
+    print(nu_contour.shape, cell_contour.shape)
+    
+    pts_avg = np.vstack([np.asarray(nu_centroid),
+                        alignment.realign_contour_startpoint(nu_contour),
+                        alignment.realign_contour_startpoint(cell_contour)])
     print(pts_avg.max(), pts_avg.min())
     
-    with open(f"{fft_dir}/shift_error_meta_fft128.txt", "a") as F:
+    with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
         lines = F.readlines()
+    
     imlist = []
     for img_id in imlist:
         for line in enumerate(lines) :
