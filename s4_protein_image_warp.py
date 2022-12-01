@@ -106,7 +106,7 @@ def main():
             # TODO: how to preserve spotty pattern?
             warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
             warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
-            imwrite(f"{save_dir}/{img_id}.png",warped)
+            imwrite(f"{save_dir}/{img_id}.png", warped)
             fig, ax = plt.subplots(1,4, figsize=(15,30))
             ax[0].imshow(nu_, alpha = 0.15)
             ax[0].imshow(cell_, alpha = 0.15)
@@ -121,8 +121,7 @@ def main():
             ax[3].imshow(warped)
             ax[3].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
             ax[3].set_title('midpoint to avg_shape')
-            plt.tight_layout()
-            fig.savefig(f"{plot_dir}/{img_id}.png")
+            fig.savefig(f"{plot_dir}/{img_id}.png", bbox_inches='tight')
 
 if __name__ == '__main__':
     main()
