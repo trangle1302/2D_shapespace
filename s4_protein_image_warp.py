@@ -9,8 +9,11 @@ from skimage.transform import resize
 from utils import TPSpline
 import json
 import pandas as pd
+from tqdm import tqdm
+import time
 
 def main():   
+    s = time.time()
     cell_line = 'U-2 OS'
     project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/0"  
@@ -78,8 +81,8 @@ def main():
         ls = [os.path.basename(l).replace(".npy","") for l in ls]
         # df_sl = mappings[mappings.cell_idx.isin(ls)]
         print(f"processing {len(ls)} cells")
-        print(ls[:3])
-        for img_id in ls:
+
+        for img_id in tqdm(ls):
             for line in lines:
                 if line.find(img_id) != -1 :
                     vals = line.strip().split(',')
@@ -127,6 +130,7 @@ def main():
             ax[3].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
             ax[3].set_title('midpoint to avg_shape')
             fig.savefig(f"{plot_dir}/{img_id}.png", bbox_inches='tight')
+    print(f"Finished in {(time.time() - s)/60} min")
 
 if __name__ == '__main__':
     main()
