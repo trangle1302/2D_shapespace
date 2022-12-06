@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.helpers import equidistance
-from utils import coefs, parameterize
+from utils import coefs
 from sklearn.linear_model import LinearRegression
 from matplotlib.animation import FuncAnimation, PillowWriter
 from imageio import imread
@@ -9,6 +9,9 @@ from scipy.ndimage import rotate
 from more_itertools import windowed
 from skimage import exposure
 from skimage.filters import threshold_mean
+import sys
+sys.path.append("..")
+from warps import parameterize
 
 class PlotShapeModes:
     def __init__(

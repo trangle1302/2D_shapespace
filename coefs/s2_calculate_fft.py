@@ -1,12 +1,10 @@
 import os
-from utils.parameterize import get_coordinates
-from utils import plotting, helpers, dimreduction, coefs, alignment
-from sklearn.decomposition import PCA
+import sys
+sys.path.append("..") 
+from warps.parameterize import get_coordinates
+from coefs import alignment, coefs
 from pathlib import Path
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from utils.helpers import get_location_counts
 import glob
 import multiprocessing
 from joblib import Parallel, delayed
@@ -14,30 +12,7 @@ from tqdm import tqdm
 import pickle
 import time
 
-LABEL_NAMES = {
-  0: 'Nucleoplasm',
-  1: 'Nuclear membrane',
-  2: 'Nucleoli',
-  3: 'Nucleoli fibrillar center',
-  4: 'Nuclear speckles',
-  5: 'Nuclear bodies',
-  6: 'Endoplasmic reticulum',
-  7: 'Golgi apparatus',
-  8: 'Intermediate filaments',
-  9: 'Actin filaments',
-  10: 'Microtubules',
-  11: 'Mitotic spindle',
-  12: 'Centrosome',
-  13: 'Plasma membrane',
-  14: 'Mitochondria',
-  15: 'Aggresome',
-  16: 'Cytosol',
-  17: 'Vesicles and punctate cytosolic patterns',
-  18: 'Negative',
-}
 
-all_locations = dict((v, k) for k,v in LABEL_NAMES.items())
-#%% Coefficients
 fun = "efd"
 if fun == "fft":
     get_coef_fun = coefs.fourier_coeffs 

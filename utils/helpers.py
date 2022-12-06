@@ -5,7 +5,6 @@ from pickletools import uint8
 import numpy as np
 import math
 from scipy import ndimage as ndi
-import utils.annotationUtils as annotationUtils
 import skimage
 from skimage.filters import threshold_otsu, gaussian, sobel
 from skimage.measure import regionprops
@@ -260,72 +259,6 @@ def resize_pad(image, ratio=0.25, size=256):
     return new_im  # this is  float64
 
 
-def geojson_to_masks(
-    file_proc,
-    mask_types=["filled", "edge", "labels"],
-    img_size=None,
-):
-
-    # annot_types = list(masks_to_create.keys())
-
-    annotationsImporter = annotationUtils.GeojsonImporter()
-
-    # Instance to save masks
-    masks = annotationUtils.MaskGenerator()
-
-    weightedEdgeMasks = annotationUtils.WeightedEdgeMaskGenerator(sigma=8, w0=10)
-    distMapMasks = annotationUtils.DistanceMapGenerator(truncate_distance=None)
-
-    # Decompose file name
-    drive, path_and_file = os.path.splitdrive(file_proc)
-    path, file = os.path.split(path_and_file)
-    # file_base, ext = os.path.splitext(file)
-
-    # Read annotation:  Correct class has been selected based on annot_type
-    annot_dict_all, roi_size_all, image_size = annotationsImporter.load(file_proc)
-    if img_size is not None:
-        image_size = img_size
-
-    annot_types = set(
-        annot_dict_all[k]["properties"]["label"] for k in annot_dict_all.keys()
-    )
-    masks = {}
-    for annot_type in annot_types:
-        # print("annot_type: ", annot_type)
-        # Filter the annotations by label
-        annot_dict = {
-            k: annot_dict_all[k]
-            for k in annot_dict_all.keys()
-            if annot_dict_all[k]["properties"]["label"] == annot_type
-        }
-        # Create masks
-        # Binary - is always necessary to creat other masks
-        binaryMasks = annotationUtils.BinaryMaskGenerator(
-            image_size=image_size, erose_size=5, obj_size_rem=500, save_indiv=True
-        )
-        mask_dict = binaryMasks.generate(annot_dict)
-
-        # Distance map
-        if "distance" in mask_types:
-            mask_dict = distMapMasks.generate(annot_dict, mask_dict)
-
-        # Weighted edge mask
-        if "weigthed" in mask_types:
-            mask_dict = weightedEdgeMasks.generate(annot_dict, mask_dict)
-
-        # border_mask
-        if "border_mask" in mask_types:
-            border_detection_threshold = max(
-                round(1.33 * image_size[0] / 512 + 0.66), 1
-            )
-            borderMasks = annotationUtils.BorderMaskGenerator(
-                border_detection_threshold=border_detection_threshold
-            )
-            mask_dict = borderMasks.generate(annot_dict, mask_dict)
-
-    return mask_dict
-
-
 def curvelet_transform(
     x, num_bands, num_angles=8, all_curvelets=True, as_complex=False
 ):
@@ -536,3 +469,42 @@ class NpEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+
+
+def bbox_iou(boxA, boxB):
+    # determine the (x, y)-coordinates of the intersection rectangle
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[2], boxB[2])
+    yB = min(boxA[3], boxB[3])
+    # compute the area of intersection rectangle
+    interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+    # compute the area of both the prediction and ground-truth
+    # rectangles
+    boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+    boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+    # compute the intersection over union by taking the intersection
+    # area and dividing it by the sum of prediction + ground-truth
+    # areas - the interesection area
+    iou = interArea / float(boxAArea + boxBArea - interArea)
+    # return the intersection over union value
+    return iou
+
+def realign_contour_startpoint(xy):
+    centroid = find_centroid(xy)
+    x = np.array([p[0] for p in xy])
+    y = np.array([p[1] for p in xy])
+    _, val = find_nearest(y[np.where(x > centroid[0])], centroid[1])
+    if len(np.where(y == val)[0]) > 1:
+        largest_x = x.min()
+        current_idx = None
+        for idx in np.where(y == val)[0]:
+            if x[idx] > largest_x:
+                largest_x = x[idx]
+                current_idx = idx
+        idx = current_idx
+    else:
+        idx = np.where(y == val)[0][0]
+
+    xy = np.concatenate((xy, xy))[idx : idx + len(xy)]
+    return xy

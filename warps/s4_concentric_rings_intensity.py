@@ -1,15 +1,10 @@
 import os
-from utils.parameterize import get_coordinates
-from utils import plotting, helpers, dimreduction, coefs, alignment
-from sklearn.decomposition import PCA
+import sys
+sys.path.append("..") 
+from coefs import coefs
+from utils import plotting
 from pathlib import Path
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from utils.helpers import get_location_counts
-import glob
-import multiprocessing
-from joblib import Parallel, delayed
 from tqdm import tqdm
 #import h5py
 

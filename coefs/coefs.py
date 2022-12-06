@@ -1,8 +1,10 @@
 import numpy as np
 import pywt
+import sys
+sys.path.append("..") 
 from utils.helpers import equidistance, find_nearest, find_centroid
 import matplotlib.pyplot as plt
-import pyefd
+#import pyefd
 
 def forward_fft(x, y, n=64, hamming=False, repeat=False):
     """Fuction to convert coordinates to fft coefs
