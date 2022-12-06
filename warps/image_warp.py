@@ -1,11 +1,14 @@
+import sys
+sys.path.append("..")
+from coefs import alignment,coefs
 import cv2
 import numpy as np
-from utils import coefs, helpers, alignment
+from utils import helpers
 import matplotlib.pyplot as plt
 from skimage.measure import find_contours
 from skimage.morphology import convex_hull_image
 from scipy.ndimage import center_of_mass, rotate
-from utils import TPSpline
+from warps import TPSpline
 
 def find_landmarks(nuclei, cell, n_points=32, border_points = False):
     assert nuclei.shape == cell.shape
@@ -41,12 +44,12 @@ def find_landmarks(nuclei, cell, n_points=32, border_points = False):
         (x_max, y_max) = cell.shape
         border_anchors = [[0,0],[x_max//2,0],[x_max,0],[0,y_max//2],[0,y_max],[x_max//2,y_max],[x_max,y_max//2],[x_max,y_max]]
         landmarks = np.vstack([np.array(nu_centroid),
-                        alignment.realign_contour_startpoint(nu_contour),
-                        alignment.realign_contour_startpoint(cell_contour), border_anchors])
+                        helpers.realign_contour_startpoint(nu_contour),
+                        helpers.realign_contour_startpoint(cell_contour), border_anchors])
     else:
         landmarks = np.vstack([np.array(nu_centroid),
-                        alignment.realign_contour_startpoint(nu_contour),
-                        alignment.realign_contour_startpoint(cell_contour)])
+                        helpers.realign_contour_startpoint(nu_contour),
+                        helpers.realign_contour_startpoint(cell_contour)])
     return landmarks
 
 

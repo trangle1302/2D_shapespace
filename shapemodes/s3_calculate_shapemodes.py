@@ -1,6 +1,11 @@
 import os
-from utils.parameterize import get_coordinates
-from utils import plotting, helpers, dimreduction, coefs, alignment
+import sys
+
+from shapemodes import dimreduction
+sys.path.append("..")
+from coefs import alignment, coefs
+from warps.parameterize import get_coordinates
+from utils import plotting, helpers
 from sklearn.decomposition import PCA, IncrementalPCA
 from pathlib import Path
 import pandas as pd
@@ -15,7 +20,6 @@ import random
 from ast import literal_eval
 import json
 import resource
-import sys
 
 LABEL_TO_ALIAS = {
   0: 'Nucleoplasm',

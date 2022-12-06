@@ -6,7 +6,7 @@ import argparse
 from utils import helpers
 import glob
 import matplotlib.pyplot as plt
-from utils.parameterize import get_coordinates
+from warps.parameterize import get_coordinates
 import json
 import scipy.cluster.hierarchy as spc
 import seaborn as sns
