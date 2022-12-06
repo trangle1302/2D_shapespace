@@ -5,7 +5,6 @@ from skimage.measure import find_contours, regionprops
 from scipy.ndimage import center_of_mass, rotate
 from utils import helpers
 import matplotlib.pyplot as plt
-import sys
 from pathlib import Path
 from imageio import imread
 import pickle
