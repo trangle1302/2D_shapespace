@@ -2,6 +2,7 @@ import os
 from coefs import alignment, coefs
 os.chdir("C:/Users/trang.le/Desktop/2D_shape_space")
 import numpy as np
+from imageio import imwrite
 from PIL import Image, ImageSequence
 from matplotlib import pyplot as plt
 from utils import parameterize, plotting
@@ -141,7 +142,7 @@ def main(plot=False):
         intensities = intensities[4:6].sum(axis=0) #avg 2 slice in the middle
         avg_organelle_intensity += [[org] + intensities.flatten().tolist()]
         img = coordinates_to_image(np.asarray(x_), np.asarray(y_), intensities)
-        imsave(f"{save_dir}/{org}.png",img)
+        imwrite(f"{save_dir}/{org}.png",img)
         #img = coordinates_to_image(np.asarray(x_), np.asarray(y_), intensities, binarize=True)
         plt.imshow(dilation(erosion(img), square(7)))
         plt.tight_layout()
@@ -241,6 +242,8 @@ def investigate_organell_pc_var():
         img = plt.imread(f"{save_dir}/{org}.png")
         """
 def cell_nu_ratio_cutoff():
+    organelle_dir = "C:/Users/trang.le/Desktop/shapemode/organelle"
+    shape_var_dir = "C:/Users/trang.le/Desktop/shapemode/U-2_OS/0"
     n_cells_per_pc = pd.read_csv(f"{organelle_dir}/cells_per_bin.csv")
     cell_nu_ratio = pd.read_csv(f"{shape_var_dir.rsplit('/',1)[0]}/cell_nu_ratio.txt", header=None)
     cell_nu_ratio.columns=["path","name","ratio"]
