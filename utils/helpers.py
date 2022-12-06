@@ -489,3 +489,22 @@ def bbox_iou(boxA, boxB):
     iou = interArea / float(boxAArea + boxBArea - interArea)
     # return the intersection over union value
     return iou
+
+def realign_contour_startpoint(xy):
+    centroid = find_centroid(xy)
+    x = np.array([p[0] for p in xy])
+    y = np.array([p[1] for p in xy])
+    _, val = find_nearest(y[np.where(x > centroid[0])], centroid[1])
+    if len(np.where(y == val)[0]) > 1:
+        largest_x = x.min()
+        current_idx = None
+        for idx in np.where(y == val)[0]:
+            if x[idx] > largest_x:
+                largest_x = x[idx]
+                current_idx = idx
+        idx = current_idx
+    else:
+        idx = np.where(y == val)[0][0]
+
+    xy = np.concatenate((xy, xy))[idx : idx + len(xy)]
+    return xy
