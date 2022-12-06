@@ -2,11 +2,10 @@
 """
 Created on Thu Mar 11 08:23:22 2021
 
-@author: trang.le
+@author: trangle1302
 
 This code takes in images and cell masks and return single cell shapes
 """
-import imaplib
 import os
 import skimage
 import imageio
@@ -14,50 +13,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import gzip
-from descartes import PolygonPatch
+import sys
+sys.path.append("..") 
 from utils.helpers import (
     read_from_json,
-    geojson_to_masks,
     watershed_lab,
     watershed_lab2,
     rgb_2_gray_unique,
     bbox_iou
+)
+
+from utils.geojson_helpers import (
+    geojson_to_masks,
+    plot_complete_mask
 )
 import requests
 from requests.auth import HTTPBasicAuth
 import io
 import glob
 import pickle 
-from skimage.segmentation import clear_border
 from tqdm import tqdm
 import multiprocessing
 from joblib import Parallel, delayed
-import cv2
-from skimage.morphology import erosion, square, dilation
-from sklearn.metrics import jaccard_similarity_score
- 
-
-
-def plot_complete_mask(json_path):
-    mask = read_from_json(json_path)
-    img_size = (
-        mask["bbox"][2] - mask["bbox"][0] + 1,
-        mask["bbox"][3] - mask["bbox"][1] + 1,
-    )
-    img = np.zeros(img_size)
-    fig, ax = plt.subplots(1, 1, figsize=(20, 20))
-    ax.imshow(img)
-    for feature in mask["features"]:
-        label = int(feature["properties"]["cell_idx"]) + 1
-        coords = feature["geometry"]
-        ax.add_patch(PolygonPatch(coords))
-    ax.axis("off")
-    plt.tight_layout()
-    #fig.savefig("C:/Users/trang.le/Desktop/tmp.png", bbox_inches="tight")
-
-    # img = imageio.imread('C:/Users/trang.le/Desktop/tmp.png')
-    # plt.imshow(img)
-
 
 def get_cell_nuclei_masks(image_id, cell_json, base_url):
     mask_dict = geojson_to_masks(cell_json, mask_types=["labels"])
@@ -85,7 +62,7 @@ def get_cell_nuclei_masks(image_id, cell_json, base_url):
     
 def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, rm_border=True, remove_size=100, plot=False):
     if rm_border:
-        nuclei_mask = clear_border(nuclei_mask)
+        nuclei_mask = skimage.segmentation.clear_border(nuclei_mask)
         keep_value = np.unique(nuclei_mask)
         borderedcellmask = np.array([[x_ in keep_value for x_ in x] for x in cell_mask]).astype('uint8')
         cell_mask = cell_mask*borderedcellmask
@@ -105,8 +82,8 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_p
         mask[mask != region_c.label] = 0
         mask[mask == region_c.label] = 1
         if True: #erose and dilate to remove the small line
-            mask = erosion(mask,square(5))
-            mask = dilation(mask,square(5))
+            mask = skimage.morphology.erosion(mask, skimage.morphology.square(5))
+            mask = skimage.morphology.dilation(mask, skimage.morphology.square(5))
             #mask = dilation(mask,square(3))
 
         mask_n = nuclei_mask[minr:maxr, minc:maxc].astype(np.uint8)
@@ -141,7 +118,7 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_p
         imageio.imwrite(f"{save_path}{region_c.label}.png", data)
 
 
-def get_cell_nuclei_masks2(encoded_image_id):
+def get_cell_nuclei_masks2(encoded_image_id, encoded_image_dir):
     cell_mask_ = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_mask.png')
     cell_regionprops = skimage.measure.regionprops(cell_mask_)
 
@@ -219,10 +196,10 @@ def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytoo
             matched_ID += [int(highest_match)]
     assert set(np.unique(nuclei_mask)) == set(np.unique(cell_mask))
     
-    cell_mask_ = erosion(nuclei_mask, square(3)) + cell_mask
+    cell_mask_ = skimage.morphology.erosion(nuclei_mask, skimage.morphology.square(3)) + cell_mask
     # remove small patches
-    cell_mask_ = erosion(cell_mask_, square(5))
-    cell_mask_ = dilation(cell_mask_, square(5))
+    cell_mask_ = skimage.morphology.erosion(cell_mask_, skimage.morphology.square(5))
+    cell_mask_ = skimage.morphology.dilation(cell_mask_, skimage.morphology.square(5))
     protein = imageio.imread(f"{parent_dir}/{img_id}_w4_Rescaled.tif")
     return cell_mask_, nuclei_mask, protein
 
