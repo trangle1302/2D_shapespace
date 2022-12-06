@@ -3,12 +3,12 @@ import sys
 sys.path.append("..") 
 from imageio import imread, imwrite
 import numpy as np
-from utils import helpers, image_warp
+from utils import helpers
 import matplotlib.pyplot as plt
 from skimage.morphology import convex_hull_image
 from scipy.ndimage import rotate
 from skimage.transform import resize
-from utils import TPSpline
+from warps import TPSpline, image_warp
 import json
 import pandas as pd
 from tqdm import tqdm
