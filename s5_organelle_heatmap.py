@@ -3,11 +3,13 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import argparse
-from utils import plotting, parameterize
+from utils import plotting
 import glob
 import matplotlib.pyplot as plt
-from utils.parameterize import get_coordinates
+from warps.parameterize import get_coordinates
 import json
+
+from warps import parameterize
 
 LABEL_TO_ALIAS = {
   0: 'Nucleoplasm',
