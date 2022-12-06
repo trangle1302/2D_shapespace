@@ -1,12 +1,14 @@
-from coefs import alignment
+import sys
+sys.path.append("..")
+from coefs import alignment,coefs
 import cv2
 import numpy as np
-from utils import coefs, helpers
+from utils import helpers
 import matplotlib.pyplot as plt
 from skimage.measure import find_contours
 from skimage.morphology import convex_hull_image
 from scipy.ndimage import center_of_mass, rotate
-from utils import TPSpline
+from warps import TPSpline
 
 def find_landmarks(nuclei, cell, n_points=32, border_points = False):
     assert nuclei.shape == cell.shape
