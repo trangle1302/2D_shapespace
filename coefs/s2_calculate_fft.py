@@ -1,9 +1,8 @@
 import os
-from utils.parameterize import get_coordinates
-import coefs
 import sys
 sys.path.append("..") 
-from coefs import alignment
+from warps.parameterize import get_coordinates
+from coefs import alignment, coefs
 from pathlib import Path
 import numpy as np
 import glob
