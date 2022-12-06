@@ -1,7 +1,9 @@
 import os
+import sys
+sys.path.append("..") 
 from imageio import imread, imwrite
 import numpy as np
-from utils import helpers, alignment, image_warp
+from utils import helpers, image_warp
 import matplotlib.pyplot as plt
 from skimage.morphology import convex_hull_image
 from scipy.ndimage import rotate
@@ -55,8 +57,8 @@ def main():
     print(nu_contour.shape, cell_contour.shape)
     
     pts_avg = np.vstack([np.asarray(nu_centroid),
-                        alignment.realign_contour_startpoint(nu_contour),
-                        alignment.realign_contour_startpoint(cell_contour)])
+                        helpers.realign_contour_startpoint(nu_contour),
+                        helpers.realign_contour_startpoint(cell_contour)])
     print(pts_avg.max(), pts_avg.min(), cell_contour[:,0].max(), cell_contour[:,1].max())
     shape_x, shape_y = np.round(cell_contour[:,0].max()).astype('int'), np.round(cell_contour[:,1].max()).astype('int')
 
