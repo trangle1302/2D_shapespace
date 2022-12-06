@@ -1,13 +1,12 @@
 import os
+from coefs import alignment, coefs
 os.chdir("C:/Users/trang.le/Desktop/2D_shape_space")
 import numpy as np
 from PIL import Image, ImageSequence
 from matplotlib import pyplot as plt
-from utils import parameterize, plotting, helpers, dimreduction, coefs, alignment
+from utils import parameterize, plotting
 from skimage.morphology import dilation, square, erosion
-from imageio import imsave, imread
 import pandas as pd
-import scipy.cluster.hierarchy as spc
 import seaborn as sns
 
 LABEL_TO_ALIAS = {
