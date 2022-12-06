@@ -1,11 +1,12 @@
 import os
 from coefs import alignment, coefs
+from warps import parameterize
 os.chdir("C:/Users/trang.le/Desktop/2D_shape_space")
 import numpy as np
 from imageio import imwrite
 from PIL import Image, ImageSequence
 from matplotlib import pyplot as plt
-from utils import parameterize, plotting
+from utils import plotting
 from skimage.morphology import dilation, square, erosion
 import pandas as pd
 import seaborn as sns

@@ -1,7 +1,8 @@
 import os
 from coefs import alignment, coefs
+from shapemodes import dimreduction
 from warps.parameterize import get_coordinates
-from utils import plotting, helpers, dimreduction
+from utils import plotting, helpers
 from sklearn.decomposition import PCA
 from pathlib import Path
 import pandas as pd
