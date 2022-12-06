@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append("..") 
 from coefs import coefs
 from utils import plotting
 from pathlib import Path
