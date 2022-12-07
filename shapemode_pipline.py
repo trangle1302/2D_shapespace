@@ -58,7 +58,7 @@ df_.columns = [f'coef{i}' for i in range(len(df_.columns))]
 save_path = os.path.join(d.cwd(),"fft",f"fourier_ccentroid_fft_{n_coef}.txt")
 df_.to_csv(save_path)
 df = pd.read_csv(save_path, index_col=0)
-df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
+df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
 """
 compare = (df_ == df)      # Dataframe of True/False
 compare.all()              # By column, True if all values are equal

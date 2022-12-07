@@ -89,7 +89,7 @@ if __name__ == "__main__":
                 continue
             assert sc_path == data_shifts[0]
 
-            ori_fft = [np.complex(s.replace('i', 'j')) for s in data_[1:]]# applymap(lambda s: np.complex(s.replace('i', 'j'))) 
+            ori_fft = [complex(s.replace('i', 'j')) for s in data_[1:]]# applymap(lambda s: complex(s.replace('i', 'j'))) 
             
             shifts = dict()
             shifts["theta"] = np.float(data_shifts[1])

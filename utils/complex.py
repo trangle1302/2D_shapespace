@@ -38,7 +38,7 @@ def read_complex_df(fft_dir="", n_coef=128, n_samples = 10000):
                 lines[data_[0]]=data_[1:]
 
     df = pd.DataFrame(lines).transpose()
-    df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
+    df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
 
     return df
     
