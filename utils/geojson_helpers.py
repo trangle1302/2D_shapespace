@@ -1,8 +1,11 @@
 
-from descartes import PolygonPatch
+import os
+import numpy as np
 import utils.annotationUtils as annotationUtils
+from utils.helpers import read_from_json
 import matplotlib.pyplot as plt
-
+from matplotlib.patches import PathPatch
+from matplotlib.path import Path
 
 def plot_complete_mask(json_path):
     mask = read_from_json(json_path)
@@ -89,3 +92,21 @@ def geojson_to_masks(
             mask_dict = borderMasks.generate(annot_dict, mask_dict)
 
     return mask_dict
+
+# 
+def PolygonPatch(polygon, **kwargs):
+    def coding(ob):
+        # The codes will be all "LINETO" commands, except for "MOVETO"s at the
+        # beginning of each subpath
+        n = len(getattr(ob, 'coords', None) or ob)
+        vals = np.ones(n, dtype=Path.code_type) * Path.LINETO
+        vals[0] = Path.MOVETO
+        return vals
+
+    vertices = np.concatenate(
+        [np.asarray(polygon.exterior)[:, :2]] +
+        [np.asarray(r)[:, :2] for r in polygon.interiors])
+    codes = np.concatenate(
+        [coding(polygon.exterior)] + [coding(r) for r in polygon.interiors])
+
+    return PathPatch(Path(vertices, codes), **kwargs)
