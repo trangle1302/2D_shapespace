@@ -133,7 +133,7 @@ def main():
         df = pd.DataFrame(lines).transpose()
 
         if fun == "fft":
-            df = df.applymap(lambda s: np.complex(s.replace('i', 'j'))) 
+            df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
         shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/{fun}"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
@@ -179,10 +179,12 @@ def main():
             pc_keep,
             scaler=None,
             complex_type=use_complex,
-            fourier_algo="efd",
+            fourier_algo=fun,
             inverse_func=inverse_func,
         )
         pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
+        
+        n_ = 20# number of random cells to plot
         cells_assigned = dict()
         for pc in pc_keep:
             pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
@@ -195,9 +197,16 @@ def main():
             #print(bin_links, len(bin_links))
             #print([len(b) for b in bin_links])
             cells_assigned[pc] = [list(b) for b in bin_links]
+            fig, ax = plt.subplots(n_, len(bin_links)) # (number of random cells, number of  bin)
+            for b in bin_links:
+                cells_ = np.random.choice(bin_links[b])
+                for i, c in enumerate(cells_):
+                    ax[i, b].imshow(plt.imread(c))
+            fig.savefig(f"{shape_mode_path}/{pc}_example_cells.png", bbox_inches=None)
         
         with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
             json.dump(cells_assigned, fp)
+        
         
         """
         if not os.path.isdir(f"{project_dir}/shapemode/organelle"):
