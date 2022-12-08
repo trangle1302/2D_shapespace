@@ -11,7 +11,7 @@ import pickle
 import os
 import sys
 sys.path.append("..") 
-from utils.coefs import find_nearest, find_centroid
+from coefficients.coefs import find_nearest, find_centroid
 
 def align_cell_nuclei_centroids(data, protein_ch, plot=False):
     """
@@ -93,6 +93,7 @@ def align_cell_major_axis(data, protein_ch, plot=True):
         ax[2].imshow(nuclei_, alpha=0.5)
         ax[2].imshow(cell_, alpha=0.5)
         ax[3].imshow(protein_ch_)
+        fig.savefig("")
     return nuclei_, cell_, 90-theta
 
 
@@ -106,8 +107,8 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
         data = np.load(im)
         pro = imread(Path(str(im).replace('.npy', '_protein.png')))
         try:
-            nuclei_, cell_, theta = align_cell_nuclei_centroids(data, pro, plot=False)
-            # nuclei, cell = align_cell_major_axis(data, pro, plot=False)
+            # nuclei_, cell_, theta = align_cell_nuclei_centroids(data, pro, plot=False)
+            nuclei, cell, theta = align_cell_major_axis(data, pro, plot=False)
             centroid = center_of_mass(nuclei_)
             # centroid = center_of_mass(cell)
             

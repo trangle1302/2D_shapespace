@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append("..") 
 from warps.parameterize import get_coordinates
-from coefs import alignment, coefs
+from coefficients import alignment, coefs
 from pathlib import Path
 import numpy as np
 import glob
@@ -13,7 +13,7 @@ import pickle
 import time
 
 
-fun = "efd"
+fun = "fft"
 if fun == "fft":
     get_coef_fun = coefs.fourier_coeffs 
     inverse_func = coefs.inverse_fft 
@@ -58,12 +58,12 @@ def calculate_fft_ccd():
     num_cores = multiprocessing.cpu_count() - 4 # save 4 core for some other processes
     inputs = tqdm(imlist)
     print(f"Processing {len(imlist)} in {num_cores} cores")
-    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun) for i in inputs)
+    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=True) for i in inputs)
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
         pickle.dump(processed_list, success_list)
 
 if __name__ == "__main__": 
     s_t = time.time()
-    #calculate_fft_hpa()
-    calculate_fft_ccd()
+    calculate_fft_hpa()
+    # calculate_fft_ccd()
     print(f"Done in {np.round((time.time()-s_t)/3600,2)} h.")
