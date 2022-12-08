@@ -92,6 +92,8 @@ def align_cell_major_axis(data, protein_ch, plot=True):
         ax[1].imshow(protein_ch)
         ax[2].imshow(nuclei_, alpha=0.5)
         ax[2].imshow(cell_, alpha=0.5)
+        center_ = center_of_mass(nuclei_)
+        ax[2].scatter(center_[1],center_[0])
         ax[3].imshow(protein_ch_)
         fig.savefig("")
     return nuclei_, cell_, 90-theta
