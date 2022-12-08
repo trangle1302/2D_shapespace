@@ -3,7 +3,7 @@ import sys
 
 from shapemodes import dimreduction
 sys.path.append("..")
-from coefs import alignment, coefs
+from coefficients import alignment, coefs
 from warps.parameterize import get_coordinates
 from utils import plotting, helpers
 from sklearn.decomposition import PCA, IncrementalPCA

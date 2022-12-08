@@ -3,7 +3,7 @@ sys.path.append("..")
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.helpers import equidistance, get_line
-from coefs import coefs
+from coefficients import coefs
 from sklearn.linear_model import LinearRegression
 from matplotlib.animation import FuncAnimation, PillowWriter
 from imageio import imread
@@ -816,3 +816,4 @@ def plot_example_cells(bin_links, n_coef=128, cells_per_bin=5, shape_coef_path="
             ax[i, b_index].axis("scaled")
     if save_path != None:
         fig.savefig(save_path, bbox_inches=None)
+        plt.close()

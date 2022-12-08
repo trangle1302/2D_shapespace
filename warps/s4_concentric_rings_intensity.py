@@ -1,7 +1,7 @@
 import os
 import sys
 sys.path.append("..") 
-from coefs import coefs
+from coefficients import coefs
 from utils import plotting
 from pathlib import Path
 import numpy as np

@@ -1,5 +1,5 @@
 import os
-from coefs import alignment, coefs
+from coefficients import alignment, coefs
 from shapemodes import dimreduction
 from warps.parameterize import get_coordinates
 from utils import plotting, helpers
