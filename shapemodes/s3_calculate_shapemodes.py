@@ -203,6 +203,7 @@ def main():
                 for i, c in enumerate(cells_):
                     ax[i, b_index].imshow(plt.imread(c.replace(".npy","_protein.png")))
             fig.savefig(f"{shape_mode_path}/{pc}_example_cells.png", bbox_inches=None)
+            plt.close()
         
         with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
             json.dump(cells_assigned, fp)
