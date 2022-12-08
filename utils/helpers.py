@@ -511,14 +511,15 @@ def realign_contour_startpoint(xy):
 
 def get_line(file_path, search_text="", mode="first"):
     # Function to read line(s) containing search_text in a very large txt file (x GB)
-    with open(file_path, "rb") as f:        
-        if mode == "first":
-            for line in f:
-                if line.find(search_text) != -1 :
-                    return line
-        elif mode == "all":
-            l_results = []
-            for line in f:
-                if line.find(search_text) != -1 :
-                    l_results += [line]
-            return l_results
+    with open(file_path, "r") as F:
+        lines = F.readlines()
+    if mode == "first":
+        for line in lines:
+            if line.find(search_text) != -1 :
+                return line
+    elif mode == "all":
+        l_results = []
+        for line in lines:
+            if line.find(search_text) != -1 :
+                l_results += [line]
+        return l_results
