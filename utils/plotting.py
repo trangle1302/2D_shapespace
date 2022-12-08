@@ -1,7 +1,9 @@
+import sys
+sys.path.append("..")
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.helpers import equidistance
-from utils import coefs
+from utils.helpers import equidistance, get_line
+from coefs import coefs
 from sklearn.linear_model import LinearRegression
 from matplotlib.animation import FuncAnimation, PillowWriter
 from imageio import imread
@@ -9,8 +11,6 @@ from scipy.ndimage import rotate
 from more_itertools import windowed
 from skimage import exposure
 from skimage.filters import threshold_mean
-import sys
-sys.path.append("..")
 from warps import parameterize
 
 class PlotShapeModes:
@@ -796,3 +796,23 @@ def _plot_protein_through_shape_variation_gif(pc_name, nu_coords, mem_coords, pr
         writer=writer,
     )
     plt.close()
+
+
+def plot_example_cells(bin_links, n_coef=128, cells_per_bin=5, shape_coef_path="", save_path=None):
+    plt.figure()
+    fig, ax = plt.subplots(cells_per_bin, len(bin_links),sharex=True,sharey=True) # (number of random cells, number of  bin)
+    for b_index, b_ in enumerate(bin_links):
+        cells_ = np.random.choice(b_, cells_per_bin)
+        for i, c in enumerate(cells_):
+            fft_coefs = get_line(shape_coef_path, search_text=c, mode="first")
+            f_coef_n = fft_coefs.split(",")[1:n_coef*2+1]
+            f_coef_n = [complex(s.replace('i', 'j')) for s in f_coef_n]
+            f_coef_c = fft_coefs.split(",")[n_coef*2+1:]
+            f_coef_c = [complex(s.replace('i', 'j')) for s in f_coef_c]
+            ix_n, iy_n = coefs.inverse_fft(f_coef_n[0:n_coef],f_coef_n[n_coef:])
+            ix_c, iy_c = coefs.inverse_fft(f_coef_c[0:n_coef],f_coef_c[n_coef:])
+            ax[i, b_index].plot(ix_n.real, iy_n.real)
+            ax[i, b_index].plot(ix_c.real, iy_c.real)
+            ax[i, b_index].axis("scaled")
+    if save_path != None:
+        fig.savefig(save_path, bbox_inches=None)
