@@ -1,8 +1,7 @@
 import os
 import sys
-
-from shapemodes import dimreduction
 sys.path.append("..")
+from shapemodes import dimreduction
 from coefficients import alignment, coefs
 from warps.parameterize import get_coordinates
 from utils import plotting, helpers
@@ -46,7 +45,7 @@ LABEL_TO_ALIAS = {
 
 all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
 #%% Coefficients
-fun = "efd"
+fun = "fft"
 if fun == "fft":
     get_coef_fun = coefs.fourier_coeffs 
     inverse_func = coefs.inverse_fft 
@@ -84,17 +83,18 @@ def main():
     fft_dir = f"{project_dir}/fftcoefs/{fun}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
     
-    sampled_intensity_dir = Path(f"{project_dir}/sampled_intensity") #Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
+    protein_dir = Path(f"{project_dir}/cell_masks") #Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
     #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
     mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
     mappings = mappings[mappings['atlas_name']=='U-2 OS']
     #print(mappings.target.value_counts())
-    print(mappings.columns)
-    id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
-    mappings["Link"] =[f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy" for id in mappings.id]
+    print(mappings.shape, mappings.columns)
+    id_with_intensity = glob.glob(f"{protein_dir}/*.png")
+    mappings["Link"] =[f"{protein_dir}/{id.split('_',1)[1]}_protein.png" for id in mappings.id]
     mappings = mappings[mappings.Link.isin(id_with_intensity)]
-    print(mappings.target.value_counts())
-
+    print(mappings.shape, mappings.target.value_counts())
+    print(mappings.Link[:3].values)
+    
     with open(fft_path) as f:
         count = sum(1 for _ in f)
     
@@ -127,11 +127,11 @@ def main():
         lines = {k:lines[k] for k in lines.keys() if os.path.basename(k).split(".")[0] not in rm_cells}
         print(len(lines))
         keep_cells = [cell_id.split("_",1)[1] for cell_id in mappings.id]
-        print(f"Removing border cells leftover") 
+        print(f"Removing border cells leftover: {len(keep_cells)}") 
         lines = {k:lines[k] for k in lines.keys() if os.path.basename(k).split(".")[0] in keep_cells}
 
         df = pd.DataFrame(lines).transpose()
-
+        print(df.index[0])
         if fun == "fft":
             df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
         shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/{fun}"
@@ -184,7 +184,7 @@ def main():
         )
         pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
         
-        n_ = 20# number of random cells to plot
+        n_ = 10# number of random cells to plot
         cells_assigned = dict()
         for pc in pc_keep:
             pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
@@ -198,10 +198,10 @@ def main():
             #print([len(b) for b in bin_links])
             cells_assigned[pc] = [list(b) for b in bin_links]
             fig, ax = plt.subplots(n_, len(bin_links)) # (number of random cells, number of  bin)
-            for b in bin_links:
-                cells_ = np.random.choice(bin_links[b])
+            for b_index, b_ in enumerate(bin_links):
+                cells_ = np.random.choice(b_, n_)
                 for i, c in enumerate(cells_):
-                    ax[i, b].imshow(plt.imread(c))
+                    ax[i, b_index].imshow(plt.imread(c.replace(".npy","_protein.png")))
             fig.savefig(f"{shape_mode_path}/{pc}_example_cells.png", bbox_inches=None)
         
         with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
