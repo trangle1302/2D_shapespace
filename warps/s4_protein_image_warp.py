@@ -70,7 +70,7 @@ def main():
     mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
     
     pc_cells = cells_assigned['PC1']
-    merged_bins = [[0,1,2,3],[4,5,6],[7,8,9,10]]
+    merged_bins = [[0,1,2,3,4],[5],[6,7,8,9,10]]
     #imlist = pc_cells[5]
     #print(imlist[:3])
 
@@ -119,20 +119,22 @@ def main():
             warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
             imwrite(f"{save_dir}/{img_id}.png", (warped*255).astype(np.uint8))
             #print(warped.max(), warped.dtype)
-            fig, ax = plt.subplots(1,4, figsize=(15,30))
-            ax[0].imshow(nu_, alpha = 0.15)
-            ax[0].imshow(cell_, alpha = 0.15)
-            ax[0].imshow(img, alpha=0.3)
-            ax[0].set_title('original shape+protein')
-            ax[1].imshow(img_resized)
-            ax[1].scatter(pts_ori[:,1], pts_ori[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
-            ax[1].set_title('resized protein channel')
-            ax[2].imshow(warped1)
-            ax[2].scatter(pts_convex[:,1], pts_convex[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
-            ax[2].set_title('ori_shape to midpoint')
-            ax[3].imshow(warped)
-            ax[3].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
-            ax[3].set_title('midpoint to avg_shape')
+            fig, ax = plt.subplots(1,5, figsize=(15,30), sharex=True, sharey=True)
+            ax[0].imshow(nu_, alpha = 0.3)
+            ax[0].imshow(cell_, alpha = 0.3)
+            ax[0].set_title('original shape')            
+            ax[1].imshow(nu_resized, alpha = 0.3)
+            ax[1].imshow(cell_resized, alpha = 0.3)
+            ax[1].set_title('resized shape+protein')
+            ax[2].imshow(img_resized)
+            ax[2].scatter(pts_ori[:,1], pts_ori[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+            ax[2].set_title('resized protein channel')
+            ax[3].imshow(warped1)
+            ax[3].scatter(pts_convex[:,1], pts_convex[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+            ax[3].set_title('ori_shape to midpoint')
+            ax[4].imshow(warped)
+            ax[4].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+            ax[4].set_title('midpoint to avg_shape')
             fig.savefig(f"{plot_dir}/{img_id}.png", bbox_inches='tight')
     print(f"Finished in {(time.time() - s)/60} min")
 
