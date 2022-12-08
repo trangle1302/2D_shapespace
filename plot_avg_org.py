@@ -1,5 +1,5 @@
 import os
-from coefs import alignment, coefs
+from coefficients import alignment, coefs
 from warps import parameterize
 os.chdir("C:/Users/trang.le/Desktop/2D_shape_space")
 import numpy as np
@@ -186,6 +186,7 @@ def sample_covar_matrix(mat1, mat2):
     corr : 
 
     """
+    corr = np.cov(mat1)
     return corr
 
 def investigate_organell_pc_var():
