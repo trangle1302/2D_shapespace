@@ -118,7 +118,7 @@ def align_cell_major_axis_polarized(data, protein_ch, plot=True):
         nuclei_ = np.fliplr(nuclei_)
         protein_ch_ = np.fliplr(protein_ch_)
 
-    if True:
+    if plot:
         center_ = center_of_mass(nuclei_)
         fig, ax = plt.subplots(1, 4, figsize=(8, 4))
         ax[0].imshow(nuclei, alpha=0.5)
@@ -206,7 +206,8 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
     pro = imread(Path(str(im).replace('.npy', '_protein.png')))
     try:
         # nuclei_, cell_, theta = align_cell_nuclei_centroids(data, pro, plot=False)
-        nuclei_, cell_, theta = align_cell_major_axis(data, pro, plot=False)
+        # nuclei_, cell_, theta = align_cell_major_axis(data, pro, plot=False)
+        nuclei_, cell_, theta = align_cell_major_axis_polarized(data, pro, plot=False)
         centroid = center_of_mass(nuclei_)
         # centroid = center_of_mass(cell)
         
@@ -234,7 +235,9 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
             return im, 0
 
         cell_coords = cell_coords_.copy()
+        cell_coords = helpers.realign_contour_startpoint(cell_coords)
         nuclei_coords = nuclei_coords_.copy()
+        nuclei_coords = helpers.realign_contour_startpoint(nuclei_coords)
         if plot:
             fig, ax = plt.subplots(1, 3, figsize=(8, 4))
             ax[0].imshow(nuclei, alpha=0.5)
@@ -246,8 +249,8 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
             ax[2].plot(cell_coords[:, 0], cell_coords[:, 1])
             ax[2].scatter(cell_coords[0, 0], cell_coords[0, 1], color="r")
             ax[2].axis("scaled")
-            plt.show()
             plt.savefig(f"{save_dir}/{os.path.basename(im)}.png")
+            plt.close()
 
         fcoef_n, e_n = func(nuclei_coords, n=n_coef)
         fcoef_c, e_c = func(cell_coords, n=n_coef)
