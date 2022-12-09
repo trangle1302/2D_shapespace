@@ -18,7 +18,7 @@ def main():
     s = time.time()
     cell_line = 'U-2 OS'
     project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
-    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/0"  
+    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/ratio8"  
     fft_dir = f"{project_dir}/fftcoefs"  
     data_dir = f"{project_dir}/cell_masks" 
     save_dir = f"{project_dir}/morphed_protein_avg" 
