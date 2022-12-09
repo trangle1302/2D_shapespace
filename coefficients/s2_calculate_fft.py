@@ -34,6 +34,7 @@ def calculate_fft_hpa():
     log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
 
     imlist= glob.glob(f"{save_dir}/*.npy")
+    imlist = [im for im in imlist if os.path.getsize(im)>0]
     
     num_cores = multiprocessing.cpu_count() - 4 # save 4 core for some other processes
     inputs = tqdm(imlist)
@@ -54,7 +55,7 @@ def calculate_fft_ccd():
     abids = os.listdir(sc_mask_dir)
     imlist = [glob.glob(f"{sc_mask_dir}/{ab}/*.npy") for ab in abids]
     imlist = [item for sublist in imlist for item in sublist]
-    
+    imlist = [im for im in imlist if os.path.getsize(im)>0]
     num_cores = multiprocessing.cpu_count() - 4 # save 4 core for some other processes
     inputs = tqdm(imlist)
     print(f"Processing {len(imlist)} in {num_cores} cores")
