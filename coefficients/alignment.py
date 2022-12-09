@@ -202,7 +202,10 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
     return coef_df, names, shifts
 
 def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
-    data = np.load(im)
+    try:
+        data = np.load(im)
+    except:
+        print(f"Check file size or format: {im}")
     pro = imread(Path(str(im).replace('.npy', '_protein.png')))
     try:
         # nuclei_, cell_, theta = align_cell_nuclei_centroids(data, pro, plot=False)
