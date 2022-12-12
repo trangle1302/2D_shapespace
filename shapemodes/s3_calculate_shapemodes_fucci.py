@@ -72,20 +72,20 @@ def get_memory():
 
 def main():
     n_coef = 128
-    n_samples = -1 #5000
+    n_samples = -1#5000
     n_cv = 1
-    cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
-    # project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
+    cell_line = "S-BIAD34"#"U-2 OS"
+    #project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
     fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized"
     log_dir = f"{project_dir}/logs"
     #fft_dir = f"{project_dir}/fftcoefs/{fun}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
-    
+    """
     protein_dir = Path(f"{project_dir}/cell_masks") #Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
-    mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-    #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
     mappings = mappings[mappings['atlas_name']=='U-2 OS']
     #print(mappings.target.value_counts())
     print(mappings.shape, mappings.columns)
@@ -94,10 +94,10 @@ def main():
     mappings = mappings[mappings.Link.isin(id_with_intensity)]
     print(mappings.shape, mappings.target.value_counts())
     print(mappings.Link[:3].values)
-    
+    """
     with open(fft_path) as f:
         count = sum(1 for _ in f)
-    print(f"Number of cells with fftcoefs = {count}")
+    
     for i in range(n_cv):
         with open(fft_path, "r") as file:
             lines = dict()
@@ -105,7 +105,6 @@ def main():
                 specified_lines = range(count)
             else:
                 specified_lines = random.sample(range(count), n_samples) # 10k cells/ CV
-            print(f"Loading {len(specified_lines)} lines")
             # loop over lines in a file
             for pos, l_num in enumerate(file):
                 # check if the line number is specified in the lines to read array
@@ -120,22 +119,12 @@ def main():
                             continue
                     #data_dict = {data_dict[0]:data_dict[1:]}
                     lines[data_[0]]=data_[1:]
-
-        cell_nu_ratio = pd.read_csv(f"{project_dir}/cell_nu_ratio.txt")
-        cell_nu_ratio.columns = ["path", "name", "nu_area","cell_area", "ratio"]
-        rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].name.to_list()
-        print(f"Large cell-nu ratio cells to remove: {len(rm_cells)}") # 6264 cells for ratio 10, and 16410 for ratio 8
-        lines = {k:lines[k] for k in lines.keys() if os.path.basename(k).split(".")[0] not in rm_cells}
-        print(len(lines))
-        keep_cells = [cell_id.split("_",1)[1] for cell_id in mappings.id]
-        print(f"Removing border cells leftover: {len(keep_cells)}") 
-        lines = {k:lines[k] for k in lines.keys() if os.path.basename(k).split(".")[0] in keep_cells}
-
+        
         df = pd.DataFrame(lines).transpose()
         print(df.index[0])
         if fun == "fft":
             df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
-        shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized"
+        shape_mode_path = f"{project_dir}/shapemode/fft_major_axis_polarized"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
         
@@ -202,7 +191,11 @@ def main():
             for b_index, b_ in enumerate(bin_links):
                 cells_ = np.random.choice(b_, n_)
                 for i, c in enumerate(cells_):
-                    ax[i, b_index].imshow(plt.imread(c.replace("/data/2Dshapespace","/scratch/users/tle1302/2Dshapespace").replace(".npy","_protein.png")))
+                    pro_path = c.replace("/data/2Dshapespace","/scratch/users/tle1302").replace(".npy","_protein.png")
+                    if os.path.exists(pro_path):
+                        ax[i, b_index].imshow(plt.imread(pro_path))
+                    else:
+                        continue
             fig.savefig(f"{shape_mode_path}/{pc}_example_cells.png", bbox_inches=None)
             plt.close()
         

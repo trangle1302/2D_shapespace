@@ -16,3 +16,4 @@ module load py-scikit-image/0.17.2_py36
 pip install tqdm
 pip install more-itertools
 python3 s3_calculate_shapemodes.py
+#python3 s3_calculate_shapemodes_fucci.py
