@@ -109,7 +109,7 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_p
             plt.imshow(mask_n, alpha=0.5)
             plt.axis("off")
             plt.tight_layout()
-            plt.savefig(f"{save_path}{region_c.label}.jpg")
+            plt.savefig(f"{save_path}{region_c.label}.jpg", bbox_inches="tight")
 
         imageio.imwrite(f"{save_path}{region_c.label}_protein.png", pr)
         data = np.stack((mask, mask_n))
@@ -241,7 +241,7 @@ def get_single_cell_mask2(cell_mask, nuclei_mask, protein, keep_cell_list, save_
             plt.imshow(mask_n, alpha=0.5)
             plt.axis("off")
             plt.tight_layout()
-            plt.savefig(f"{save_path}{region_c.label}.jpg")
+            plt.savefig(f"{save_path}{region_c.label}.jpg", bbox_inches="tight")
 
         imageio.imwrite(f"{save_path}{region_c.label}_protein.png", pr)
         data = np.stack((mask, mask_n))

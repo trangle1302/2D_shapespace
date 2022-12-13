@@ -215,7 +215,7 @@ def investigate_organell_pc_var():
             ax[(i-1) //6, (i-1) % 6].set_title(f"PC{i}")
         fig.suptitle(org)
         plt.tight_layout()
-        plt.savefig(f"{save_dir}/allPC_{org}.png")
+        plt.savefig(f"{save_dir}/allPC_{org}.png", bbox_inches="tight")
     
     # Plot all organelles for each PC
     for i in range(1,13):
@@ -231,7 +231,7 @@ def investigate_organell_pc_var():
         fig.suptitle(f"PC{i}")
         plt.axis("off")
         plt.tight_layout()
-        plt.savefig(f"{save_dir}/allorg_PC{i}.png")
+        plt.savefig(f"{save_dir}/allorg_PC{i}.png", bbox_inches="tight")
         """
         plt.tight_layout()
             fig, ax = plt.subplots(10,1)

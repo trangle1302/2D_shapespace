@@ -116,7 +116,7 @@ if __name__ == "__main__":
             for ii in np.unique(idx):
                 p = sns.heatmap(covar_mat.iloc[np.where(idx==ii)[0],np.where(idx==ii)[0]], 
                             cmap='RdBu', vmin=-1, vmax=1)
-                p.get_figure().savefig(f"{save_dir}/PC{PC}_bin{i}_cluster{ii}.png")
+                p.get_figure().savefig(f"{save_dir}/PC{PC}_bin{i}_cluster{ii}.png", bbox_inches="tight")
                 plt.close()
             
             # Plot
