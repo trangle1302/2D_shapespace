@@ -144,7 +144,7 @@ class PlotShapeModes:
         plt.plot(ix_n, iy_n,"#8ab0cf")
         plt.plot(ix_c, iy_c,"m")
         plt.axis("scaled")
-        plt.savefig(f"{save_dir}/Avg_cell.jpg")
+        plt.savefig(f"{save_dir}/Avg_cell.jpg", bbox_inches="tight")
         plt.close()
         
     def get_equipoints(self):
@@ -502,7 +502,7 @@ def display_scree_plot(pca, dark=True, save_dir="C:/Users/trang.le/Desktop/2D_sh
     plt.xlabel("Number of PCs")
     plt.ylabel("Percentage explained variance")
     plt.title("Scree plot")   
-    plt.savefig(f"{save_dir}/PCA_scree.jpg")
+    plt.savefig(f"{save_dir}/PCA_scree.jpg", bbox_inches="tight")
 
     # plt.hlines(y=70, xmin = 0, xmax = len(scree), linestyles='dashed', alpha=0.5)
     # plt.vlines(x=np.argmax(scree.cumsum()>70), ymin = 0, ymax = 100, linestyles='dashed', alpha=0.5)
@@ -548,7 +548,7 @@ def plot_interpolations(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     for (xi, yi) in zip(x_,y_):
         ax[1,2].plot(xi, yi, "--")
     ax[1,2].axis("scaled")
-    plt.savefig(save_path)
+    plt.savefig(save_path, bbox_inches="tight")
     plt.close()
     
 def plot_interpolation2(shape_path, pro_path,shift_dict, save_path, ori_fft, reduced_fft, n_coef, inverse_func):
@@ -579,7 +579,7 @@ def plot_interpolation2(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     for (xi, yi) in zip(x_,y_):
         ax[2].plot(xi, yi, "--")
     ax[2].axis("scaled")
-    #plt.savefig(save_path)
+    #plt.savefig(save_path, bbox_inches="tight")
     plt.close()
 
 def plot_interpolation3(shape_path, pro_path,shift_dict, save_path, ori_fft, reduced_fft, n_coef, inverse_func):
@@ -632,7 +632,7 @@ def plot_interpolation3(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     ax[3].axis("scaled")
     ax[3].set_facecolor('#191919')
     plt.tight_layout()
-    plt.savefig(save_path)
+    plt.savefig(save_path, bbox_inches="tight")
     plt.close()
 
 def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func, fourier_algo = "fft"):

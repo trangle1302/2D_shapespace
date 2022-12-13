@@ -253,7 +253,7 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
             ax[2].plot(cell_coords[:, 0], cell_coords[:, 1])
             ax[2].scatter(cell_coords[0, 0], cell_coords[0, 1], color="r")
             ax[2].axis("scaled")
-            plt.savefig(f"{save_dir}/{os.path.basename(im)}.png")
+            plt.savefig(f"{save_dir}/{os.path.basename(im)}.png", bbox_inches="tight")
             plt.close()
 
         fcoef_n, e_n = func(nuclei_coords, n=n_coef)

@@ -112,13 +112,13 @@ if __name__ == "__main__":
             for ii in np.unique(idx):
                 p = sns.heatmap(covar_mat.iloc[np.where(idx==ii)[0],np.where(idx==ii)[0]], 
                             cmap='RdBu', vmin=-1, vmax=1)
-                p.get_figure().savefig(f"{save_dir}/PC{PC}_bin{i}_cluster{ii}.png")
+                p.get_figure().savefig(f"{save_dir}/PC{PC}_bin{i}_cluster{ii}.png", bbox_inches="tight")
                 plt.close()
             
             # Plot
             p = sns.clustermap(corr, method="complete", cmap='RdBu', annot=True, 
                annot_kws={"size": 3}, vmin=-1, vmax=1, figsize=(20,20))
-            p.savefig(f"{save_dir}/PC{PC}_{i}.png")
+            p.savefig(f"{save_dir}/PC{PC}_{i}.png", bbox_inches="tight")
             # covar matrix is symmetric, so getting row dendogram is the same as col dendogram
             dendogram = p.dendrogram_row.dendrogram
             Z = p.dendrogram_col.linkage
