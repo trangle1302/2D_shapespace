@@ -153,10 +153,16 @@ def main():
             pca = PCA(n_components=df_.shape[1])
             pca.fit(df_)
             plotting.display_scree_plot(pca, save_dir=shape_mode_path)
-
-        matrix_of_features_transform = pca.transform(df_)
+        
+        scree = pca.explained_variance_ratio_ * 100
+        for percent in np.arange(70,95,5):
+            n_pc = np.sum(scree.cumsum() < percent) + 1
+            print(f"{n_pc} to explain {percent} % variance")
+        n_pc = np.sum(scree.cumsum() < 75) + 1
         pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
-        pc_keep = [f"PC{c}" for c in range(1, 1 + 12)]
+        pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
+        
+        matrix_of_features_transform = pca.transform(df_)
         df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
         df_trans.columns = pc_names
         df_trans.index = df.index
