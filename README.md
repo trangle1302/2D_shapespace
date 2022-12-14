@@ -8,7 +8,7 @@ Steps for the pipelines:
 ## s0 - segmentation
 Either manual segmentation, or segmentation by any DL model (in this case HPACellSegmentator).
 
-## s1 - process image masks of multiple cells to single cell masks of cell and nucleus, and into .npy
+## s1 - [segmentation](https://github.com/trangle1302/2D_shapespace/tree/master/segmentation) process image masks of multiple cells to single cell masks of cell and nucleus, and into .npy
 Removing cells where nucleus touching the borders. Cells where cell segmentation touching the bordered are still kept (maybe do a percentage rules to remove them in the future).
 ```sh
 python s1_get_single_cell_shapes.py
@@ -33,6 +33,7 @@ python s3_calculate_shapemodes.py
 
 ```sh
 python s4_concentric_rings_intensity.py
+python s4_protein_image_warp.py
 ```
 
 ## s5 - Organelle distribution and relation with each other
