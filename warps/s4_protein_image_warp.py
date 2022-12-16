@@ -18,8 +18,8 @@ def main():
     s = time.time()
     cell_line = 'U-2 OS'
     project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
-    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/ratio8"  
-    fft_dir = f"{project_dir}/fftcoefs"  
+    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized"  
+    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized"  
     data_dir = f"{project_dir}/cell_masks" 
     save_dir = f"{project_dir}/morphed_protein_avg" 
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
