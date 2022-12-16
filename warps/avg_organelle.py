@@ -77,7 +77,7 @@ def avg_cell_landmarks(file_path):
 def main():   
     s = time.time()
     cell_line = 'U-2 OS'
-    project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
+    project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
     shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized"  
     fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized"  
     data_dir = f"{project_dir}/cell_masks" 
@@ -97,7 +97,8 @@ def main():
     mappings = mappings[mappings.atlas_name=="U-2 OS"]
     mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
     
-    pc_cells = cells_assigned['PC1']
+    PC = "PC1"
+    pc_cells = cells_assigned[PC]
     merged_bins = [[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10]]
     org_percent = {}
     for i, bin_ in enumerate(merged_bins):
@@ -123,35 +124,42 @@ def main():
         df_sl = mappings[mappings.cell_idx.isin(ls)]
         df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
         #org_percent[f"bin{i}"] = df_sl.target.value_counts().to_dict()
-        print(df_sl.target.value_counts())
+        #print(df_sl.target.value_counts())
         print(f"processing {df_sl.shape[0]} cells")
-        """
-        for img_id in tqdm(ls):
-            for line in lines:
-                if line.find(img_id) != -1 :
-                    vals = line.strip().split(',')
-                    break
-            theta = np.float(vals[1])
-            shift_c = (np.float(vals[2].strip('(')),(np.float(vals[3].strip(')'))))
-            
-            cell_shape = np.load(f"{data_dir}/{img_id}.npy")
-            img = imread(f"{data_dir}/{img_id}_protein.png")
-            #print(np.unique(cell_shape), img.dtype, img.max())
-            
-            img = rotate(img, theta)
-            nu_ = rotate(cell_shape[1,:,:], theta)
-            cell_ = rotate(cell_shape[0,:,:], theta)
-            img_resized = resize(img, (shape_x, shape_y), mode='constant')
-            nu_resized = resize(nu_, (shape_x, shape_y), mode='constant') * 255
-            cell_resized = resize(cell_, (shape_x, shape_y), mode='constant') * 255
-            #print(f"rotated img max: {img.max()}, resized img max: {img_resized.max()}")
-            #print(f"rotated nu max: {nu_.max()}, resized nu max: {nu_resized.max()}, rotated cell max: {cell_.max()}, resized cell max: {cell_resized.max()}")
-            pts_ori = image_warp.find_landmarks(nu_resized, cell_resized, n_points=32, border_points = False)
-            
-            pts_convex = (pts_avg + pts_ori) / 2
-            warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
-            warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
-            """
+        
+        #images = []
+        for org in ["Centrosome","IntermediateF","ActinF","NuclearM","NuclearB"]:            
+            if not os.path.exists(f"{save_dir}/{PC}/{org}"):
+                os.makedirs(f"{save_dir}/{PC}/{org}")
+            ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
+            for img_id in tqdm(ls_, desc=f"{PC}_{org}"):
+                for line in lines:
+                    if line.find(img_id) != -1 :
+                        vals = line.strip().split(',')
+                        break
+                theta = np.float(vals[1])
+                shift_c = (np.float(vals[2].strip('(')),(np.float(vals[3].strip(')'))))
+                
+                cell_shape = np.load(f"{data_dir}/{img_id}.npy")
+                img = imread(f"{data_dir}/{img_id}_protein.png")
+                #print(np.unique(cell_shape), img.dtype, img.max())
+                
+                img = rotate(img, theta)
+                nu_ = rotate(cell_shape[1,:,:], theta)
+                cell_ = rotate(cell_shape[0,:,:], theta)
+                img_resized = resize(img, (shape_x, shape_y), mode='constant')
+                nu_resized = resize(nu_, (shape_x, shape_y), mode='constant') * 255
+                cell_resized = resize(cell_, (shape_x, shape_y), mode='constant') * 255
+                #print(f"rotated img max: {img.max()}, resized img max: {img_resized.max()}")
+                #print(f"rotated nu max: {nu_.max()}, resized nu max: {nu_resized.max()}, rotated cell max: {cell_.max()}, resized cell max: {cell_resized.max()}")
+                pts_ori = image_warp.find_landmarks(nu_resized, cell_resized, n_points=32, border_points = False)
+                
+                pts_convex = (pts_avg + pts_ori) / 2
+                warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
+                warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
+                imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
+                #images += [warped]
+        
 
 if __name__ == '__main__':
     main()
