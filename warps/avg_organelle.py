@@ -84,7 +84,7 @@ def main():
     save_dir = f"{project_dir}/morphed_protein_avg" 
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
     n_landmarks = 32 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
-
+    print(save_dir, plot_dir)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     if not os.path.exists(plot_dir):
@@ -93,7 +93,7 @@ def main():
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
-    mappings = pd.read_csv("/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
     mappings = mappings[mappings.atlas_name=="U-2 OS"]
     mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
     
@@ -152,3 +152,6 @@ def main():
             warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
             warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
             """
+
+if __name__ == '__main__':
+    main()
