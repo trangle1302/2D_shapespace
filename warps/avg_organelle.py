@@ -92,7 +92,7 @@ def main():
     mappings = mappings[mappings.atlas_name=="U-2 OS"]
     mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
     
-    PC = "PC1"
+    PC = "PC2"
     # created a folder where avg organelle for each bin is saved
     if not os.path.exists(f"{save_dir}/{PC}"):
         os.makedirs(f"{save_dir}/{PC}")
@@ -134,7 +134,7 @@ def main():
         df_sl = mappings[mappings.cell_idx.isin(ls)]
         df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
         
-        for org in ["Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS"]:#["ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
+        for org in ["Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS","ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')
             if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
