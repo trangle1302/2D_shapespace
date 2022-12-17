@@ -39,14 +39,9 @@ LABEL_TO_ALIAS = {
 
 all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
 
-def avg_cell_landmarks(file_path, n_landmarks=32):
-    # Load average cell
-    avg_cell = np.load(file_path)
-    nu_centroid = [0,0]
-    ix_n = avg_cell['ix_n']
-    iy_n = avg_cell['iy_n']
-    ix_c = avg_cell['ix_c']
-    iy_c = avg_cell['iy_c']
+def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
+    nu_centroid = find_centroid([(x_,y_) for x_, y_ in zip(ix_n, iy_n)])
+    print(f"Nucleus centroid of the avg shape: {nu_centroid}")
     
     # Move average shape from zero-centered coords to min=[0,0]
     min_x = np.min(ix_c)
@@ -98,8 +93,15 @@ def main():
     mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
     
     PC = "PC1"
+    # created a folder where avg organelle for each bin is saved
+    if not os.path.exists(f"{save_dir}/{PC}"):
+        os.makedirs(f"{save_dir}/{PC}")
+
     pc_cells = cells_assigned[PC]
+
+    #merged_bins = [[0,1,2],[4,5,6],[8,9,10]]
     merged_bins = [[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10]]
+
     org_percent = {}
     for i, bin_ in enumerate(merged_bins):
         ls = [pc_cells[b] for b in bin_]
@@ -112,12 +114,20 @@ def main():
     df = pd.DataFrame(org_percent)
     print(df)
 
-    pts_avg, (shape_x, shape_y) = avg_cell_landmarks(f"{shape_mode_path}/Avg_cell.npz", n_landmarks = n_landmarks)
-    
+    #pts_avg, (shape_x, shape_y) = avg_cell_landmarks(f"{shape_mode_path}/Avg_cell.npz", n_landmarks = n_landmarks)
+    avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
+
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
         lines = F.readlines()
     
     for i, bin_ in enumerate(merged_bins):
+        if len(bin_) == 1:
+            ix_n = avg_cell_per_bin['nuc'][bin_[0]][:n_coef]
+            iy_n = avg_cell_per_bin['nuc'][bin_[0]][n_coef:]
+            ix_n = avg_cell_per_bin['mem'][bin_[0]][:n_coef]
+            iy_n = avg_cell_per_bin['mem'][bin_[0]][n_coef:]
+            pts_avg, (shape_x, shape_y) = avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks = n_landmarks)    
+
         ls = [pc_cells[b] for b in bin_]
         ls = helpers.flatten_list(ls)
         ls = [os.path.basename(l).replace(".npy","") for l in ls]
@@ -127,10 +137,10 @@ def main():
         #print(df_sl.target.value_counts())
         print(f"processing {df_sl.shape[0]} cells")
         
-        #images = []
-        for org in ["Centrosome","IntermediateF","ActinF","NuclearM","NuclearB"]:            
-            if not os.path.exists(f"{save_dir}/{PC}/{org}"):
-                os.makedirs(f"{save_dir}/{PC}/{org}")
+        for org in ["ActinF","Centrosome"]:#["Centrosome","IntermediateF","ActinF","NuclearM","NuclearB"]: 
+            avg_img = np.zeros_like((shape_x, shape_y))
+            if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
+                os.makedirs(f"{plot_dir}/{PC}/{org}")
             ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
             for img_id in tqdm(ls_, desc=f"{PC}_{org}"):
                 for line in lines:
@@ -169,9 +179,31 @@ def main():
                 pts_convex = (pts_avg + pts_ori) / 2
                 warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
                 warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
-                imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
-                #images += [warped]
-        
+                #imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
+
+                # adding weighed contribution of this image
+                avg_img += warped / len(ls_)
+                print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
+
+                # Plot landmark points at morphing
+                fig, ax = plt.subplots(1,5, figsize=(15,30), sharex=True, sharey=True)
+                ax[0].imshow(nu_, alpha = 0.3)
+                ax[0].imshow(cell_, alpha = 0.3)
+                ax[0].set_title('original shape')            
+                ax[1].imshow(nu_resized, alpha = 0.3)
+                ax[1].imshow(cell_resized, alpha = 0.3)
+                ax[1].set_title('resized shape+protein')
+                ax[2].imshow(img_resized)
+                ax[2].scatter(pts_ori[:,1], pts_ori[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+                ax[2].set_title('resized protein channel')
+                ax[3].imshow(warped1)
+                ax[3].scatter(pts_convex[:,1], pts_convex[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+                ax[3].set_title('ori_shape to midpoint')
+                ax[4].imshow(warped)
+                ax[4].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+                ax[4].set_title('midpoint to avg_shape')
+                fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
+            imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
 
 if __name__ == '__main__':
     main()
