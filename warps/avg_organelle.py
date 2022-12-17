@@ -134,7 +134,7 @@ def main():
         df_sl = mappings[mappings.cell_idx.isin(ls)]
         df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
         
-        for org in ["ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
+        for org in ["Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS"]:#["ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')
             if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
@@ -182,7 +182,7 @@ def main():
                 # adding weighed contribution of this image
                 print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
                 avg_img += warped / len(ls_)
-
+                '''
                 # Plot landmark points at morphing
                 fig, ax = plt.subplots(1,5, figsize=(15,30))
                 ax[0].imshow(nu_, alpha = 0.3)
@@ -202,6 +202,7 @@ def main():
                 ax[4].set_title('midpoint to avg_shape')
                 fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
                 plt.close()
+                '''
             imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
             gc.collect()
 
