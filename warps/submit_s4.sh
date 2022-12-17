@@ -2,10 +2,10 @@
 #
 #SBATCH --job-name=imagewarp
 #
-#SBATCH --time=5:00:00
+#SBATCH --time=10:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=5G
+#SBATCH --mem-per-cpu=20G
 
 module load python/3.9.0
 module load py-pandas/1.3.1_py39
