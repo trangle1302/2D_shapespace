@@ -12,7 +12,7 @@ import json
 import pandas as pd
 from tqdm import tqdm
 import time
-
+import gc
 
 LABEL_TO_ALIAS = {
   0: 'Nucleoplasm',
@@ -134,12 +134,14 @@ def main():
         df_sl = mappings[mappings.cell_idx.isin(ls)]
         df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
         
-        for org in ["ActinF","Centrosome"]:#["Centrosome","IntermediateF","ActinF","NuclearM","NuclearB"]: 
+        for org in ["ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')
             if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
             ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
-            for img_id in tqdm(ls_, desc=f"{PC}_{org}"):
+            if os.path.exists(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png"):
+                continue
+            for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
                 for line in lines:
                     if line.find(img_id) != -1 :
                         vals = line.strip().split(';')
@@ -182,7 +184,7 @@ def main():
                 avg_img += warped / len(ls_)
 
                 # Plot landmark points at morphing
-                fig, ax = plt.subplots(1,5, figsize=(15,30), sharex=True, sharey=True)
+                fig, ax = plt.subplots(1,5, figsize=(15,30))
                 ax[0].imshow(nu_, alpha = 0.3)
                 ax[0].imshow(cell_, alpha = 0.3)
                 ax[0].set_title('original shape')            
@@ -199,7 +201,9 @@ def main():
                 ax[4].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
                 ax[4].set_title('midpoint to avg_shape')
                 fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
+                plt.close()
             imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
+            gc.collect()
 
 if __name__ == '__main__':
     main()
