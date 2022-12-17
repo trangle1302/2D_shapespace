@@ -5,7 +5,7 @@ from imageio import imread, imwrite
 import numpy as np
 from utils import helpers
 import matplotlib.pyplot as plt
-from scipy.ndimage import rotate
+from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
 from warps import TPSpline, image_warp
 import json
@@ -39,7 +39,7 @@ LABEL_TO_ALIAS = {
 
 all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
 
-def avg_cell_landmarks(file_path):
+def avg_cell_landmarks(file_path, n_landmarks=32):
     # Load average cell
     avg_cell = np.load(file_path)
     nu_centroid = [0,0]
@@ -112,7 +112,7 @@ def main():
     df = pd.DataFrame(org_percent)
     print(df)
 
-    #pts_avg, (shape_x, shape_y) = avg_cell_landmarks(f"{shape_mode_path}/Avg_cell.npz")
+    pts_avg, (shape_x, shape_y) = avg_cell_landmarks(f"{shape_mode_path}/Avg_cell.npz", n_landmarks = n_landmarks)
     
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
         lines = F.readlines()
@@ -135,10 +135,10 @@ def main():
             for img_id in tqdm(ls_, desc=f"{PC}_{org}"):
                 for line in lines:
                     if line.find(img_id) != -1 :
-                        vals = line.strip().split(',')
+                        vals = line.strip().split(';')
                         break
                 theta = np.float(vals[1])
-                shift_c = (np.float(vals[2].strip('(')),(np.float(vals[3].strip(')'))))
+                shift_c = (float(vals[2].split(',')[0].strip('(')),(float(vals[2].split(',')[1].strip(')'))))
                 
                 cell_shape = np.load(f"{data_dir}/{img_id}.npy")
                 img = imread(f"{data_dir}/{img_id}_protein.png")
@@ -147,12 +147,24 @@ def main():
                 img = rotate(img, theta)
                 nu_ = rotate(cell_shape[1,:,:], theta)
                 cell_ = rotate(cell_shape[0,:,:], theta)
+                
+                shape = nu_.shape
+                center_ = center_of_mass(nu_)
+                if center_[0] < shape[0]//2:
+                    cell_ = np.flipud(cell_)
+                    nu_ = np.flipud(nu_)
+                    img = np.flipud(img)
+                if center_[1] < shape[1]//2:
+                    cell_ = np.fliplr(cell_)
+                    nu_ = np.fliplr(nu_)
+                    img = np.fliplr(img)
+
                 img_resized = resize(img, (shape_x, shape_y), mode='constant')
                 nu_resized = resize(nu_, (shape_x, shape_y), mode='constant') * 255
                 cell_resized = resize(cell_, (shape_x, shape_y), mode='constant') * 255
                 #print(f"rotated img max: {img.max()}, resized img max: {img_resized.max()}")
                 #print(f"rotated nu max: {nu_.max()}, resized nu max: {nu_resized.max()}, rotated cell max: {cell_.max()}, resized cell max: {cell_resized.max()}")
-                pts_ori = image_warp.find_landmarks(nu_resized, cell_resized, n_points=32, border_points = False)
+                pts_ori = image_warp.find_landmarks(nu_resized, cell_resized, n_points=n_landmarks, border_points = False)
                 
                 pts_convex = (pts_avg + pts_ori) / 2
                 warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
