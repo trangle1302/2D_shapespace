@@ -40,13 +40,13 @@ LABEL_TO_ALIAS = {
 all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
 
 def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
-    nu_centroid = find_centroid([(x_,y_) for x_, y_ in zip(ix_n, iy_n)])
+    nu_centroid = helpers.find_centroid([(x_,y_) for x_, y_ in zip(ix_n, iy_n)])
+    nu_centroid = [nu_centroid[0],nu_centroid[1]]
     print(f"Nucleus centroid of the avg shape: {nu_centroid}")
     
     # Move average shape from zero-centered coords to min=[0,0]
     min_x = np.min(ix_c)
     min_y = np.min(iy_c)
-    print(min_x,min_y)
     nu_centroid[0] -= min_x
     nu_centroid[1] -= min_y
     ix_n -= min_x
@@ -114,7 +114,6 @@ def main():
     df = pd.DataFrame(org_percent)
     print(df)
 
-    #pts_avg, (shape_x, shape_y) = avg_cell_landmarks(f"{shape_mode_path}/Avg_cell.npz", n_landmarks = n_landmarks)
     avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
 
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
@@ -122,10 +121,11 @@ def main():
     
     for i, bin_ in enumerate(merged_bins):
         if len(bin_) == 1:
+            n_coef = len(avg_cell_per_bin['nuc'][0])//2
             ix_n = avg_cell_per_bin['nuc'][bin_[0]][:n_coef]
             iy_n = avg_cell_per_bin['nuc'][bin_[0]][n_coef:]
-            ix_n = avg_cell_per_bin['mem'][bin_[0]][:n_coef]
-            iy_n = avg_cell_per_bin['mem'][bin_[0]][n_coef:]
+            ix_c = avg_cell_per_bin['mem'][bin_[0]][:n_coef]
+            iy_c = avg_cell_per_bin['mem'][bin_[0]][n_coef:]
             pts_avg, (shape_x, shape_y) = avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks = n_landmarks)    
 
         ls = [pc_cells[b] for b in bin_]
@@ -133,9 +133,6 @@ def main():
         ls = [os.path.basename(l).replace(".npy","") for l in ls]
         df_sl = mappings[mappings.cell_idx.isin(ls)]
         df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
-        #org_percent[f"bin{i}"] = df_sl.target.value_counts().to_dict()
-        #print(df_sl.target.value_counts())
-        print(f"processing {df_sl.shape[0]} cells")
         
         for org in ["ActinF","Centrosome"]:#["Centrosome","IntermediateF","ActinF","NuclearM","NuclearB"]: 
             avg_img = np.zeros_like((shape_x, shape_y))
@@ -152,7 +149,6 @@ def main():
                 
                 cell_shape = np.load(f"{data_dir}/{img_id}.npy")
                 img = imread(f"{data_dir}/{img_id}_protein.png")
-                #print(np.unique(cell_shape), img.dtype, img.max())
                 
                 img = rotate(img, theta)
                 nu_ = rotate(cell_shape[1,:,:], theta)
