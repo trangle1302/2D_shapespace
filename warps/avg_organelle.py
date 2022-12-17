@@ -112,7 +112,7 @@ def main():
         org_percent[f"bin{i}"] = df_sl.target.value_counts().to_dict()
     
     df = pd.DataFrame(org_percent)
-    print(df)
+    #print(df)
 
     avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
 
@@ -135,7 +135,7 @@ def main():
         df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
         
         for org in ["ActinF","Centrosome"]:#["Centrosome","IntermediateF","ActinF","NuclearM","NuclearB"]: 
-            avg_img = np.zeros_like((shape_x, shape_y))
+            avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')
             if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
             ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
@@ -144,7 +144,7 @@ def main():
                     if line.find(img_id) != -1 :
                         vals = line.strip().split(';')
                         break
-                theta = np.float(vals[1])
+                theta = float(vals[1])
                 shift_c = (float(vals[2].split(',')[0].strip('(')),(float(vals[2].split(',')[1].strip(')'))))
                 
                 cell_shape = np.load(f"{data_dir}/{img_id}.npy")
@@ -178,8 +178,8 @@ def main():
                 #imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
 
                 # adding weighed contribution of this image
-                avg_img += warped / len(ls_)
                 print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
+                avg_img += warped / len(ls_)
 
                 # Plot landmark points at morphing
                 fig, ax = plt.subplots(1,5, figsize=(15,30), sharex=True, sharey=True)
