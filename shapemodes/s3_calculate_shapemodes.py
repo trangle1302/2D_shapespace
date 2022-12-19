@@ -78,7 +78,7 @@ def main():
     # project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
-    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized"
+    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud"
     log_dir = f"{project_dir}/logs"
     #fft_dir = f"{project_dir}/fftcoefs/{fun}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
@@ -135,7 +135,7 @@ def main():
         print(df.index[0])
         if fun == "fft":
             df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
-        shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized"
+        shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized_ud"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
         
@@ -167,10 +167,10 @@ def main():
 
         matrix_of_features_transform = pca.transform(df_)
         scree = pca.explained_variance_ratio_ * 100
-        for percent in np.arange(70,95,5):
+        for percent in np.arange(70,100,5):
             n_pc = np.sum(scree.cumsum() < percent) + 1
             print(f"{n_pc} to explain {percent} % variance")
-        n_pc = np.sum(scree.cumsum() < 75) + 1
+        n_pc = np.sum(scree.cumsum() < 95) + 1
         pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
         pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
         df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())

@@ -155,10 +155,10 @@ def main():
             plotting.display_scree_plot(pca, save_dir=shape_mode_path)
         
         scree = pca.explained_variance_ratio_ * 100
-        for percent in np.arange(70,95,5):
+        for percent in np.arange(70,100,5):
             n_pc = np.sum(scree.cumsum() < percent) + 1
             print(f"{n_pc} to explain {percent} % variance")
-        n_pc = np.sum(scree.cumsum() < 75) + 1
+        n_pc = np.sum(scree.cumsum() < 95) + 1
         pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
         pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
         
