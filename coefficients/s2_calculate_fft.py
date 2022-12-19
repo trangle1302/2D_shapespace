@@ -28,7 +28,7 @@ def calculate_fft_hpa():
     cell_line = "U-2 OS"
     save_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/cell_masks"
     d = Path(save_dir)
-    save_path = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/fftcoefs/{fun}")
+    save_path = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/fftcoefs/fft_major_axis_polarized_ud")
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
@@ -39,7 +39,7 @@ def calculate_fft_hpa():
     num_cores = multiprocessing.cpu_count() - 4 # save 4 core for some other processes
     inputs = tqdm(imlist)
     print(f"Processing {len(imlist)} in {num_cores} cores")
-    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=False) for i in inputs)
+    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.01,0.99])) for i in inputs)
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
         pickle.dump(processed_list, success_list)
 
@@ -59,7 +59,7 @@ def calculate_fft_ccd():
     num_cores = multiprocessing.cpu_count() - 4 # save 4 core for some other processes
     inputs = tqdm(imlist)
     print(f"Processing {len(imlist)} in {num_cores} cores")
-    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=True) for i in inputs)
+    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.01,0.99])) for i in inputs)
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
         pickle.dump(processed_list, success_list)
 
