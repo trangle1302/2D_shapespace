@@ -214,7 +214,7 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
         # nuclei_, cell_, theta = align_cell_major_axis(data, pro, plot=False)
         nuclei_, cell_, theta = align_cell_major_axis_polarized(data, pro, plot=False)
         #centroid = center_of_mass(nuclei_)
-        centroid = center_of_mass(cell_)
+        centroid = center_of_mass(nuclei_)
         
         # Padd surrounding with 0 so no contour touch the border. This help matching squares algo not failing (as much)
         nuclei = np.zeros((nuclei_.shape[0]+2, nuclei_.shape[1]+2))
