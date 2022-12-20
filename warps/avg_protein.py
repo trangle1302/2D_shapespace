@@ -13,31 +13,7 @@ import pandas as pd
 from tqdm import tqdm
 import time
 import gc
-
-LABEL_TO_ALIAS = {
-  0: 'Nucleoplasm',
-  1: 'NuclearM',
-  2: 'Nucleoli',
-  3: 'NucleoliFC',
-  4: 'NuclearS',
-  5: 'NuclearB',
-  6: 'EndoplasmicR',
-  7: 'GolgiA',
-  8: 'IntermediateF',
-  9: 'ActinF',
-  10: 'Microtubules',
-  11: 'MitoticS',
-  12: 'Centrosome',
-  13: 'PlasmaM',
-  14: 'Mitochondria',
-  15: 'Aggresome',
-  16: 'Cytosol',
-  17: 'VesiclesPCP',
-  19: 'Negative',
-  19:'Multi-Location',
-}
-
-all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
+from collections import Counter
 
 def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
     nu_centroid = helpers.find_centroid([(x_,y_) for x_, y_ in zip(ix_n, iy_n)])
@@ -71,7 +47,7 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
 
 def main():   
     s = time.time()
-    cell_line = 'U-2 OS'
+    cell_line = 'S-BIAD34'
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
     shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized"  
     fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized"  
@@ -88,31 +64,29 @@ def main():
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
-    mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-    mappings = mappings[mappings.atlas_name=="U-2 OS"]
-    mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
-    
+    mappings = pd.read_csv(f"{project_dir}/experimentB-processed.txt", sep="\t")
+    print(f"...Found {len(mappings["Antibody id"].unique())} antibodies")
+
     PC = "PC2"
-    # created a folder where avg organelle for each bin is saved
+    # created a folder where avg protein for each bin is saved
     if not os.path.exists(f"{save_dir}/{PC}"):
         os.makedirs(f"{save_dir}/{PC}")
 
     pc_cells = cells_assigned[PC]
 
-    #merged_bins = [[0,1,2],[4,5,6],[8,9,10]]
+    #merged_bins = [[0,1,2],[4,5,6],[8,9,10]]ls
     merged_bins = [[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10]]
 
-    org_percent = {}
-    for i, bin_ in enumerate(merged_bins):
-        ls = [pc_cells[b] for b in bin_]
-        ls = helpers.flatten_list(ls)
-        ls = [os.path.basename(l).replace(".npy","") for l in ls]
-        df_sl = mappings[mappings.cell_idx.isin(ls)]
-        df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
-        org_percent[f"bin{i}"] = df_sl.target.value_counts().to_dict()
-    
-    df = pd.DataFrame(org_percent)
-    #print(df)
+    pro_count = {}
+    for b in np.arange(11):
+        pc_cells = cells_assigned["PC1"][b]
+        antibodies = [c.split("/")[-2] for c in pc_cells]
+        cells_per_ab = Counter(antibodies)
+        pro_count[f"bin{b}"] = cells_per_ab
+        
+    df = pd.DataFrame(pro_count)
+    df["total"] = df.sum(axis=1)
+    print(df.sort_values(by=['total']))
 
     avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
 
@@ -155,7 +129,7 @@ def main():
                 img = rotate(img, theta)
                 nu_ = rotate(cell_shape[1,:,:], theta)
                 cell_ = rotate(cell_shape[0,:,:], theta)
-                             
+                
                 flip_ud = True # Set True for polarized version of cell mass
                 flip_lr = False # Set True for polarized version of cell mass
                 shape = nu_.shape
@@ -170,7 +144,6 @@ def main():
                         cell_ = np.fliplr(cell_)
                         nu_ = np.fliplr(nu_)
                         img = np.fliplr(img)
-
 
                 img_resized = resize(img, (shape_x, shape_y), mode='constant')
                 nu_resized = resize(nu_, (shape_x, shape_y), mode='constant') * 255
@@ -187,7 +160,6 @@ def main():
                 # adding weighed contribution of this image
                 print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
                 avg_img += warped / len(ls_)
-                
                 if np.random.choice([True,False], p=[0.001,0.999]):
                     # Plot landmark points at morphing
                     fig, ax = plt.subplots(1,5, figsize=(15,30))
@@ -208,7 +180,6 @@ def main():
                     ax[4].set_title('midpoint to avg_shape')
                     fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
                     plt.close()
-
             imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
             gc.collect()
 
