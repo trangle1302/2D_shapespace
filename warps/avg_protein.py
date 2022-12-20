@@ -77,17 +77,16 @@ def main():
     #merged_bins = [[0,1,2],[4,5,6],[8,9,10]]ls
     merged_bins = [[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10]]
 
-    protein_percent = {}
-    for i, bin_ in enumerate(merged_bins):
-        ls = [pc_cells[b] for b in bin_]
-        ls = helpers.flatten_list(ls)
-        ls = [os.path.basename(l).replace(".npy","") for l in ls]
-        df_sl = mappings[mappings.cell_idx.isin(ls)]
-        df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
-        protein_percent[f"bin{i}"] = df_sl.target.value_counts().to_dict()
-    
-    df = pd.DataFrame(protein_percent)
-    #print(df)
+    pro_count = {}
+    for b in np.arange(11):
+        pc_cells = cells_assigned["PC1"][b]
+        antibodies = [c.split("/")[-2] for c in pc_cells]
+        cells_per_ab = Counter(antibodies)
+        pro_count[f"bin{b}"] = cells_per_ab
+        
+    df = pd.DataFrame(pro_count)
+    df["total"] = df.sum(axis=1)
+    print(df.sort_values(by=['total']))
 
     avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
 
@@ -131,15 +130,17 @@ def main():
                 nu_ = rotate(cell_shape[1,:,:], theta)
                 cell_ = rotate(cell_shape[0,:,:], theta)
                 
-                flip = False # Set True for polarized version of cell mass
-                if flip:
-                    shape = nu_.shape
-                    center_ = center_of_mass(cell_)
-                    if center_[0] < shape[0]//2:
+                flip_ud = True # Set True for polarized version of cell mass
+                flip_lr = False # Set True for polarized version of cell mass
+                shape = nu_.shape
+                center_ = center_of_mass(cell_)
+                if flip_ud:
+                    if center_[0] > shape[0]//2:
                         cell_ = np.flipud(cell_)
                         nu_ = np.flipud(nu_)
                         img = np.flipud(img)
-                    if center_[1] < shape[1]//2:
+                if flip_lr:
+                    if center_[1] > shape[1]//2:
                         cell_ = np.fliplr(cell_)
                         nu_ = np.fliplr(nu_)
                         img = np.fliplr(img)
@@ -159,27 +160,26 @@ def main():
                 # adding weighed contribution of this image
                 print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
                 avg_img += warped / len(ls_)
-                '''
-                # Plot landmark points at morphing
-                fig, ax = plt.subplots(1,5, figsize=(15,30))
-                ax[0].imshow(nu_, alpha = 0.3)
-                ax[0].imshow(cell_, alpha = 0.3)
-                ax[0].set_title('original shape')            
-                ax[1].imshow(nu_resized, alpha = 0.3)
-                ax[1].imshow(cell_resized, alpha = 0.3)
-                ax[1].set_title('resized shape+protein')
-                ax[2].imshow(img_resized)
-                ax[2].scatter(pts_ori[:,1], pts_ori[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
-                ax[2].set_title('resized protein channel')
-                ax[3].imshow(warped1)
-                ax[3].scatter(pts_convex[:,1], pts_convex[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
-                ax[3].set_title('ori_shape to midpoint')
-                ax[4].imshow(warped)
-                ax[4].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
-                ax[4].set_title('midpoint to avg_shape')
-                fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
-                plt.close()
-                '''
+                if np.random.choice([True,False], p=[0.001,0.999]):
+                    # Plot landmark points at morphing
+                    fig, ax = plt.subplots(1,5, figsize=(15,30))
+                    ax[0].imshow(nu_, alpha = 0.3)
+                    ax[0].imshow(cell_, alpha = 0.3)
+                    ax[0].set_title('original shape')            
+                    ax[1].imshow(nu_resized, alpha = 0.3)
+                    ax[1].imshow(cell_resized, alpha = 0.3)
+                    ax[1].set_title('resized shape+protein')
+                    ax[2].imshow(img_resized)
+                    ax[2].scatter(pts_ori[:,1], pts_ori[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+                    ax[2].set_title('resized protein channel')
+                    ax[3].imshow(warped1)
+                    ax[3].scatter(pts_convex[:,1], pts_convex[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+                    ax[3].set_title('ori_shape to midpoint')
+                    ax[4].imshow(warped)
+                    ax[4].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+                    ax[4].set_title('midpoint to avg_shape')
+                    fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
+                    plt.close()
             imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
             gc.collect()
 
