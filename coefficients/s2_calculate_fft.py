@@ -59,9 +59,9 @@ def calculate_fft_ccd():
     if False:
         import pandas as pd
         imlist = pd.read_csv(f"{d}/failed_img.csv").iloc[:,0].values.tolist()
-    num_cores = 2 #multiprocessing.cpu_count() - 4 # save 4 core for some other processes
+    num_cores = multiprocessing.cpu_count() - 10 # save 10 core for some other processes
     inputs = tqdm(imlist)
-    print(f"Processing {len(imlist)} in {num_cores} cores")
+    print(f"Processing {len(imlist)} in {num_cores} cores, saving to {save_path}")
     processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.001,0.999])) for i in inputs)
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
         pickle.dump(processed_list, success_list)
