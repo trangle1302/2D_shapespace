@@ -227,7 +227,9 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
         cell_coords_ = find_contours(cell, 0, fully_connected='high')
         if len(cell_coords_) > 1: # concatenate fragmented contour lines, original point could be ambiguous! (attempt to re-align original point in coefs.XXX_fourier_coefs())
             cell_coords_ = np.vstack(cell_coords_)
-        cell_coords_ = cell_coords_[0] - centroid
+            cell_coords_ = cell_coords_ - centroid
+        else:
+            cell_coords_ = cell_coords_[0] - centroid
         """
         if min(cell_coords_[:, 0]) > 0 or min(cell_coords_[:, 1]) > 0:
             with open(f'{log_dir}/images_fft_failed.pkl', 'wb') as error_list:

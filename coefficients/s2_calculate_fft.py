@@ -51,12 +51,14 @@ def calculate_fft_ccd():
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     log_dir = f"{d}/logs"
-
-    abids = os.listdir(sc_mask_dir)
-    imlist = [glob.glob(f"{sc_mask_dir}/{ab}/*.npy") for ab in abids]
-    imlist = [item for sublist in imlist for item in sublist]
-    imlist = [im for im in imlist if os.path.getsize(im)>0]
-    num_cores = multiprocessing.cpu_count() - 4 # save 4 core for some other processes
+    if False:
+        abids = os.listdir(sc_mask_dir)
+        imlist = [glob.glob(f"{sc_mask_dir}/{ab}/*.npy") for ab in abids]
+        imlist = [item for sublist in imlist for item in sublist]
+        imlist = [im for im in imlist if os.path.getsize(im)>0]
+    import pandas as pd
+    imlist = pd.read_csv(f"{d}/failed_img.csv").iloc[:,0].values.tolist()
+    num_cores = 2 #multiprocessing.cpu_count() - 4 # save 4 core for some other processes
     inputs = tqdm(imlist)
     print(f"Processing {len(imlist)} in {num_cores} cores")
     processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.01,0.99])) for i in inputs)
@@ -65,6 +67,6 @@ def calculate_fft_ccd():
 
 if __name__ == "__main__": 
     s_t = time.time()
-    calculate_fft_hpa()
-    #calculate_fft_ccd()
+    #calculate_fft_hpa()
+    calculate_fft_ccd()
     print(f"Done in {np.round((time.time()-s_t)/3600,2)} h.")
