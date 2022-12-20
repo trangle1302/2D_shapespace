@@ -39,7 +39,7 @@ def calculate_fft_hpa():
     num_cores = multiprocessing.cpu_count() - 4 # save 4 core for some other processes
     inputs = tqdm(imlist)
     print(f"Processing {len(imlist)} in {num_cores} cores")
-    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.01,0.99])) for i in inputs)
+    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.001,0.999])) for i in inputs)
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
         pickle.dump(processed_list, success_list)
 
@@ -47,21 +47,22 @@ def calculate_fft_ccd():
     dataset = "S-BIAD34"
     d = f"/data/2Dshapespace/{dataset}"
     sc_mask_dir = f"{d}/cell_masks"
-    save_path = f"{d}/fftcoefs/{fun}"
+    save_path = f"{d}/fftcoefs/fft_major_axis_polarized_ud"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     log_dir = f"{d}/logs"
-    if False:
+    if True:
         abids = os.listdir(sc_mask_dir)
         imlist = [glob.glob(f"{sc_mask_dir}/{ab}/*.npy") for ab in abids]
         imlist = [item for sublist in imlist for item in sublist]
         imlist = [im for im in imlist if os.path.getsize(im)>0]
-    import pandas as pd
-    imlist = pd.read_csv(f"{d}/failed_img.csv").iloc[:,0].values.tolist()
+    if False:
+        import pandas as pd
+        imlist = pd.read_csv(f"{d}/failed_img.csv").iloc[:,0].values.tolist()
     num_cores = 2 #multiprocessing.cpu_count() - 4 # save 4 core for some other processes
     inputs = tqdm(imlist)
     print(f"Processing {len(imlist)} in {num_cores} cores")
-    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.01,0.99])) for i in inputs)
+    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.001,0.999])) for i in inputs)
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
         pickle.dump(processed_list, success_list)
 
