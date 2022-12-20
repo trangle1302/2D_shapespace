@@ -85,29 +85,30 @@ def inverse_fft(fft_x, fft_y, hamming=False, repeat=False):
     return ix, iy
 
 
-### separate fft of cell and nucleus, and add back offset to 1st DC of nucleus
-def fourier_coeffs(shape_coords, n=64):
+### TOTRY: separate fft of cell and nucleus, and add back offset to 1st DC of nucleus
+def fourier_coeffs(shape_coords, n=64, align=False):
     coords = shape_coords
 
     x = np.array([p[0] for p in coords])
     y = np.array([p[1] for p in coords])
 
-    # aligning start point of contour
-    centroid = find_centroid(coords)
-    _, val = find_nearest(y[np.where(x > centroid[0])], centroid[1])
-    if len(np.where(y == val)[0]) > 1:
-        largest_x = x.min()
-        current_idx = None
-        for idx in np.where(y == val)[0]:
-            if x[idx] > largest_x:
-                largest_x = x[idx]
-                current_idx = idx
-        idx = current_idx
-    else:
-        idx = np.where(y == val)[0][0]
+    if align: #align=True only if helpers.realign_contour_startpoint not used in step before
+        # aligning start point of contour
+        centroid = find_centroid(coords)
+        _, val = find_nearest(y[np.where(x > centroid[0])], centroid[1])
+        if len(np.where(y == val)[0]) > 1:
+            largest_x = x.min()
+            current_idx = None
+            for idx in np.where(y == val)[0]:
+                if x[idx] > largest_x:
+                    largest_x = x[idx]
+                    current_idx = idx
+            idx = current_idx
+        else:
+            idx = np.where(y == val)[0][0]
 
-    x = np.concatenate((x, x))[idx : idx + len(coords)]
-    y = np.concatenate((y, y))[idx : idx + len(coords)]
+        x = np.concatenate((x, x))[idx : idx + len(coords)]
+        y = np.concatenate((y, y))[idx : idx + len(coords)]
 
     x_, y_ = equidistance(x, y, n_points=2 * n)
 
