@@ -184,27 +184,28 @@ def main():
                 # adding weighed contribution of this image
                 print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
                 avg_img += warped / len(ls_)
-                '''
-                # Plot landmark points at morphing
-                fig, ax = plt.subplots(1,5, figsize=(15,30))
-                ax[0].imshow(nu_, alpha = 0.3)
-                ax[0].imshow(cell_, alpha = 0.3)
-                ax[0].set_title('original shape')            
-                ax[1].imshow(nu_resized, alpha = 0.3)
-                ax[1].imshow(cell_resized, alpha = 0.3)
-                ax[1].set_title('resized shape+protein')
-                ax[2].imshow(img_resized)
-                ax[2].scatter(pts_ori[:,1], pts_ori[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
-                ax[2].set_title('resized protein channel')
-                ax[3].imshow(warped1)
-                ax[3].scatter(pts_convex[:,1], pts_convex[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
-                ax[3].set_title('ori_shape to midpoint')
-                ax[4].imshow(warped)
-                ax[4].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
-                ax[4].set_title('midpoint to avg_shape')
-                fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
-                plt.close()
-                '''
+                
+                if np.random.choice([True,False], p=[0.001,0.999]):
+                    # Plot landmark points at morphing
+                    fig, ax = plt.subplots(1,5, figsize=(15,30))
+                    ax[0].imshow(nu_, alpha = 0.3)
+                    ax[0].imshow(cell_, alpha = 0.3)
+                    ax[0].set_title('original shape')            
+                    ax[1].imshow(nu_resized, alpha = 0.3)
+                    ax[1].imshow(cell_resized, alpha = 0.3)
+                    ax[1].set_title('resized shape+protein')
+                    ax[2].imshow(img_resized)
+                    ax[2].scatter(pts_ori[:,1], pts_ori[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+                    ax[2].set_title('resized protein channel')
+                    ax[3].imshow(warped1)
+                    ax[3].scatter(pts_convex[:,1], pts_convex[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+                    ax[3].set_title('ori_shape to midpoint')
+                    ax[4].imshow(warped)
+                    ax[4].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
+                    ax[4].set_title('midpoint to avg_shape')
+                    fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
+                    plt.close()
+
             imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
             gc.collect()
 
