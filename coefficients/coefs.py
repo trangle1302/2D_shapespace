@@ -85,7 +85,7 @@ def inverse_fft(fft_x, fft_y, hamming=False, repeat=False):
     return ix, iy
 
 
-### TOTRY: separate fft of cell and nucleus, and add back offset to 1st DC of nucleus
+### TO-TRY: separate fft of cell and nucleus, and add back offset to 1st DC of nucleus
 def fourier_coeffs(shape_coords, n=64, align=False):
     coords = shape_coords
 
