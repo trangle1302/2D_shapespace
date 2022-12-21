@@ -79,7 +79,7 @@ def main():
 
     pro_count = {}
     for b in np.arange(11):
-        pc_cells = cells_assigned["PC1"][b]
+        pc_cells = cells_assigned[PC][b]
         antibodies = [c.split("/")[-2] for c in pc_cells]
         cells_per_ab = Counter(antibodies)
         pro_count[f"bin{b}"] = cells_per_ab
@@ -87,7 +87,9 @@ def main():
     df = pd.DataFrame(pro_count)
     df["total"] = df.sum(axis=1)
     print(df.sort_values(by=['total']))
-
+    idx_keep = [all(r.values > 5) for _, r in df.iterrows()]
+    ab_keep = df.index.values[idx_keep].tolist()
+    
     avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
 
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
@@ -105,17 +107,15 @@ def main():
         ls = [pc_cells[b] for b in bin_]
         ls = helpers.flatten_list(ls)
         ls = [os.path.basename(l).replace(".npy","") for l in ls]
-        df_sl = mappings[mappings.cell_idx.isin(ls)]
-        df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
-        
-        for org in ["Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS","ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
+    
+        for ab_id in ab_keep:
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')
-            if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
-                os.makedirs(f"{plot_dir}/{PC}/{org}")
-            ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
-            if os.path.exists(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png"):
+            if not os.path.exists(f"{plot_dir}/{PC}/{ab_id}"):
+                os.makedirs(f"{plot_dir}/{PC}/{ab_id}")
+            ls_ = [f for f in ls if f.__contains__(ab_id)]
+            if os.path.exists(f"{save_dir}/{PC}/bin{bin_[0]}_{ab_id}.png"):
                 continue
-            for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
+            for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{ab_id}"):
                 for line in lines:
                     if line.find(img_id) != -1 :
                         vals = line.strip().split(';')
@@ -131,7 +131,7 @@ def main():
                 cell_ = rotate(cell_shape[0,:,:], theta)
                 
                 flip_ud = True # Set True for polarized version of cell mass
-                flip_lr = False # Set True for polarized version of cell mass
+                flip_lr = True # Set True for polarized version of cell mass
                 shape = nu_.shape
                 center_ = center_of_mass(cell_)
                 if flip_ud:
