@@ -211,6 +211,7 @@ def main():
 
             imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
             gc.collect()
+    print(f"Time elapsed: {(time.time() - s)/3600} h.")
 
 if __name__ == '__main__':
     main()

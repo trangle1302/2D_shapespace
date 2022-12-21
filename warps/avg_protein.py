@@ -14,6 +14,7 @@ from tqdm import tqdm
 import time
 import gc
 from collections import Counter
+import argparse
 
 def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
     nu_centroid = helpers.find_centroid([(x_,y_) for x_, y_ in zip(ix_n, iy_n)])
@@ -49,7 +50,7 @@ def main():
     s = time.time()
     cell_line = 'S-BIAD34'
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized_ud_lr"  
+    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/shapemodes/fft_major_axis_polarized_ud_lr"  
     fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud_lr"  
     data_dir = f"{project_dir}/cell_masks" 
     save_dir = f"{project_dir}/morphed_protein_avg" 
@@ -65,7 +66,7 @@ def main():
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
     mappings = pd.read_csv(f"{project_dir}/experimentB-processed.txt", sep="\t")
-    print(f"...Found {len(mappings["Antibody id"].unique())} antibodies")
+    print(f"...Found {len(mappings['Antibody id'].unique())} antibodies")
 
     PC = "PC2"
     # created a folder where avg protein for each bin is saved
@@ -182,6 +183,7 @@ def main():
                     plt.close()
             imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
             gc.collect()
+    print(f"Time elapsed: {(time.time() - s)/3600} h.")
 
 if __name__ == '__main__':
     main()
