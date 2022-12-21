@@ -3,10 +3,9 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import argparse
-from utils import plotting
 import glob
 import matplotlib.pyplot as plt
-from warps.parameterize import get_coordinates
+from imageio import imread, imwrite
 import json
 
 from warps import parameterize
@@ -50,62 +49,26 @@ if __name__ == "__main__":
     fftcoefs_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized"
     fft_path = os.path.join(fftcoefs_dir,f"fftcoefs_{n_coef}.txt")
     shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized"  
-    save_dir = f"{project_dir}/morphed_protein_avg" 
+    avg_organelle_dir = f"{project_dir}/morphed_protein_avg" 
 
-    #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/pHPA10000_15_0.1_euclidean_ilsc_2d_bbox_nobordercells.csv")
-    mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-    print(mappings.columns)
-    mappings = mappings[mappings.atlas_name=="U-2 OS"]
-    mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
+    merged_bins = [[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10]]
+    # Panel 1: Organelle through shapespace
+    for PC in np.arange(8):
+        for org in LABEL_TO_ALIAS.values():
+            
+            for i, bin_ in enumerate(merged_bins):
+                if len(bin_) == 1:
+                    bin_ = bin_[0]
+                    org_bin = imread(f"{avg_organelle_dir}/PC{PC}/bin_{bin_}_{org}")
 
-    f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json")
-    cells_assigned = json.load(f)
-    print(cells_assigned.keys())
-    save_dir = f"{project_dir}/shapemode/organelle2"
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
-    meta = []
-    org = args.org
-    df_sl_Label = mappings[mappings.target == org]
-    
-    for PC, pc_cells in cells_assigned.items():
-        if os.path.exists(f"{save_dir}/{org}_{PC}_intensity.npz"):
-            continue
-        print(org, PC, len(pc_cells), len(pc_cells[0]))
-        shape = (21, n_coef*2)
-        intensities_pcX = []
-        counts = []
-        for ls in pc_cells:
-            intensities = []
-            i= 0
-            for l in ls:
-                l = str(sampled_intensity_dir) + "/"+ Path(l).stem + "_protein.npy"
-                if l in list(df_sl_Label.Link):
-                    intensity = np.load(l)
-                    dummy_threshold = intensity.max() // 3
-                    intensity = np.where(intensity > dummy_threshold, 1, 0)
-                    intensities += [intensity.flatten()]
-                    i +=1
-            counts += [i]
-            if len(intensities) == 0:
-                print(f'No cell sample at this bin for {org}')
-                intensities_pcX += [np.zeros(shape)]
-            else:
-                print(len(intensities))
-                intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
-        print(counts)
-        meta += [[org]+ counts]
-        intensities_pcX = np.array(intensities_pcX)
-        print(intensities_pcX.shape)
-        np.save(f"{save_dir}/{org}_{PC}_intensity", intensities_pcX)
-        #pm.protein_intensities = intensities_pcX/intensities_pcX.max()
-        #pm.plot_protein_through_shape_variation_gif(PC, title=org, dark=True, save_dir=f"{project_dir}/shapemode/organelle")
-        #data = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
-        #print(data["nuc"].shape, data["mem"].shape)
-        #x_,y_ = parameterize.get_coordinates(data["nuc"], data["mem"], [0,0], n_isos = [10,10], plot=False)
-        #print(f"saving to {save_dir}")
-        #plotting._plot_protein_through_shape_variation_gif(PC, data["nuc"], data["mem"], intensities_pcX/intensities_pcX.max(), title=org, dark=True, save_dir=save_dir)
-    meta = pd.DataFrame(meta)
-    meta.columns = ["org"] +["".join(("n_bin",str(i))) for i in range(11)]
-    print(meta)
-    meta.to_csv(f"{save_dir}/{org}cells_per_bin.csv", index=False)
+
+    # Panel 2: Organelle heatmap through shapespace
+    for PC in np.arange(8):
+        for b in np.arange(11):
+            all_orgs = []
+            for org in LABEL_TO_ALIAS.values():
+                org_bin_ = imread(f"{avg_organelle_dir}/PC{PC}/bin_{bin_}_{org}")
+                all_orgs += [org_bin_]
+            all_orgs = np.stack(all_orgs)
+            # TODO: calculate similarity between all pairs of organelles within the same bin (same cell shape)
+            
