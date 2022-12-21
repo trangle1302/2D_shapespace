@@ -110,12 +110,12 @@ def align_cell_major_axis_polarized(data, protein_ch, plot=True):
     center_cell = center_of_mass(cell_)
     shape = nuclei_.shape
 
-    if center_[0] > shape[0]//2: # flip along axis 0
+    if center_[0] < shape[0]//2: # flip along axis 0
         cell_ = np.flipud(cell_)
         nuclei_ = np.flipud(nuclei_)
         protein_ch_ = np.flipud(protein_ch_)
     if True:
-        if center_[1] > shape[1]//2: # flip along axis 1
+        if center_[1] < shape[1]//2: # flip along axis 1
             cell_ = np.fliplr(cell_)
             nuclei_ = np.fliplr(nuclei_)
             protein_ch_ = np.fliplr(protein_ch_)
@@ -223,24 +223,30 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
         cell[1:1+cell_.shape[0],1:1+cell_.shape[1]] = cell_
         
         nuclei_coords_ = find_contours(nuclei)
-        nuclei_coords_ = nuclei_coords_[0] - centroid
+        if len(nuclei_coords_) > 1: # concatenate fragmented contour lines, original point could be ambiguous! (attempt to re-align original point in coefs.XXX_fourier_coefs())
+            # if the biggest contour segment is a close loop, the rest are micronuclei, artifact segments
+            idx_longest = np.argmax([len(xy) for xy in nuclei_coords_])
+            biggest = nuclei_coords_[idx_longest]
+            if all(biggest[0] == biggest[-1]):
+                nuclei_coords_ = biggest - centroid
+            else:
+                nuclei_coords_ = np.vstack(nuclei_coords_)
+                nuclei_coords_ = nuclei_coords_ - centroid
+        else:
+            nuclei_coords_ = cell_coords_[0] - centroid
 
         cell_coords_ = find_contours(cell)
         if len(cell_coords_) > 1: # concatenate fragmented contour lines, original point could be ambiguous! (attempt to re-align original point in coefs.XXX_fourier_coefs())
-            cell_coords_ = np.vstack(cell_coords_)
-            cell_coords_ = cell_coords_ - centroid
+            # if the biggest contour segment is a close loop, the rest are micronuclei, artifact segments
+            idx_longest = np.argmax([len(xy) for xy in cell_coords_])
+            biggest = cell_coords_[idx_longest]
+            if all(biggest[0] == biggest[-1]):
+                cell_coords_ = biggest - centroid
+            else:
+                cell_coords_ = np.vstack(cell_coords_)
+                cell_coords_ = cell_coords_ - centroid
         else:
             cell_coords_ = cell_coords_[0] - centroid
-        """
-        if min(cell_coords_[:, 0]) > 0 or min(cell_coords_[:, 1]) > 0:
-            with open(f'{log_dir}/images_fft_failed.pkl', 'wb') as error_list:
-                pickle.dump(f"Contour failed {im}", error_list)
-            return im, 0
-        elif max(cell_coords_[:, 0]) < 0 or max(cell_coords_[:, 1]) < 0:
-            with open(f'{log_dir}/images_fft_failed.pkl', 'wb') as error_list:
-                pickle.dump(f"Contour failed {im}", error_list)
-            return im, 0
-        """
 
         cell_coords = cell_coords_.copy()
         cell_coords = helpers.realign_contour_startpoint(cell_coords)
