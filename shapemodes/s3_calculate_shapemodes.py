@@ -78,14 +78,13 @@ def main():
     # project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
-    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud"
+    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud_lr"
     log_dir = f"{project_dir}/logs"
     #fft_dir = f"{project_dir}/fftcoefs/{fun}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
     
     protein_dir = Path(f"{project_dir}/cell_masks") #Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
     mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-    #mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
     mappings = mappings[mappings['atlas_name']=='U-2 OS']
     #print(mappings.target.value_counts())
     print(mappings.shape, mappings.columns)
@@ -135,7 +134,7 @@ def main():
         print(df.index[0])
         if fun == "fft":
             df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
-        shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized_ud"
+        shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized_ud_lr"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
         

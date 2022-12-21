@@ -78,7 +78,7 @@ def main():
     #project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
-    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud"
+    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud_lr"
     log_dir = f"{project_dir}/logs"
     #fft_dir = f"{project_dir}/fftcoefs/{fun}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
@@ -124,7 +124,7 @@ def main():
         print(df.index[0])
         if fun == "fft":
             df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
-        shape_mode_path = f"{project_dir}/shapemode/fft_major_axis_polarized_ud"
+        shape_mode_path = f"{project_dir}/shapemode/fft_major_axis_polarized_ud_lr"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
         
