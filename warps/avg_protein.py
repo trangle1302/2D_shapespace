@@ -49,8 +49,8 @@ def main():
     s = time.time()
     cell_line = 'S-BIAD34'
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized"  
-    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized"  
+    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized_ud_lr"  
+    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud_lr"  
     data_dir = f"{project_dir}/cell_masks" 
     save_dir = f"{project_dir}/morphed_protein_avg" 
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
