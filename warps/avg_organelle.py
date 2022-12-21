@@ -161,12 +161,12 @@ def main():
                 shape = nu_.shape
                 center_ = center_of_mass(cell_)
                 if flip_ud:
-                    if center_[0] > shape[0]//2:
+                    if center_[0] < shape[0]//2:
                         cell_ = np.flipud(cell_)
                         nu_ = np.flipud(nu_)
                         img = np.flipud(img)
                 if flip_lr:
-                    if center_[1] > shape[1]//2:
+                    if center_[1] < shape[1]//2:
                         cell_ = np.fliplr(cell_)
                         nu_ = np.fliplr(nu_)
                         img = np.fliplr(img)
