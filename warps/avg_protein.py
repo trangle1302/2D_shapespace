@@ -48,14 +48,20 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
 
 def main():   
     s = time.time()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--merged_bins", nargs='+',help="bin to investigate", type=int)
+    parser.add_argument("--organelle", help="", type=str)
+    args = parser.parse_args()
+    print(args.organelle)
+    print(args.merged_bins)
     cell_line = 'S-BIAD34'
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/shapemodes/fft_major_axis_polarized_ud_lr"  
+    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/shapemode/fft_major_axis_polarized_ud_lr"  
     fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud_lr"  
     data_dir = f"{project_dir}/cell_masks" 
     save_dir = f"{project_dir}/morphed_protein_avg" 
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
-    n_landmarks = 32 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
+    n_landmarks = 32 # number of landmark points frgs='+',or each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     print(save_dir, plot_dir)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
