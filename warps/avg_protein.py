@@ -87,7 +87,7 @@ def main():
     df = pd.DataFrame(pro_count)
     df["total"] = df.sum(axis=1)
     print(df.sort_values(by=['total']))
-    idx_keep = [all(r.values > 5) for _, r in df.iterrows()]
+    idx_keep = [all(r.values >= 5) for _, r in df.iterrows()]
     ab_keep = df.index.values[idx_keep].tolist()
     
     avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
