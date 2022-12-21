@@ -114,7 +114,7 @@ def align_cell_major_axis_polarized(data, protein_ch, plot=True):
         cell_ = np.flipud(cell_)
         nuclei_ = np.flipud(nuclei_)
         protein_ch_ = np.flipud(protein_ch_)
-    if False:
+    if True:
         if center_[1] > shape[1]//2: # flip along axis 1
             cell_ = np.fliplr(cell_)
             nuclei_ = np.fliplr(nuclei_)
