@@ -36,12 +36,12 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
         ix_c, iy_c = helpers.equidistance(ix_c, iy_c, n_points=n_landmarks)
     nu_contour = np.stack([ix_n, iy_n]).T
     cell_contour = np.stack([ix_c, iy_c]).T
-    print(nu_contour.shape, cell_contour.shape)
+    #print(nu_contour.shape, cell_contour.shape)
     
     pts_avg = np.vstack([np.asarray(nu_centroid),
                         helpers.realign_contour_startpoint(nu_contour),
                         helpers.realign_contour_startpoint(cell_contour)])
-    print(pts_avg.max(), pts_avg.min(), cell_contour[:,0].max(), cell_contour[:,1].max())
+    #print(pts_avg.max(), pts_avg.min(), cell_contour[:,0].max(), cell_contour[:,1].max())
     shape_x, shape_y = np.round(cell_contour[:,0].max()).astype('int'), np.round(cell_contour[:,1].max()).astype('int')
 
     return pts_avg, (shape_x, shape_y) 
@@ -80,7 +80,7 @@ def main():
         antibodies = [c.split("/")[-2] for c in pc_cells]
         cells_per_ab = Counter(antibodies)
         pro_count[f"bin{b}"] = cells_per_ab
-        print(len(pc_cells), len(cells_per_ab.keys()))
+        #print(len(pc_cells), len(cells_per_ab.keys()))
  
     df = pd.DataFrame(pro_count)
     df["total"] = df.sum(axis=1)
@@ -111,15 +111,16 @@ def main():
 
         ls = [pc_cells[b] for b in bin_]
         ls = helpers.flatten_list(ls)
-        ls = [os.path.basename(l).replace(".npy","") for l in ls]
-
+        #ls = [os.path.basename(l).replace(".npy","") for l in ls]
+        #print("examples of antibodies", ab_keep[:5])
         for ab_id in ab_keep:
-            if os.path.exists(f"{save_dir}/{PC}/bin{bin_[0]}_{ab_id}.png"):
-                continue
+            #if os.path.exists(f"{save_dir}/{PC}/bin{bin_[0]}_{ab_id}.png"):
+            #    continue
             if not os.path.exists(f"{plot_dir}/{PC}/{ab_id}"):
                 os.makedirs(f"{plot_dir}/{PC}/{ab_id}")
             ls_ = [f for f in ls if f.__contains__(ab_id)]
-            for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{ab_id}"):
+            ls_ = [os.path.basename(l).replace(".npy","") for l in ls_]
+            for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{ab_id}", total=len(ls_)):
                 for line in lines:
                     if line.find(img_id) != -1 :
                         vals = line.strip().split(';')
@@ -127,9 +128,9 @@ def main():
                 theta = float(vals[1])
                 shift_c = (float(vals[2].split(',')[0].strip('(')),(float(vals[2].split(',')[1].strip(')'))))
                 
-                cell_shape = np.load(f"{data_dir}/{img_id}.npy")
-                img = imread(f"{data_dir}/{img_id}_protein.png")
-                
+                cell_shape = np.load(f"{data_dir}/{ab_id}/{img_id}.npy")
+                img = imread(f"{data_dir}/{ab_id}/{img_id}_protein.png")
+                print(f"Image value max {img.max()}, image dtype: {img.dtype}") 
                 img = rotate(img, theta)
                 nu_ = rotate(cell_shape[1,:,:], theta)
                 cell_ = rotate(cell_shape[0,:,:], theta)
