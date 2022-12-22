@@ -233,7 +233,7 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
                 nuclei_coords_ = np.vstack(nuclei_coords_)
                 nuclei_coords_ = nuclei_coords_ - centroid
         else:
-            nuclei_coords_ = cell_coords_[0] - centroid
+            nuclei_coords_ = nuclei_coords_[0] - centroid
 
         cell_coords_ = find_contours(cell)
         if len(cell_coords_) > 1: # concatenate fragmented contour lines, original point could be ambiguous! (attempt to re-align original point in coefs.XXX_fourier_coefs())
