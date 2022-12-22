@@ -3,7 +3,7 @@
 #SBATCH --job-name=warp_protein
 #
 #SBATCH --time=10:00:00
-#SBATCH --ntasks=2
+#SBATCH --ntasks=11
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=5G
 
@@ -16,5 +16,14 @@ module load opencv/4.5.2
 pip install imageio
 pip install tqdm
 
-srun -N 1 -n1 python3 avg_protein.py --merged_bins 0 1
-srun -N 1 -n1 python3 avg_protein.py --merged_bins 9 10
+srun -N 1 -n1 python3 avg_protein.py --merged_bins 0  --pc PC1 &
+srun -N 1 -n1 python3 avg_protein.py --merged_bins 1  --pc PC1 &
+srun -N 1 -n1 python3 avg_protein.py --merged_bins 2  --pc PC1 &
+srun -N 1 -n1 python3 avg_protein.py --merged_bins 3  --pc PC1 &
+srun -N 1 -n1 python3 avg_protein.py --merged_bins 4  --pc PC1 &
+srun -N 1 -n1 python3 avg_protein.py --merged_bins 5  --pc PC1 &
+srun -N 1 -n1 python3 avg_protein.py --merged_bins 6  --pc PC1 &
+srun -N 1 -n1 python3 avg_protein.py --merged_bins 7  --pc PC1 &
+srun -N 1 -n1 python3 avg_protein.py --merged_bins 8  --pc PC1 &
+srun -N 1 -n1 python3 avg_protein.py --merged_bins 9  --pc PC1 &
+srun -N 1 -n1 python3 avg_protein.py --merged_bins 10 --pc PC1
