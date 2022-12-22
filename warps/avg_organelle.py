@@ -13,6 +13,7 @@ import pandas as pd
 from tqdm import tqdm
 import time
 import gc
+import argparse
 
 LABEL_TO_ALIAS = {
   0: 'Nucleoplasm',
@@ -72,9 +73,16 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
 def main():   
     s = time.time()
     cell_line = 'U-2 OS'
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--merged_bins", nargs='+',help="bin to investigate", type=int)
+    parser.add_argument("--pc", help="principle component", type=str)
+    parser.add_argument("--org", help="organelle class", type=str)
+    args = parser.parse_args()
+    org = args.org
+    PC = args.pc
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
     shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized"  
-    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized"  
+    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud_lr"  
     data_dir = f"{project_dir}/cell_masks" 
     save_dir = f"{project_dir}/morphed_protein_avg" 
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
@@ -92,7 +100,6 @@ def main():
     mappings = mappings[mappings.atlas_name=="U-2 OS"]
     mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
     
-    PC = "PC2"
     # created a folder where avg organelle for each bin is saved
     if not os.path.exists(f"{save_dir}/{PC}"):
         os.makedirs(f"{save_dir}/{PC}")
@@ -134,7 +141,7 @@ def main():
         df_sl = mappings[mappings.cell_idx.isin(ls)]
         df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
         
-        for org in ["Nucleoplasm","Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS","ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
+        if True: #for org in ["Nucleoplasm","Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS","ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')
             if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
@@ -210,6 +217,7 @@ def main():
                     plt.close()
 
             imwrite(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png", (avg_img*255).astype(np.uint8))
+            #imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
             gc.collect()
     print(f"Time elapsed: {(time.time() - s)/3600} h.")
 
