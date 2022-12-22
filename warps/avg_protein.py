@@ -52,8 +52,6 @@ def main():
     parser.add_argument("--merged_bins", nargs='+',help="bin to investigate", type=int)
     parser.add_argument("--pc", help="", type=str)
     args = parser.parse_args()
-    print(args.pc)
-    print(args.merged_bins)
     cell_line = 'S-BIAD34'
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
     shape_mode_path = f"{project_dir}/shapemode/fft_major_axis_polarized_ud_lr"  
@@ -62,7 +60,7 @@ def main():
     save_dir = f"{project_dir}/morphed_protein_avg" 
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
     n_landmarks = 32 # number of landmark points frgs='+',or each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
-    print(save_dir, plot_dir)
+    #print(save_dir, plot_dir)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     if not os.path.exists(plot_dir):
@@ -95,12 +93,13 @@ def main():
     
     bin_ = args.merged_bins
     PC = args.pc
+    print(f"Processing {bin_} of {PC}")
     # created a folder where avg protein for each bin is saved
     if not os.path.isdir(f"{save_dir}/{PC}"):
         os.makedirs(f"{save_dir}/{PC}")
 
     pc_cells = cells_assigned[PC]
-    if True: #for i, bin_ in enumerate(merged_bins):
+    if True: 
         if len(bin_) == 1:
             n_coef = len(avg_cell_per_bin['nuc'][0])//2
             ix_n = avg_cell_per_bin['nuc'][bin_[0]][:n_coef]
