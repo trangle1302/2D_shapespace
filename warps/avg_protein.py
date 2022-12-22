@@ -50,13 +50,13 @@ def main():
     s = time.time()
     parser = argparse.ArgumentParser()
     parser.add_argument("--merged_bins", nargs='+',help="bin to investigate", type=int)
-    parser.add_argument("--organelle", help="", type=str)
+    parser.add_argument("--pc", help="", type=str)
     args = parser.parse_args()
-    print(args.organelle)
+    print(args.pc)
     print(args.merged_bins)
     cell_line = 'S-BIAD34'
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/shapemode/fft_major_axis_polarized_ud_lr"  
+    shape_mode_path = f"{project_dir}/shapemode/fft_major_axis_polarized_ud_lr"  
     fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud_lr"  
     data_dir = f"{project_dir}/cell_masks" 
     save_dir = f"{project_dir}/morphed_protein_avg" 
@@ -71,18 +71,8 @@ def main():
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
-    mappings = pd.read_csv(f"{project_dir}/experimentB-processed.txt", sep="\t")
-    print(f"...Found {len(mappings['Antibody id'].unique())} antibodies")
-
-    PC = "PC2"
-    # created a folder where avg protein for each bin is saved
-    if not os.path.exists(f"{save_dir}/{PC}"):
-        os.makedirs(f"{save_dir}/{PC}")
-
-    pc_cells = cells_assigned[PC]
-
-    #merged_bins = [[0,1,2],[4,5,6],[8,9,10]]ls
-    merged_bins = [[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10]]
+    #mappings = pd.read_csv(f"{project_dir}/experimentB-processed.txt", sep="\t")
+    #print(f"...Found {len(mappings['Antibody id'].unique())} antibodies")
 
     pro_count = {}
     for b in np.arange(11):
@@ -90,38 +80,46 @@ def main():
         antibodies = [c.split("/")[-2] for c in pc_cells]
         cells_per_ab = Counter(antibodies)
         pro_count[f"bin{b}"] = cells_per_ab
-        
+        print(len(pc_cells), len(cells_per_ab.keys()))
+ 
     df = pd.DataFrame(pro_count)
     df["total"] = df.sum(axis=1)
-    print(df.sort_values(by=['total']))
+    #print(df.sort_values(by=['total']))
     idx_keep = [all(r.values >= 5) for _, r in df.iterrows()]
     ab_keep = df.index.values[idx_keep].tolist()
-    
+    print(f"Keeping {sum(idx_keep)} ab with >=5 cells/bin") 
     avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
 
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
         lines = F.readlines()
     
-    for i, bin_ in enumerate(merged_bins):
+    bin_ = args.merged_bins
+    PC = args.pc
+    # created a folder where avg protein for each bin is saved
+    if not os.path.isdir(f"{save_dir}/{PC}"):
+        os.makedirs(f"{save_dir}/{PC}")
+
+    pc_cells = cells_assigned[PC]
+    if True: #for i, bin_ in enumerate(merged_bins):
         if len(bin_) == 1:
             n_coef = len(avg_cell_per_bin['nuc'][0])//2
             ix_n = avg_cell_per_bin['nuc'][bin_[0]][:n_coef]
             iy_n = avg_cell_per_bin['nuc'][bin_[0]][n_coef:]
             ix_c = avg_cell_per_bin['mem'][bin_[0]][:n_coef]
             iy_c = avg_cell_per_bin['mem'][bin_[0]][n_coef:]
-            pts_avg, (shape_x, shape_y) = avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks = n_landmarks)    
+            pts_avg, (shape_x, shape_y) = avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks = n_landmarks)  
+            avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')  
 
         ls = [pc_cells[b] for b in bin_]
         ls = helpers.flatten_list(ls)
         ls = [os.path.basename(l).replace(".npy","") for l in ls]
-    
+
         for ab_id in ab_keep:
-            avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')
+            if os.path.exists(f"{save_dir}/{PC}/bin{bin_[0]}_{ab_id}.png"):
+                continue
             if not os.path.exists(f"{plot_dir}/{PC}/{ab_id}"):
                 os.makedirs(f"{plot_dir}/{PC}/{ab_id}")
             ls_ = [f for f in ls if f.__contains__(ab_id)]
-            if os.path.exists(f"{save_dir}/{PC}/bin{bin_[0]}_{ab_id}.png"):
-                continue
             for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{ab_id}"):
                 for line in lines:
                     if line.find(img_id) != -1 :
