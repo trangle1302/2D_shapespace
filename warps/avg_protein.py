@@ -52,6 +52,8 @@ def main():
     parser.add_argument("--merged_bins", nargs='+',help="bin to investigate", type=int)
     parser.add_argument("--pc", help="", type=str)
     args = parser.parse_args()
+    bin_ = args.merged_bins
+    PC = args.pc
     cell_line = 'S-BIAD34'
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
     shape_mode_path = f"{project_dir}/shapemode/fft_major_axis_polarized_ud_lr"  
@@ -91,8 +93,6 @@ def main():
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
         lines = F.readlines()
     
-    bin_ = args.merged_bins
-    PC = args.pc
     print(f"Processing {bin_} of {PC}")
     # created a folder where avg protein for each bin is saved
     if not os.path.isdir(f"{save_dir}/{PC}"):
@@ -182,9 +182,9 @@ def main():
                     ax[4].imshow(warped)
                     ax[4].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
                     ax[4].set_title('midpoint to avg_shape')
-                    fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
+                    fig.savefig(f"{plot_dir}/{PC}/{ab_id}/{img_id}.png", bbox_inches='tight')
                     plt.close()
-            imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
+            imwrite(f"{save_dir}/{PC}/{ab_id}_bin{bin_[0]}.png", (avg_img*255).astype(np.uint8))
             gc.collect()
     print(f"Time elapsed: {(time.time() - s)/3600} h.")
 
