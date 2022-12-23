@@ -1,7 +1,7 @@
 import os
 import sys
 sys.path.append("..") 
-from imageio import imread, imwrite
+from imageio.v2 import imread, imwrite
 import numpy as np
 from utils import helpers
 import matplotlib.pyplot as plt
