@@ -74,17 +74,18 @@ def main():
     s = time.time()
     cell_line = 'U-2 OS'
     parser = argparse.ArgumentParser()
-    parser.add_argument("--merged_bins", nargs='+',help="bin to investigate", type=int)
+    #parser.add_argument("--merged_bins", nargs='+',help="bin to investigate", type=int)
     parser.add_argument("--pc", help="principle component", type=str)
     parser.add_argument("--org", help="organelle class", type=str)
     args = parser.parse_args()
     org = args.org
     PC = args.pc
+    print(f"Processing {org} in {PC}")
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized"  
-    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud_lr"  
+    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized_ud_lr"  
+    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud_lr"
     data_dir = f"{project_dir}/cell_masks" 
-    save_dir = f"{project_dir}/morphed_protein_avg" 
+    save_dir = f"{project_dir}/morphed_protein_avg_ud_lr" 
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
     n_landmarks = 32 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     print(save_dir, plot_dir)
