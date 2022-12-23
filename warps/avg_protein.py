@@ -130,6 +130,8 @@ def main():
                 
                 cell_shape = np.load(f"{data_dir}/{ab_id}/{img_id}.npy")
                 img = imread(f"{data_dir}/{ab_id}/{img_id}_protein.png")
+                if img.dtype == 'uint16':
+                    img = (img / 256).astype(np.uint8)
                 #print(f"Image value max {img.max()}, image dtype: {img.dtype}") 
                 img = rotate(img, theta)
                 nu_ = rotate(cell_shape[1,:,:], theta)
