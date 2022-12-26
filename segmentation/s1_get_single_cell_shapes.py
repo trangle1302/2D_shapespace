@@ -166,6 +166,7 @@ def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytoo
     nu = imageio.imread(f"{parent_dir}/{img_id}_{nuclei_mask_extension}")
     nu = rgb_2_gray_unique(nu)
 
+    assert cyto.shape == nu.shape
     # Relabel the cytosol region based on nuclei labels
     cell_mask = np.zeros_like(cyto)
     nuclei_mask = np.zeros_like(nu) #nu.copy()
@@ -200,7 +201,8 @@ def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytoo
     # remove small patches
     cell_mask_ = skimage.morphology.erosion(cell_mask_, skimage.morphology.square(5))
     cell_mask_ = skimage.morphology.dilation(cell_mask_, skimage.morphology.square(5))
-    assert cell_mask_.shape == nuclei_mask.shape
+
+    # load protein channel, resize if different shape
     protein = imageio.imread(f"{parent_dir}/{img_id}_w4_Rescaled.tif")
     if protein.shape != cell_mask_.shape:
         d_type = 'uint16' #protein.dtype
