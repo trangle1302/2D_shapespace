@@ -84,7 +84,13 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_p
         if True: #erose and dilate to remove the small line
             mask = skimage.morphology.erosion(mask, skimage.morphology.square(5))
             mask = skimage.morphology.dilation(mask, skimage.morphology.square(5))
-            #mask = dilation(mask,square(3))
+            # get new bbox
+            minr_, minc_, maxr_, maxc_ = skimage.measure.regionprops(mask)[0].bbox
+            mask = mask[minr_:maxr_, minc_:maxc_]
+            minr += minr_
+            minc += minc_
+            maxr = minr + (maxr_ - minr_)
+            maxc = minc + (maxc_ - minc_)
 
         mask_n = nuclei_mask[minr:maxr, minc:maxc].astype(np.uint8)
         mask_n[mask_n != region_n.label] = 0
@@ -347,7 +353,8 @@ def process_img_ccd(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "w
         cyto = rgb_2_gray_unique(cyto)
         protein = imageio.imread(f"{data_dir}/{img_id}_w4_Rescaled.tif")
         if protein.shape != cyto.shape:
-            os.remove(f"{save_dir}/{img_id}*")
+            for f in glob.glob(f"{save_dir}/{img_id}*"):
+                os.remove(f)
             img_ids_filtered += [img_id]
     print(f"(Re-)Processing {len(img_ids_filtered)} images")
     for img_id in img_ids_filtered: 
@@ -445,7 +452,7 @@ def cellcycle():
                     break        
     """
     print(f"{len(finished_imlist)} images done, processing the rest ...")
-    num_cores = multiprocessing.cpu_count() - 14 # save 1 core for some other processes
+    num_cores = multiprocessing.cpu_count() - 10 # save 1 core for some other processes
     ifimages = pd.read_csv(f"{base_url}/experimentB-processed.txt", sep="\t")
     ablist = ifimages["Antibody id"].unique()
     print(f"...Found {len(ablist)} antibody folder with masks")
