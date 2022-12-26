@@ -335,12 +335,20 @@ def process_img_ccd(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "w
         img_ids = [os.path.basename(f).replace("_w3.tif","") for f in glob.glob(f"{data_dir}/*_w3.tif")]
     
     #check if these images have nuclei mask, cytosol mask and protein channel
-    img_ids_filtered = []
+    img_ids_filtered_ = []
     for img_id in img_ids:
         if os.path.exists(f"{data_dir}/{img_id}_{cell_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_{nuclei_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_w4_Rescaled.tif"):
-            img_ids_filtered += [img_id]
-    #print(img_ids)
+            img_ids_filtered_ += [img_id]
 
+    img_ids_filtered = []
+    cell_mask_extension = "w2cytooutline.png"
+    for img_id in img_ids_filtered_:
+        cyto = imageio.imread(f"{data_dir}/{img_id}_{cell_mask_extension}")
+        cyto = rgb_2_gray_unique(cyto)
+        protein = imageio.imread(f"{data_dir}/{img_id}_w4_Rescaled.tif")
+        if protein.shape != cyto.shape:
+            os.remove(f"{save_dir}/{img_id}*")
+            img_ids_filtered += [img_id]
     print(f"(Re-)Processing {len(img_ids_filtered)} images")
     for img_id in img_ids_filtered: 
         if os.path.exists(f"{save_dir}/{img_id}_cellmask.png") & os.path.exists(f"{save_dir}/{img_id}_nuclei_mask.png"):
@@ -351,7 +359,6 @@ def process_img_ccd(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "w
                 d_type = 'uint16' #protein.dtype
                 max_val = 65535 #protein.max()
                 protein = (skimage.transform.resize(protein, cell_mask.shape)*max_val).astype(d_type)
-                os.remove(save_dir)
         else:
             cell_mask, nuclei_mask, protein = get_cell_nuclei_masks_ccd(data_dir, img_id)
             imageio.imwrite(f"{save_dir}/{img_id}_cellmask.png", cell_mask)
