@@ -200,7 +200,12 @@ def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytoo
     # remove small patches
     cell_mask_ = skimage.morphology.erosion(cell_mask_, skimage.morphology.square(5))
     cell_mask_ = skimage.morphology.dilation(cell_mask_, skimage.morphology.square(5))
+    assert cell_mask_.shape == nuclei_mask.shape
     protein = imageio.imread(f"{parent_dir}/{img_id}_w4_Rescaled.tif")
+    if protein.shape != cell_mask_.shape:
+        d_type = 'uint16' #protein.dtype
+        max_val = 65535 #protein.max()
+        cell_mask_ = (skimage.transform.resize(protein, cell_mask_.shape)*max_val).astype(d_type)
     return cell_mask_, nuclei_mask, protein
 
 def get_single_cell_mask2(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, plot=False):
