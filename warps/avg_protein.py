@@ -115,7 +115,10 @@ def main():
         for ab_id in ab_keep:
             #if os.path.exists(f"{save_dir}/{PC}/bin{bin_[0]}_{ab_id}.png"):
             #    continue
-            avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')  
+            
+            # 1 empty avg_img for each protein_pc_bin combination 
+            avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64') 
+             
             if not os.path.exists(f"{plot_dir}/{PC}/{ab_id}"):
                 os.makedirs(f"{plot_dir}/{PC}/{ab_id}")
             ls_ = [f for f in ls if f.__contains__(ab_id)]
