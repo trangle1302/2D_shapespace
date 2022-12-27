@@ -84,7 +84,13 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_p
         if True: #erose and dilate to remove the small line
             mask = skimage.morphology.erosion(mask, skimage.morphology.square(5))
             mask = skimage.morphology.dilation(mask, skimage.morphology.square(5))
-            #mask = dilation(mask,square(3))
+            # get new bbox
+            minr_, minc_, maxr_, maxc_ = skimage.measure.regionprops(mask)[0].bbox
+            mask = mask[minr_:maxr_, minc_:maxc_]
+            minr += minr_
+            minc += minc_
+            maxr = minr + (maxr_ - minr_)
+            maxc = minc + (maxc_ - minc_)
 
         mask_n = nuclei_mask[minr:maxr, minc:maxc].astype(np.uint8)
         mask_n[mask_n != region_n.label] = 0
@@ -166,6 +172,7 @@ def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytoo
     nu = imageio.imread(f"{parent_dir}/{img_id}_{nuclei_mask_extension}")
     nu = rgb_2_gray_unique(nu)
 
+    assert cyto.shape == nu.shape
     # Relabel the cytosol region based on nuclei labels
     cell_mask = np.zeros_like(cyto)
     nuclei_mask = np.zeros_like(nu) #nu.copy()
@@ -200,7 +207,13 @@ def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytoo
     # remove small patches
     cell_mask_ = skimage.morphology.erosion(cell_mask_, skimage.morphology.square(5))
     cell_mask_ = skimage.morphology.dilation(cell_mask_, skimage.morphology.square(5))
+
+    # load protein channel, resize if different shape
     protein = imageio.imread(f"{parent_dir}/{img_id}_w4_Rescaled.tif")
+    if protein.shape != cell_mask_.shape:
+        d_type = 'uint16' #protein.dtype
+        max_val = 65535 #protein.max()
+        protein = (skimage.transform.resize(protein, cell_mask_.shape)*max_val).astype(d_type)
     return cell_mask_, nuclei_mask, protein
 
 def get_single_cell_mask2(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, plot=False):
@@ -326,16 +339,37 @@ def process_img_ccd(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "w
     img_ids = [os.path.basename(f).replace("_w3.TIF","") for f in glob.glob(f"{data_dir}/*_w3.TIF")]
     if len(img_ids) == 0:
         img_ids = [os.path.basename(f).replace("_w3.tif","") for f in glob.glob(f"{data_dir}/*_w3.tif")]
+    
     #check if these images have nuclei mask, cytosol mask and protein channel
-    img_ids_filtered = []
+    img_ids_filtered_ = []
     for img_id in img_ids:
         if os.path.exists(f"{data_dir}/{img_id}_{cell_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_{nuclei_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_w4_Rescaled.tif"):
+            img_ids_filtered_ += [img_id]
+
+    img_ids_filtered = []
+    cell_mask_extension = "w2cytooutline.png"
+    for img_id in img_ids_filtered_:
+        cyto = imageio.imread(f"{data_dir}/{img_id}_{cell_mask_extension}")
+        cyto = rgb_2_gray_unique(cyto)
+        protein = imageio.imread(f"{data_dir}/{img_id}_w4_Rescaled.tif")
+        if protein.shape != cyto.shape:
+            for f in glob.glob(f"{save_dir}/{img_id}*"):
+                os.remove(f)
             img_ids_filtered += [img_id]
-    #print(img_ids)
-    for img_id in img_ids_filtered: #if True:#try:
-        cell_mask, nuclei_mask, protein = get_cell_nuclei_masks_ccd(data_dir, img_id)
-        imageio.imwrite(f"{save_dir}/cellmask.png", cell_mask)
-        imageio.imwrite(f"{save_dir}/nuclei_mask.png", nuclei_mask)
+    print(f"(Re-)Processing {len(img_ids_filtered)} images")
+    for img_id in img_ids_filtered: 
+        if os.path.exists(f"{save_dir}/{img_id}_cellmask.png") & os.path.exists(f"{save_dir}/{img_id}_nuclei_mask.png"):
+            cell_mask = imageio.imread(f"{save_dir}/cellmask.png")
+            nuclei_mask = imageio.imread(f"{save_dir}/nuclei_mask.png") 
+            protein = imageio.imread(f"{data_dir}/{img_id}_w4_Rescaled.tif")
+            if protein.shape != cell_mask.shape:
+                d_type = 'uint16' #protein.dtype
+                max_val = 65535 #protein.max()
+                protein = (skimage.transform.resize(protein, cell_mask.shape)*max_val).astype(d_type)
+        else:
+            cell_mask, nuclei_mask, protein = get_cell_nuclei_masks_ccd(data_dir, img_id)
+            imageio.imwrite(f"{save_dir}/{img_id}_cellmask.png", cell_mask)
+            imageio.imwrite(f"{save_dir}/{img_id}_nuclei_mask.png", nuclei_mask)
         save_path = f"{save_dir}/{img_id}_"
         cell_idx = np.unique(cell_mask)
         cell_idx_finished = glob.glob(f"{save_path}*.npy")
@@ -376,7 +410,7 @@ def publicHPA():
                 except EOFError:
                     break        
     print(f"{len(finished_imlist)} images done, processing the rest ...")
-    num_cores = multiprocessing.cpu_count() -1 # save 1 core for some other processes
+    num_cores = multiprocessing.cpu_count() - 4 # save 1 core for some other processes
     ifimages = pd.read_csv(f"{base_url}/IF-image.csv")
     ifimages = ifimages[ifimages.atlas_name==cell_line]
     ifimages["ID"] = [f.split("/")[-1][:-1] for f in ifimages.filename]
@@ -418,12 +452,12 @@ def cellcycle():
                     break        
     """
     print(f"{len(finished_imlist)} images done, processing the rest ...")
-    num_cores = multiprocessing.cpu_count() - 14 # save 1 core for some other processes
+    num_cores = multiprocessing.cpu_count() - 10 # save 1 core for some other processes
     ifimages = pd.read_csv(f"{base_url}/experimentB-processed.txt", sep="\t")
     ablist = ifimages["Antibody id"].unique()
     print(f"...Found {len(ablist)} antibody folder with masks")
     print(f"...Processing {len(ablist)} images with masks in {num_cores}")
-    #abid = "HPA040393"
+    #abid = "HPA047549"
     #process_img_ccd(abid, mask_dir, save_dir, log_dir)
     #done = pd.read_pickle(f'{log_dir}/images_done.pkl')
     #ablist = list(set(ablist).difference(set(done))))
