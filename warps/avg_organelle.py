@@ -134,7 +134,8 @@ def main():
             iy_n = avg_cell_per_bin['nuc'][bin_[0]][n_coef:]
             ix_c = avg_cell_per_bin['mem'][bin_[0]][:n_coef]
             iy_c = avg_cell_per_bin['mem'][bin_[0]][n_coef:]
-            pts_avg, (shape_x, shape_y) = avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks = n_landmarks)    
+            pts_avg, (shape_x, shape_y) = avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks = n_landmarks)  
+            #avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')  
 
         ls = [pc_cells[b] for b in bin_]
         ls = helpers.flatten_list(ls)
@@ -143,6 +144,7 @@ def main():
         df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
         
         if True: #for org in ["Nucleoplasm","Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS","ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
+            # 1 empty avg_img for each organelle_pc_bin combination 
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')
             if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
