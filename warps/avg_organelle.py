@@ -60,12 +60,12 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
         ix_c, iy_c = helpers.equidistance(ix_c, iy_c, n_points=n_landmarks)
     nu_contour = np.stack([ix_n, iy_n]).T
     cell_contour = np.stack([ix_c, iy_c]).T
-    print(nu_contour.shape, cell_contour.shape)
+    #print(nu_contour.shape, cell_contour.shape)
     
     pts_avg = np.vstack([np.asarray(nu_centroid),
                         helpers.realign_contour_startpoint(nu_contour),
                         helpers.realign_contour_startpoint(cell_contour)])
-    print(pts_avg.max(), pts_avg.min(), cell_contour[:,0].max(), cell_contour[:,1].max())
+    #print(pts_avg.max(), pts_avg.min(), cell_contour[:,0].max(), cell_contour[:,1].max())
     shape_x, shape_y = np.round(cell_contour[:,0].max()).astype('int'), np.round(cell_contour[:,1].max()).astype('int')
 
     return pts_avg, (shape_x, shape_y) 
@@ -89,9 +89,9 @@ def main():
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
     n_landmarks = 32 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     print(save_dir, plot_dir)
-    if not os.path.exists(save_dir):
+    if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
-    if not os.path.exists(plot_dir):
+    if not os.path.isdir(plot_dir):
         os.makedirs(plot_dir)
     
     # Loading cell assignation into PC bins
@@ -102,7 +102,7 @@ def main():
     mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
     
     # created a folder where avg organelle for each bin is saved
-    if not os.path.exists(f"{save_dir}/{PC}"):
+    if not os.path.isdir(f"{save_dir}/{PC}"):
         os.makedirs(f"{save_dir}/{PC}")
 
     pc_cells = cells_assigned[PC]
@@ -147,7 +147,7 @@ def main():
             if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
             ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
-            if os.path.exists(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png"):
+            if os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"):
                 continue
             for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
                 for line in lines:
@@ -165,7 +165,7 @@ def main():
                 cell_ = rotate(cell_shape[0,:,:], theta)
                              
                 flip_ud = True # Set True for polarized version of cell mass
-                flip_lr = False # Set True for polarized version of cell mass
+                flip_lr = True # Set True for polarized version of cell mass
                 shape = nu_.shape
                 center_ = center_of_mass(cell_)
                 if flip_ud:
@@ -193,7 +193,7 @@ def main():
                 #imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
 
                 # adding weighed contribution of this image
-                print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
+                #print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
                 avg_img += warped / len(ls_)
                 
                 if np.random.choice([True,False], p=[0.001,0.999]):
@@ -216,7 +216,7 @@ def main():
                     ax[4].set_title('midpoint to avg_shape')
                     fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
                     plt.close()
-
+            print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
             imwrite(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png", (avg_img*255).astype(np.uint8))
             #imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
             gc.collect()
