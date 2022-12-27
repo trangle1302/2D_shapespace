@@ -106,8 +106,7 @@ def main():
             iy_n = avg_cell_per_bin['nuc'][bin_[0]][n_coef:]
             ix_c = avg_cell_per_bin['mem'][bin_[0]][:n_coef]
             iy_c = avg_cell_per_bin['mem'][bin_[0]][n_coef:]
-            pts_avg, (shape_x, shape_y) = avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks = n_landmarks)  
-            avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')  
+            pts_avg, (shape_x, shape_y) = avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks = n_landmarks) 
 
         ls = [pc_cells[b] for b in bin_]
         ls = helpers.flatten_list(ls)
@@ -116,6 +115,7 @@ def main():
         for ab_id in ab_keep:
             #if os.path.exists(f"{save_dir}/{PC}/bin{bin_[0]}_{ab_id}.png"):
             #    continue
+            avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')  
             if not os.path.exists(f"{plot_dir}/{PC}/{ab_id}"):
                 os.makedirs(f"{plot_dir}/{PC}/{ab_id}")
             ls_ = [f for f in ls if f.__contains__(ab_id)]
