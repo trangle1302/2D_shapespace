@@ -63,9 +63,9 @@ def main():
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
     n_landmarks = 32 # number of landmark points frgs='+',or each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     #print(save_dir, plot_dir)
-    if not os.path.exists(save_dir):
+    if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
-    if not os.path.exists(plot_dir):
+    if not os.path.isdir(plot_dir):
         os.makedirs(plot_dir)
     
     # Loading cell assignation into PC bins
@@ -165,9 +165,10 @@ def main():
                 #imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
 
                 # adding weighed contribution of this image
-                print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
+                #print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
                 avg_img += warped / len(ls_)
-                if np.random.choice([True,False], p=[0.001,0.999]):
+                if ab_id in ["HPA049341","HPA061027","HPA060948","HPA063464","HPA065871"]:
+                #if np.random.choice([True,False], p=[0.001,0.999]):
                     # Plot landmark points at morphing
                     fig, ax = plt.subplots(1,5, figsize=(15,30))
                     ax[0].imshow(nu_, alpha = 0.3)
@@ -185,8 +186,9 @@ def main():
                     ax[4].imshow(warped)
                     ax[4].scatter(pts_avg[:,1], pts_avg[:,0], c=np.arange(len(pts_ori)),cmap='Reds')
                     ax[4].set_title('midpoint to avg_shape')
-                    fig.savefig(f"{plot_dir}/{PC}/{ab_id}/{img_id}.png", bbox_inches='tight')
+                    fig.savefig(f"{plot_dir}/{PC}/{ab_id}/bin{bin_[0]}_{img_id}.png", bbox_inches='tight')
                     plt.close()
+            print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
             imwrite(f"{save_dir}/{PC}/{ab_id}_bin{bin_[0]}.png", (avg_img*255).astype(np.uint8))
             gc.collect()
     print(f"Time elapsed: {(time.time() - s)/3600} h.")
