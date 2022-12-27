@@ -169,7 +169,7 @@ def main():
                 flip_ud = True # Set True for polarized version of cell mass
                 flip_lr = True # Set True for polarized version of cell mass
                 shape = nu_.shape
-                center_ = center_of_mass(cell_)
+                center_ = center_of_mass(nu_)
                 if flip_ud:
                     if center_[0] < shape[0]//2:
                         cell_ = np.flipud(cell_)

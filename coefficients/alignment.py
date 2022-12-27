@@ -107,7 +107,7 @@ def align_cell_major_axis_polarized(data, protein_ch, plot=True):
     nuclei_ = rotate(nuclei, 90-theta)
     protein_ch_ = rotate(protein_ch, 90-theta)
     center_ = center_of_mass(nuclei_)
-    center_cell = center_of_mass(cell_)
+    #center_cell = center_of_mass(cell_)
     shape = nuclei_.shape
 
     if center_[0] < shape[0]//2: # flip along axis 0

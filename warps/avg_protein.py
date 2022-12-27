@@ -118,7 +118,7 @@ def main():
             
             # 1 empty avg_img for each protein_pc_bin combination 
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64') 
-             
+
             if not os.path.exists(f"{plot_dir}/{PC}/{ab_id}"):
                 os.makedirs(f"{plot_dir}/{PC}/{ab_id}")
             ls_ = [f for f in ls if f.__contains__(ab_id)]
@@ -143,7 +143,7 @@ def main():
                 flip_ud = True # Set True for polarized version of cell mass
                 flip_lr = True # Set True for polarized version of cell mass
                 shape = nu_.shape
-                center_ = center_of_mass(cell_)
+                center_ = center_of_mass(nu_)
                 if flip_ud:
                     if center_[0] > shape[0]//2:
                         cell_ = np.flipud(cell_)
