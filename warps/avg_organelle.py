@@ -135,7 +135,6 @@ def main():
             ix_c = avg_cell_per_bin['mem'][bin_[0]][:n_coef]
             iy_c = avg_cell_per_bin['mem'][bin_[0]][n_coef:]
             pts_avg, (shape_x, shape_y) = avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks = n_landmarks)  
-            #avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')  
 
         ls = [pc_cells[b] for b in bin_]
         ls = helpers.flatten_list(ls)
@@ -149,8 +148,8 @@ def main():
             if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
             ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
-            if os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"):
-                continue
+            #if os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"):
+            #    continue
             for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
                 for line in lines:
                     if line.find(img_id) != -1 :
@@ -161,7 +160,9 @@ def main():
                 
                 cell_shape = np.load(f"{data_dir}/{img_id}.npy")
                 img = imread(f"{data_dir}/{img_id}_protein.png")
-                
+                if img.dtype == 'uint16':
+                    img = (img / 256).astype(np.uint8)
+                #print(img.max(), img.dtype, len(ls_))
                 img = rotate(img, theta)
                 nu_ = rotate(cell_shape[1,:,:], theta)
                 cell_ = rotate(cell_shape[0,:,:], theta)
@@ -195,7 +196,7 @@ def main():
                 #imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
 
                 # adding weighed contribution of this image
-                #print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
+                # print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype,  (warped / len(ls_)).max())
                 avg_img += warped / len(ls_)
                 
                 if np.random.choice([True,False], p=[0.001,0.999]):
