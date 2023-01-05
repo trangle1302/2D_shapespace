@@ -63,10 +63,9 @@ def main():
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
     n_landmarks = 32 # number of landmark points frgs='+',or each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     #print(save_dir, plot_dir)
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
-    if not os.path.isdir(plot_dir):
-        os.makedirs(plot_dir)
+    
+    os.makedirs(save_dir, exist_ok=True)
+    os.makedirs(plot_dir, exist_ok=True)
     
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
@@ -95,8 +94,7 @@ def main():
     
     print(f"Processing {bin_} of {PC}")
     # created a folder where avg protein for each bin is saved
-    if not os.path.isdir(f"{save_dir}/{PC}"):
-        os.makedirs(f"{save_dir}/{PC}")
+    os.makedirs(f"{save_dir}/{PC}", exist_ok=True)
 
     pc_cells = cells_assigned[PC]
     if True: 
@@ -119,7 +117,7 @@ def main():
             # 1 empty avg_img for each protein_pc_bin combination 
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64') 
 
-            if not os.path.exists(f"{plot_dir}/{PC}/{ab_id}"):
+            if not os.path.isdir(f"{plot_dir}/{PC}/{ab_id}"):
                 os.makedirs(f"{plot_dir}/{PC}/{ab_id}")
             ls_ = [f for f in ls if f.__contains__(ab_id)]
             ls_ = [os.path.basename(l).replace(".npy","") for l in ls_]
@@ -145,12 +143,12 @@ def main():
                 shape = nu_.shape
                 center_ = center_of_mass(nu_)
                 if flip_ud:
-                    if center_[0] > shape[0]//2:
+                    if center_[0] < shape[0]//2:
                         cell_ = np.flipud(cell_)
                         nu_ = np.flipud(nu_)
                         img = np.flipud(img)
                 if flip_lr:
-                    if center_[1] > shape[1]//2:
+                    if center_[1] < shape[1]//2:
                         cell_ = np.fliplr(cell_)
                         nu_ = np.fliplr(nu_)
                         img = np.fliplr(img)
