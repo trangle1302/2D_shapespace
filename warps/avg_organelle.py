@@ -150,6 +150,9 @@ def main():
             ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
             #if os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"):
             #    continue
+            if len(ls_) > 500:
+                import random
+                ls_ = random.sample(ls_, 500)
             for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
                 for line in lines:
                     if line.find(img_id) != -1 :
