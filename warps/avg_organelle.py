@@ -1,7 +1,7 @@
 import os
 import sys
 sys.path.append("..") 
-from imageio.v2 import imread, imwrite
+from imageio import imread, imwrite
 import numpy as np
 from utils import helpers
 import matplotlib.pyplot as plt
@@ -81,7 +81,8 @@ def main():
     org = args.org
     PC = args.pc
     print(f"Processing {org} in {PC}")
-    project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
+    project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
+    #project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
     shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized_ud_lr"  
     fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud_lr"
     data_dir = f"{project_dir}/cell_masks" 
@@ -97,7 +98,8 @@ def main():
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
-    mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    mappings = pd.read_csv("/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
     mappings = mappings[mappings.atlas_name=="U-2 OS"]
     mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
     
@@ -142,7 +144,7 @@ def main():
         df_sl = mappings[mappings.cell_idx.isin(ls)]
         df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
         
-        if True: #for org in ["Nucleoplasm","Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS","ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
+        if not os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"): #for org in ["Nucleoplasm","Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS","ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
             # 1 empty avg_img for each organelle_pc_bin combination 
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')
             if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
