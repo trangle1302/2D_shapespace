@@ -102,37 +102,36 @@ def align_cell_major_axis_polarized(data, protein_ch, plot=True):
     nuclei = data[1, :, :]
     cell = data[0, :, :]
     region = regionprops(cell)[0]
-    theta = region.orientation * 180 / np.pi  # radiant to degree conversion
-    cell_ = rotate(cell, 90-theta)
-    nuclei_ = rotate(nuclei, 90-theta)
-    protein_ch_ = rotate(protein_ch, 90-theta)
-    center_ = center_of_mass(nuclei_)
-    #center_cell = center_of_mass(cell_)
+    theta = region.orientation * (180 / np.pi)  # radiant to degree conversion
+    theta = 90 - theta
+    cell_ = rotate(cell, theta)
+    nuclei_ = rotate(nuclei, theta)
+    center_cell = center_of_mass(cell_)
+    center_nuclei = center_of_mass(nuclei_)
     shape = nuclei_.shape
-
-    if center_[0] < shape[0]//2: # flip along axis 0
-        cell_ = np.flipud(cell_)
-        nuclei_ = np.flipud(nuclei_)
-        protein_ch_ = np.flipud(protein_ch_)
-    if True:
-        if center_[1] < shape[1]//2: # flip along axis 1
-            cell_ = np.fliplr(cell_)
-            nuclei_ = np.fliplr(nuclei_)
-            protein_ch_ = np.fliplr(protein_ch_)
-
+    
+    # NOTE: np.rot90() flip counter-clockwise
+    if center_cell[1] > center_nuclei[1]: # Move 1 quadrant counter-clockwise
+        cell_ = rotate(cell_, 180)
+        nuclei_ = rotate(nuclei_, 180)
+        theta += 180
+    
+    theta = theta % 360 
+    protein_ch_ = rotate(protein_ch, theta)
     if plot:
-        center_ = center_of_mass(nuclei_)
+        center_ = center_of_mass(cell_)
         fig, ax = plt.subplots(1, 4, figsize=(8, 4))
         ax[0].imshow(nuclei, alpha=0.5)
         ax[0].imshow(cell, alpha=0.5)
         ax[1].imshow(protein_ch)
+        ax[2].set_title(f"theta = {np.round(theta,1)}°")
         ax[2].imshow(nuclei_, alpha=0.5)
         ax[2].imshow(cell_, alpha=0.5)
         ax[2].scatter(center_[1],center_[0])
-        ax[2].vlines(shape[1]//2, 0, shape[0]-1)
-        ax[2].hlines(shape[0]//2, 0, shape[1]-1)
+        ax[2].vlines(shape[1]//2, 0, shape[0]-1, colors='gray', linestyles ='dashed') 
+        ax[2].hlines(shape[0]//2, 0, shape[1]-1, colors='gray', linestyles ='dashed') 
         ax[3].imshow(protein_ch_)
-    return nuclei_, cell_, 90-theta
+    return nuclei_, cell_, theta
 
 def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
     coef_df = pd.DataFrame()
@@ -256,15 +255,28 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
             fig, ax = plt.subplots(1, 3, figsize=(8, 4))
             ax[0].imshow(nuclei, alpha=0.5)
             ax[0].imshow(cell, alpha=0.5)
+            
+            nu_centroid = helpers.find_centroid(nuclei_coords)
+            cell_centroid = helpers.find_centroid(cell_coords)
             ax[1].plot(nuclei_coords_[:, 0], nuclei_coords_[:, 1])
-            ax[1].scatter(nuclei_coords_[0, 0], nuclei_coords_[0, 1], color="r")
+            ax[1].scatter(nuclei_coords_[0, 0], nuclei_coords_[0, 1], color="slateblue")
+            ax[1].scatter(nu_centroid[0], nu_centroid[1], color="b")
             ax[1].plot(cell_coords_[:, 0], cell_coords_[:, 1])
-            ax[1].scatter(cell_coords_[0, 0], cell_coords_[0, 1], color="r")
+            ax[1].scatter(cell_coords_[0, 0], cell_coords_[0, 1], color="gold")
+            ax[1].scatter(cell_centroid[0], cell_centroid[1], color="orange")
+            
+            ax[1].vlines(0, -200, 200, colors='gray', linestyles ='dashed') 
+            ax[1].hlines(0, -200, 200, colors='gray', linestyles ='dashed')
             ax[1].axis("scaled")
+            ax[2].set_title(f"theta = {np.round(theta,1)}°")
+            ax[2].vlines(0, -200, 200, colors='gray', linestyles ='dashed') 
+            ax[2].hlines(0, -200, 200, colors='gray', linestyles ='dashed')
             ax[2].plot(nuclei_coords[:, 0], nuclei_coords[:, 1])
-            ax[2].scatter(nuclei_coords[0, 0], nuclei_coords[0, 1], color="r")
+            ax[2].scatter(nuclei_coords[0, 0], nuclei_coords[0, 1], color="slateblue")
+            ax[2].scatter(nu_centroid[0], nu_centroid[1], color="b")
             ax[2].plot(cell_coords[:, 0], cell_coords[:, 1])
-            ax[2].scatter(cell_coords[0, 0], cell_coords[0, 1], color="r")
+            ax[2].scatter(cell_coords[0, 0], cell_coords[0, 1], color="gold")
+            ax[2].scatter(cell_centroid[0], cell_centroid[1], color="orange")
             ax[2].axis("scaled")
             plt.savefig(f"{save_dir}/{os.path.basename(im)}.png", bbox_inches="tight")
             plt.close()
