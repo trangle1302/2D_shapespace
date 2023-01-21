@@ -28,7 +28,7 @@ def calculate_fft_hpa():
     cell_line = "U-2 OS"
     save_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/cell_masks"
     d = Path(save_dir)
-    save_path = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/fftcoefs/fft_major_axis_polarized_ud_lr")
+    save_path = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/fftcoefs/fft_major_axis_polarized")
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
@@ -47,7 +47,7 @@ def calculate_fft_ccd():
     dataset = "S-BIAD34"
     d = f"/data/2Dshapespace/{dataset}"
     sc_mask_dir = f"{d}/cell_masks"
-    save_path = f"{d}/fftcoefs/fft_major_axis_polarized_ud_lr"
+    save_path = f"{d}/fftcoefs/fft_major_axis_polarized"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     log_dir = f"{d}/logs"
@@ -68,6 +68,6 @@ def calculate_fft_ccd():
 
 if __name__ == "__main__": 
     s_t = time.time()
-    #calculate_fft_hpa()
-    calculate_fft_ccd()
+    calculate_fft_hpa()
+    #calculate_fft_ccd()
     print(f"Done in {np.round((time.time()-s_t)/3600,2)} h.")
