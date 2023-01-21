@@ -83,8 +83,8 @@ def main():
     print(f"Processing {org} in {PC}")
     project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     #project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized_ud_lr"  
-    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized_ud_lr"
+    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized"  
+    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized"
     data_dir = f"{project_dir}/cell_masks" 
     save_dir = f"{project_dir}/morphed_protein_avg_ud_lr" 
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
