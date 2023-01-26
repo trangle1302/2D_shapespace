@@ -116,6 +116,7 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_p
             plt.axis("off")
             plt.tight_layout()
             plt.savefig(f"{save_path}{region_c.label}.jpg", bbox_inches="tight")
+            plt.close()
 
         imageio.imwrite(f"{save_path}{region_c.label}_protein.png", pr)
         data = np.stack((mask, mask_n))
@@ -452,7 +453,7 @@ def cellcycle():
                     break        
     """
     print(f"{len(finished_imlist)} images done, processing the rest ...")
-    num_cores = multiprocessing.cpu_count() - 10 # save 1 core for some other processes
+    num_cores = multiprocessing.cpu_count() - 14 # save 1 core for some other processes
     ifimages = pd.read_csv(f"{base_url}/experimentB-processed.txt", sep="\t")
     ablist = ifimages["Antibody id"].unique()
     print(f"...Found {len(ablist)} antibody folder with masks")
