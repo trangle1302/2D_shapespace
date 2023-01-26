@@ -1,11 +1,9 @@
-import os, shutil
 import numpy as np
 import matplotlib.pyplot as plt
-from cellpose import core, utils, io, models, metrics
+from cellpose import io, models, metrics
 from glob import glob
 from skimage import img_as_float
 from skimage import exposure
-from natsort import natsorted
 
 def sharpen(image):
     image = img_as_float(image)
@@ -38,7 +36,7 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
             nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
             img = np.stack([sharpen(w1), nuclei, np.zeros_like(w1)])
             test_data += [img]
-            test_labels += [io.imread(test_seg[k].replace('w1.tif','nucleimask.png'))]
+            test_labels += [io.imread(f.replace('w1.tif','nucleimask.png'))]
 
 
     elif initial_model == 'cyto':
@@ -60,7 +58,7 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
             nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
             img = np.stack([sharpen(w1), nuclei, np.zeros_like(w1)])
             test_data += [img]
-            test_labels += [io.imread(test_seg[k].replace('w1.tif','cellmask.png'))]
+            test_labels += [io.imread(f.replace('w1.tif','cellmask.png'))]
 
 
     # start logger (to see training across epochs)
@@ -83,10 +81,16 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
     # diameter of labels in training images
     diam_labels = model.diam_labels.copy()
     masks = model.eval(test_data, 
-                   channels=[0, 1, 2],
+                   channels=channels,
                    diameter=diam_labels)[0]
+                   
+    # check performance using ground truth labels
+    ap = metrics.average_precision(test_labels, masks)[0]
+    print(f'>>> average precision at iou threshold 0.5 in test set = {ap[:,0].mean():.3f}')
+
     save_path = f"{save_dir}/test_predictions.png"
     plot(test_data, test_labels, masks, save_path)
+    
 
 def plot(data, groundtruths, predicted_masks, save_path):   
     try:
