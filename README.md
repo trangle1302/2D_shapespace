@@ -6,7 +6,7 @@ HPA (public images, automatic segmentation): 297108 cells (23272 images)
 
 Steps for the pipelines:
 ## s0 - segmentation
-Either manual segmentation, or segmentation by any DL model (in this case HPACellSegmentator).
+Either manual segmentation, or segmentation by any DL model (in this case [HPACellSegmentator](https://github.com/CellProfiling/HPA-Cell-Segmentation) for inference; training code is currently in private repo). I've also provided here example of training and segmenting dataset by the popular [cellpose v2.0](https://github.com/MouseLand/cellpose) (credits to their starter notebook, I only wrapped them in a more comprehensible/concise manner). The training set for this part is only 9 images/FOVs.
 
 ## s1 - process image masks of multiple cells to single cell masks of cell and nucleus, and into .npy
 
