@@ -164,7 +164,8 @@ class PlotShapeModes:
             std_ = self.std[c].copy()
             p_std = []
             #for k in np.round(np.arange(-1.5, 1.5, 0.3),1):
-            for k in np.linspace(-1.5,1.5,11):
+            for k in np.linspace(-2,2,9):
+            #for k in np.linspace(-1.5,1.5,11):
                 p_std += [midpoint + k * std_]
             points[c] = p_std
         self.stdpoints = points
