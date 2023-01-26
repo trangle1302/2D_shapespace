@@ -147,11 +147,13 @@ def main():
         if not os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"): #for org in ["Nucleoplasm","Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS","ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
             # 1 empty avg_img for each organelle_pc_bin combination 
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')
-            if not os.path.exists(f"{plot_dir}/{PC}/{org}"):
+            if not os.path.isdir(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
             ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
             #if os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"):
             #    continue
+            ls_ = [img_id for img_id in ls_ if os.path.exists(f"{data_dir}/{img_id}_protein.png")]
+            ls_ = [img_id for img_id in ls_ if os.path.exists(f"{data_dir}/{img_id}.npy")]
             if len(ls_) > 500:
                 import random
                 ls_ = random.sample(ls_, 500)
@@ -225,8 +227,9 @@ def main():
                     fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
                     plt.close()
             print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
+            print(f"======>>> Saving to {save_dir}/{PC}/{org}_bin{bin_[0]}.png")
             imwrite(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png", (avg_img*255).astype(np.uint8))
-            #imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
+            #:imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
             gc.collect()
     print(f"Time elapsed: {(time.time() - s)/3600} h.")
 
