@@ -15,17 +15,16 @@ def sharpen(image):
     img_rescale = exposure.rescale_intensity(image, in_range=(p5, p98))
     return img_rescale
 
-def predict(model_path, files, plot_dir):
-    
+def predict(model_path, files, plot_dir, diameter=0):    
     # declare model
     model = models.CellposeModel(gpu=True, 
                                 pretrained_model=model_path)
 
     # use model diameter if user diameter is 0
     diameter = model.diam_labels if diameter==0 else diameter
-
+    print(f'object diameter: {diameter}')
     # gets image files in dir (ignoring image files ending in _masks)
-    flow_threshold = 0.1
+    flow_threshold = 0.2
     cellprob_threshold = 0
     if model_path.rsplit('_')[1] == 'nuclei':
         channels = [2,3]
@@ -61,23 +60,33 @@ def predict(model_path, files, plot_dir):
                                             )
             
             # Random QC
-            fig = plt.figure(figsize=(40,10))
+            fig = plt.figure(figsize=(40,10),facecolor='black')
             i = np.random.choice(len(images))
             name = os.path.basename(files[i]).replace("_w1.tif",".png")
-            img = images[i].copy() * 0.5
+            img = images[i].copy()
+            if img.shape[0] != len(channels):
+                tmp = []
+                for ch in channels:
+                    tmp += [img[ch-1]]
+                img = np.stack(tmp) * 0.3
             plot.show_segmentation(fig, img, masks[i], flows[i][0], channels=channels, file_name=None)
             fig.savefig(f'{plot_dir}/{name}')
+            io.imsave(f'{plot_dir}/{name}_nucleimask.png',masks[i])
+            #for m in masks:
+                #io.imsave(f'{plot_dir}/{name}_nucleimask.png',m)
+            #    io.imsave(files[i].replace('w1.tif','nucleimask.png'),m)
             pbar.update(end_ - start_)
+
 
 if __name__ == "__main__": 
     base_dir = '/data/2Dshapespace/S-BIAD34'
-    files = glob.glob(f'{base_dir}/Files/*/*w1.tif')
+    files = glob(f'{base_dir}/Files/*/*w1.tif')
     print(f'========== Segmenting {len(files)} fovs ==========')
 
     print(f'==========> Segmenting nucleus')
-    os.makedirs(f'{base_dir}/resegment/QCs/nuclei', exist_ok=True)
-    predict(model_path = f'{base_dir}/resegments/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegment/QCs/nuclei')
+    os.makedirs(f'{base_dir}/resegmentation/QCs/nuclei', exist_ok=True)
+    predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
     
     print(f'==========> Segmenting cells')
-    os.makedirs(f'{base_dir}/resegment/QCs/cell', exist_ok=True)
-    predict(model_path = f'{base_dir}/resegments/models/S-BIAD34_cyto', files = files, plot_dir = f'{base_dir}/resegment/QCs/cell')
+    os.makedirs(f'{base_dir}/resegmentation/QCs/cell', exist_ok=True)
+    predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_cyto', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/cell')

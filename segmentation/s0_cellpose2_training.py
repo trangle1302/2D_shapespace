@@ -13,7 +13,7 @@ def sharpen(image):
 
 def train(train_files, test_files, save_dir, initial_model='nuclei'):
     use_GPU=True
-    n_epochs = 200
+    n_epochs = 400
     learning_rate = 0.05
     weight_decay = 0.001
     if initial_model == 'nuclei':
