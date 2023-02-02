@@ -6,6 +6,7 @@ from glob import glob
 from skimage import img_as_float
 from skimage import exposure
 from tqdm import tqdm
+from natsort import natsorted
 #import multiprocessing
 #from joblib import Parallel, delayed
 
@@ -101,14 +102,14 @@ def predict(model_path, files, plot_dir, diameter=0):
 if __name__ == "__main__": 
     base_dir = '/data/2Dshapespace/S-BIAD34'
     if True:
-        files = glob(f'{base_dir}/Files/*/*w1.tif')
+        files = natsorted(glob(f'{base_dir}/Files/*/*w1.tif'))
         print(f'========== Segmenting {len(files)} fovs ==========')
 
         print(f'==========> Segmenting nucleus')
         os.makedirs(f'{base_dir}/resegmentation/QCs/nuclei', exist_ok=True)
         predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
     
-    files = glob(f'{base_dir}/Files/*/*nucleimask.png')
+    files = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
     files = [f.replace('nucleimask.png','w1.tif') for f in files]
     print(f'========== Segmenting {len(files)} fovs ==========')
     print(f'==========> Segmenting cells')
