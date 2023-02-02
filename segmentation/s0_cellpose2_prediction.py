@@ -11,8 +11,8 @@ from tqdm import tqdm
 
 def sharpen(image):
     image = img_as_float(image)
-    p5, p98 = np.percentile(image, (2, 98))
-    img_rescale = exposure.rescale_intensity(image, in_range=(p5, p98))
+    p2, p98 = np.percentile(image, (2, 98))
+    img_rescale = exposure.rescale_intensity(image, in_range=(p2, p98))
     return img_rescale
 
 def predict(model_path, files, plot_dir, diameter=0):    
