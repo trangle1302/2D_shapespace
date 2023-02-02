@@ -24,9 +24,10 @@ def predict(model_path, files, plot_dir, diameter=0):
     diameter = model.diam_labels if diameter==0 else diameter
     print(f'object diameter: {diameter}')
     # gets image files in dir (ignoring image files ending in _masks)
-    flow_threshold = 0.2
     cellprob_threshold = 0
-    if model_path.rsplit('_')[1] == 'nuclei':
+    model_name = model_path.rsplit('_')[1]
+    if model_name == 'nuclei':
+        flow_threshold = 0.1
         channels = [2,3]
         def read_img(f):
             w1 = io.imread(f)
@@ -34,22 +35,25 @@ def predict(model_path, files, plot_dir, diameter=0):
             w3 = io.imread(f.replace('w1.tif','w3.tif'))
             img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
             return img
-    elif model_path.rsplit('_')[1] == 'cyto':
-        channels = [1,2]
+            
+    elif model_name == 'cyto':
+        flow_threshold = 0
+        channels = [2,3]
         def read_img(f):
             w1 = io.imread(f)
             nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
-            img = np.stack([sharpen(w1),nuclei, np.zeros_like(w1)])
+            img = np.stack([np.zeros_like(w1), sharpen(w1), nuclei])
             return img
-
     chunk_size = 10
     n = len(files)
     with tqdm(total=n) as pbar:
         for start_ in range(0, n, chunk_size):
             end_ = min(start_ + chunk_size, n)
             images = []
+            file_names = []
             for i_ in range(start_, end_):
                 images += [read_img(files[i_])]
+                file_names += [files[i_]]
 
             # run model on <chunk_size> images
             masks, flows, styles = model.eval(images, 
@@ -58,35 +62,55 @@ def predict(model_path, files, plot_dir, diameter=0):
                                             flow_threshold=flow_threshold,
                                             cellprob_threshold=cellprob_threshold
                                             )
+            '''
+            masks = []
+            flows = []
+             # run model on <chunk_size> images
+            for img in images:
+                mask, flow, _ = model.eval(images, 
+                                        channels=channels,
+                                        diameter=diameter,
+                                        flow_threshold=flow_threshold,
+                                        cellprob_threshold=cellprob_threshold
+                                        )
+                masks +=[mask]
+                flows +=[flow]
             
-            # Random QC
-            fig = plt.figure(figsize=(40,10),facecolor='black')
-            i = np.random.choice(len(images))
-            name = os.path.basename(files[i]).replace("_w1.tif",".png")
-            img = images[i].copy()
-            if img.shape[0] != len(channels):
-                tmp = []
-                for ch in channels:
-                    tmp += [img[ch-1]]
-                img = np.stack(tmp) * 0.3
-            plot.show_segmentation(fig, img, masks[i], flows[i][0], channels=channels, file_name=None)
-            fig.savefig(f'{plot_dir}/{name}')
-            io.imsave(f'{plot_dir}/{name}_nucleimask.png',masks[i])
-            #for m in masks:
-                #io.imsave(f'{plot_dir}/{name}_nucleimask.png',m)
-            #    io.imsave(files[i].replace('w1.tif','nucleimask.png'),m)
+            '''
+            if True:
+                # Random QC
+                for i in [np.random.choice(len(images))]:
+                #for i in range(1, len(images)):
+                    fig = plt.figure(figsize=(40,10),facecolor='black')
+                    name = os.path.basename(files[i]).replace("_w1.tif",".png")
+                    img = images[i].copy()
+                    if img.shape[0] != len(channels):
+                        tmp = []
+                        for ch in channels:
+                            tmp += [img[ch-1]]
+                        img = np.stack(tmp) * 0.3
+                    plot.show_segmentation(fig, img, masks[i], flows[i][0], channels=channels, file_name=None)
+                    fig.savefig(f'{plot_dir}/{name}')
+                    plt.close()
+                    io.imsave(f'{plot_dir}/{name[:-4]}_{model_name}mask.png',masks[i])
+            for m, f in zip(masks, file_names):              
+                io.imsave(f.replace('w1.tif',f'{model_name}mask.png'),m)
             pbar.update(end_ - start_)
 
 
 if __name__ == "__main__": 
     base_dir = '/data/2Dshapespace/S-BIAD34'
-    files = glob(f'{base_dir}/Files/*/*w1.tif')
-    print(f'========== Segmenting {len(files)} fovs ==========')
+    if True:
+        files = glob(f'{base_dir}/Files/*/*w1.tif')
+        print(f'========== Segmenting {len(files)} fovs ==========')
 
-    print(f'==========> Segmenting nucleus')
-    os.makedirs(f'{base_dir}/resegmentation/QCs/nuclei', exist_ok=True)
-    predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
+        print(f'==========> Segmenting nucleus')
+        os.makedirs(f'{base_dir}/resegmentation/QCs/nuclei', exist_ok=True)
+        predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
     
+    files = glob(f'{base_dir}/Files/*/*nucleimask.png')
+    files = [f.replace('nucleimask.png','w1.tif') for f in files]
+    print(f'========== Segmenting {len(files)} fovs ==========')
     print(f'==========> Segmenting cells')
     os.makedirs(f'{base_dir}/resegmentation/QCs/cell', exist_ok=True)
     predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_cyto', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/cell')
