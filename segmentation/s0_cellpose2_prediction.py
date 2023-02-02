@@ -34,7 +34,10 @@ def predict(model_path, files, plot_dir, diameter=0):
             w1 = io.imread(f)
             w2 = io.imread(f.replace('w1.tif','w2.tif'))
             w3 = io.imread(f.replace('w1.tif','w3.tif'))
-            img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+            if w1.max()>0 and w2.max()>0 and w3.max() > 0:
+                img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+            else:
+                img = None
             return img
             
     elif model_name == 'cyto':
@@ -53,9 +56,13 @@ def predict(model_path, files, plot_dir, diameter=0):
             images = []
             file_names = []
             for i_ in range(start_, end_):
-                images += [read_img(files[i_])]
-                file_names += [files[i_]]
-
+                img = read_img(files[i_])
+                if img not None:
+                    images += []
+                    file_names += [files[i_]]
+                else:
+                    with open("/data/2Dshapespace/S-BIAD34/resegmentation/failed_imgs_channelvalue0.txt", "a") as f:
+                        f.write(files[i_])
             # run model on <chunk_size> images
             masks, flows, styles = model.eval(images, 
                                             channels=channels,
