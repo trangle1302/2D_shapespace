@@ -102,7 +102,11 @@ def predict(model_path, files, plot_dir, diameter=0):
 if __name__ == "__main__": 
     base_dir = '/data/2Dshapespace/S-BIAD34'
     if True:
+        files_finished = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
+        files_finished = [f.replace('nucleimask.png','w1.tif') for f in files_finished]
+        print(f'Found {len(files_finished)} FOVs with nucleimasks.png done')
         files = natsorted(glob(f'{base_dir}/Files/*/*w1.tif'))
+        files = [f for f in files if f not in files_finished]
         print(f'========== Segmenting {len(files)} fovs ==========')
 
         print(f'==========> Segmenting nucleus')
