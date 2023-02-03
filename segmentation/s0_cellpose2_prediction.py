@@ -34,14 +34,17 @@ def predict(model_path, files, plot_dir, diameter=0):
             w1 = io.imread(f)
             w2 = io.imread(f.replace('w1.tif','w2.tif'))
             w3 = io.imread(f.replace('w1.tif','w3.tif'))
-            if w1.max()>0 and w2.max()>0 and w3.max() > 0:
-                img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
-            else:
+            try:
+                if w1.max()>0 and w2.max()>0 and w3.max() > 0:
+                    img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+                else: #fail because empty channel
+                    img = []
+            except: #fail because reading error
                 img = []
             return img
             
     elif model_name == 'cyto':
-        flow_threshold = 0
+        flow_threshold = 0.1
         channels = [2,3]
         def read_img(f):
             w1 = io.imread(f)
@@ -59,7 +62,7 @@ def predict(model_path, files, plot_dir, diameter=0):
                 img = read_img(files[i_])
                 if len(img) == 0:
                     with open("/data/2Dshapespace/S-BIAD34/resegmentation/failed_imgs_channelvalue0.txt", "a") as f:
-                        print(f'Failed: {os.path.basename(files[i_])}')
+                        print(f'Failed: {files[i_].split('/')[-2:]}')
                         f.write(files[i_])
                 else:
                     images += [img]
@@ -101,7 +104,7 @@ def predict(model_path, files, plot_dir, diameter=0):
                     plot.show_segmentation(fig, img, masks[i], flows[i][0], channels=channels, file_name=None)
                     fig.savefig(f'{plot_dir}/{name}')
                     plt.close()
-                    io.imsave(f'{plot_dir}/{name[:-4]}_{model_name}mask.png',masks[i])
+                    #io.imsave(f'{plot_dir}/{name[:-4]}_{model_name}mask.png',masks[i])
             for m, f in zip(masks, file_names):              
                 io.imsave(f.replace('w1.tif',f'{model_name}mask.png'),m)
             pbar.update(end_ - start_)
