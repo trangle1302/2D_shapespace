@@ -28,7 +28,6 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
             w2 = io.imread(f.replace('w1.tif','w2.tif'))
             w3 = io.imread(f.replace('w1.tif','w3.tif'))
             img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
-            nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
             train_data += [img]
             train_labels += [nuclei]
 
@@ -39,7 +38,6 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
             w2 = io.imread(f.replace('w1.tif','w2.tif'))
             w3 = io.imread(f.replace('w1.tif','w3.tif'))
             img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
-            nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
             test_data += [img]
             test_labels += [nuclei]
 
@@ -52,6 +50,7 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
         for k, f in enumerate(train_files):
             w1 = io.imread(f)
             nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
+            nuclei = nuclei/nuclei.max()
             img = np.stack([np.zeros_like(w1), sharpen(w1), nuclei])
             train_data += [img]
             train_labels += [io.imread(f.replace('w1.tif','cellmask.png'))]
@@ -61,6 +60,7 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
         for k, f in enumerate(test_files):
             w1 = io.imread(f)
             nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
+            nuclei = nuclei/nuclei.max()
             img = np.stack([np.zeros_like(w1), sharpen(w1), nuclei])
             test_data += [img]
             test_labels += [io.imread(f.replace('w1.tif','cellmask.png'))]
@@ -138,7 +138,7 @@ if __name__ == "__main__":
         test_files = glob(f'{base_dir}/test/*_w1.tif')
         train(train_files, test_files,save_dir=base_dir, initial_model='nuclei')
     
-    train_files = glob(f'{base_dir}/train/*_w1.png')
+    train_files = glob(f'{base_dir}/train/*_w1.tif')
     train_files = [f for f in train_files if os.path.exists(f.replace('w1.tif','cellmask.png'))]
-    test_files = glob(f'{base_dir}/test/*_w1.png')
+    test_files = glob(f'{base_dir}/test/*_w1.tif')
     train(train_files, test_files,save_dir=base_dir, initial_model='cyto')
