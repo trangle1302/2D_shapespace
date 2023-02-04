@@ -44,7 +44,7 @@ def predict(model_path, files, plot_dir, diameter=0):
             return img
             
     elif model_name == 'cyto':
-        flow_threshold = 0.1
+        flow_threshold = 0
         channels = [2,3]
         def read_img(f):
             w1 = io.imread(f)
@@ -62,7 +62,7 @@ def predict(model_path, files, plot_dir, diameter=0):
                 img = read_img(files[i_])
                 if len(img) == 0:
                     with open("/data/2Dshapespace/S-BIAD34/resegmentation/failed_imgs_channelvalue0.txt", "a") as f:
-                        print(f'Failed: {files[i_].split('/')[-2:]}')
+                        print(f'Failed: {files[i_].split("/")[-2:]}')
                         f.write(files[i_])
                 else:
                     images += [img]
@@ -91,10 +91,14 @@ def predict(model_path, files, plot_dir, diameter=0):
             '''
             if True:
                 # Random QC
-                for i in [np.random.choice(len(images))]:
-                #for i in range(1, len(images)):
+                
+                #if True:
+                #    i = np.random.choice(len(images))
+                for i in range(1, len(images)):
                     fig = plt.figure(figsize=(40,10),facecolor='black')
-                    name = os.path.basename(files[i]).replace("_w1.tif",".png")
+                    name = os.path.basename(file_names[i]).replace("_w1.tif",".png")
+                    name = '_'.join([file_names[i].split('/')[-2], name])
+                    print(name)
                     img = images[i].copy()
                     if img.shape[0] != len(channels):
                         tmp = []
@@ -105,14 +109,21 @@ def predict(model_path, files, plot_dir, diameter=0):
                     fig.savefig(f'{plot_dir}/{name}')
                     plt.close()
                     #io.imsave(f'{plot_dir}/{name[:-4]}_{model_name}mask.png',masks[i])
-            for m, f in zip(masks, file_names):              
-                io.imsave(f.replace('w1.tif',f'{model_name}mask.png'),m)
+            #for m, f in zip(masks, file_names):              
+            #    io.imsave(f.replace('w1.tif',f'{model_name}mask.png'),m)
             pbar.update(end_ - start_)
 
 
 if __name__ == "__main__": 
     base_dir = '/data/2Dshapespace/S-BIAD34'
     if True:
+        files = natsorted(glob(f'{base_dir}/resegmentation/train/*w1.tif'))
+        files = [f for f in files if not os.path.exists(f.replace('w1.tif','nucleimask.png'))]
+        print(f'==========> Segmenting nucleus')
+        os.makedirs(f'{base_dir}/resegmentation/QCs/nuclei', exist_ok=True)
+        predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
+    
+    if False:
         files_finished = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
         files_finished = [f.replace('nucleimask.png','w1.tif') for f in files_finished]
         print(f'Found {len(files_finished)} FOVs with nucleimasks.png done')
@@ -124,9 +135,10 @@ if __name__ == "__main__":
         os.makedirs(f'{base_dir}/resegmentation/QCs/nuclei', exist_ok=True)
         predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
     
-    files = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
-    files = [f.replace('nucleimask.png','w1.tif') for f in files]
-    print(f'========== Segmenting {len(files)} fovs ==========')
-    print(f'==========> Segmenting cells')
-    os.makedirs(f'{base_dir}/resegmentation/QCs/cell', exist_ok=True)
-    predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_cyto', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/cell')
+    if False:
+        files = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
+        files = [f.replace('nucleimask.png','w1.tif') for f in files]
+        print(f'========== Segmenting {len(files)} fovs ==========')
+        print(f'==========> Segmenting cells')
+        os.makedirs(f'{base_dir}/resegmentation/QCs/cell', exist_ok=True)
+        predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_cyto', files = files[390:450], plot_dir = f'{base_dir}/resegmentation/QCs/cell')
