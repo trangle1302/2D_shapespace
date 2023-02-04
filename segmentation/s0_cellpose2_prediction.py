@@ -44,7 +44,7 @@ def predict(model_path, files, plot_dir, diameter=0):
             return img
             
     elif model_name == 'cyto':
-        flow_threshold = 0.05
+        flow_threshold = 0
         channels = [2,3]
         def read_img(f):
             w1 = io.imread(f)
@@ -75,27 +75,13 @@ def predict(model_path, files, plot_dir, diameter=0):
                                             flow_threshold=flow_threshold,
                                             cellprob_threshold=cellprob_threshold
                                             )
-            '''
-            masks = []
-            flows = []
-             # run model on <chunk_size> images
-            for img in images:
-                mask, flow, _ = model.eval(images, 
-                                        channels=channels,
-                                        diameter=diameter,
-                                        flow_threshold=flow_threshold,
-                                        cellprob_threshold=cellprob_threshold
-                                        )
-                masks +=[mask]
-                flows +=[flow]
-            
-            '''
+
             if True:
                 # Random QC
                 
-                #if True:
-                #    i = np.random.choice(len(images))
-                for i in range(1, len(images)):
+                if True:
+                    i = np.random.choice(len(images))
+                #for i in range(1, len(images)):
                     fig = plt.figure(figsize=(40,10),facecolor='black')
                     name = os.path.basename(file_names[i]).replace("_w1.tif",".png")
                     name = '_'.join([file_names[i].split('/')[-2], name])
@@ -110,36 +96,36 @@ def predict(model_path, files, plot_dir, diameter=0):
                     fig.savefig(f'{plot_dir}/{name}')
                     plt.close()
                     #io.imsave(f'{plot_dir}/{name[:-4]}_{model_name}mask.png',masks[i])
-            #for m, f in zip(masks, file_names):              
-            #    io.imsave(f.replace('w1.tif',f'{model_name}mask.png'),m)
+            for m, f in zip(masks, file_names):              
+                io.imsave(f.replace('w1.tif',f'{model_name}mask.png'),m)
             pbar.update(end_ - start_)
 
 
 if __name__ == "__main__": 
     base_dir = '/data/2Dshapespace/S-BIAD34'
-    if True:
+    if False:
         files = natsorted(glob(f'{base_dir}/resegmentation/train/*w1.tif'))
         files = [f for f in files if not os.path.exists(f.replace('w1.tif','nucleimask.png'))]
         print(f'==========> Segmenting nucleus')
         os.makedirs(f'{base_dir}/resegmentation/QCs/nuclei', exist_ok=True)
         predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
     
-    if False:
-        files_finished = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
-        files_finished = [f.replace('nucleimask.png','w1.tif') for f in files_finished]
-        print(f'Found {len(files_finished)} FOVs with nucleimasks.png done')
+    if True:
+        #files_finished = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
+        #files_finished = [f.replace('nucleimask.png','w1.tif') for f in files_finished]
+        #print(f'Found {len(files_finished)} FOVs with nucleimasks.png done')
         files = natsorted(glob(f'{base_dir}/Files/*/*w1.tif'))
-        files = [f for f in files if f not in files_finished]
+        #files = [f for f in files if f not in files_finished]
         print(f'========== Segmenting {len(files)} fovs ==========')
 
         print(f'==========> Segmenting nucleus')
         os.makedirs(f'{base_dir}/resegmentation/QCs/nuclei', exist_ok=True)
-        predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
+        predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files[:20], plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
     
-    if True:
+    if False:
         files = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
         files = [f.replace('nucleimask.png','w1.tif') for f in files]
         print(f'========== Segmenting {len(files)} fovs ==========')
         print(f'==========> Segmenting cells')
         os.makedirs(f'{base_dir}/resegmentation/QCs/cell', exist_ok=True)
-        predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_cyto', files = files[90:100], plot_dir = f'{base_dir}/resegmentation/QCs/cell')
+        predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_cyto', files = files[:20], plot_dir = f'{base_dir}/resegmentation/QCs/cell')
