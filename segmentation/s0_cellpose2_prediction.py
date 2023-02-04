@@ -44,11 +44,12 @@ def predict(model_path, files, plot_dir, diameter=0):
             return img
             
     elif model_name == 'cyto':
-        flow_threshold = 0
+        flow_threshold = 0.05
         channels = [2,3]
         def read_img(f):
             w1 = io.imread(f)
             nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
+            nuclei = nuclei/nuclei.max()
             img = np.stack([np.zeros_like(w1), sharpen(w1), nuclei])
             return img
     chunk_size = 10
@@ -135,10 +136,10 @@ if __name__ == "__main__":
         os.makedirs(f'{base_dir}/resegmentation/QCs/nuclei', exist_ok=True)
         predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
     
-    if False:
+    if True:
         files = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
         files = [f.replace('nucleimask.png','w1.tif') for f in files]
         print(f'========== Segmenting {len(files)} fovs ==========')
         print(f'==========> Segmenting cells')
         os.makedirs(f'{base_dir}/resegmentation/QCs/cell', exist_ok=True)
-        predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_cyto', files = files[390:450], plot_dir = f'{base_dir}/resegmentation/QCs/cell')
+        predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_cyto', files = files[90:100], plot_dir = f'{base_dir}/resegmentation/QCs/cell')
