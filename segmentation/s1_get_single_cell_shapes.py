@@ -348,7 +348,6 @@ def process_img_ccd(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "w
             img_ids_filtered_ += [img_id]
 
     img_ids_filtered = []
-    cell_mask_extension = "w2cytooutline.png"
     for img_id in img_ids_filtered_:
         cyto = imageio.imread(f"{data_dir}/{img_id}_{cell_mask_extension}")
         cyto = rgb_2_gray_unique(cyto)
@@ -375,10 +374,8 @@ def process_img_ccd(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "w
         cell_idx = np.unique(cell_mask)
         cell_idx_finished = glob.glob(f"{save_path}*.npy")
         cell_idx_finished = [int(f.replace(save_path,"").replace(".npy","")) for f in cell_idx_finished]
-        #print(cell_idx)
-        #print(cell_idx_finished)
+
         cell_idx = list(set(cell_idx).difference(set(cell_idx_finished)))
-        #print(cell_idx)
         if len(cell_idx) > 0:
             get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, remove_size=20, plot=False)
         with open(f'{log_dir}/images_done.pkl', 'ab') as success_list:
