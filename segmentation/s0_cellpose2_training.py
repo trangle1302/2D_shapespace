@@ -4,6 +4,7 @@ from cellpose import io, models, metrics
 from glob import glob
 from skimage import img_as_float
 from skimage import exposure
+import os
 
 def sharpen(image):
     image = img_as_float(image)
@@ -87,7 +88,8 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
     masks = model.eval(test_data, 
                    channels=channels,
                    diameter=diam_labels)[0]
-                   
+    for m in masks:
+        io.imsave(f.replace('w1.tif',f'{model_name}mask.png'),m)
     # check performance using ground truth labels
     ap = metrics.average_precision(test_labels, masks)[0]
     print(f'>>> average precision at iou threshold 0.5 in test set = {ap[:,0].mean():.3f}')
@@ -130,8 +132,13 @@ def plot(data, groundtruths, predicted_masks, save_path):
 if __name__ == "__main__": 
     #base_dir = '/content/gdrive/MyDrive/Files'
     base_dir = '/data/2Dshapespace/S-BIAD34/resegmentation'
-    train_files = glob(f'{base_dir}/train/*_w1.tif')
-    test_files = glob(f'{base_dir}/test/*_w1.tif')
-
-    #train(train_files, test_files,save_dir=base_dir, initial_model='nuclei')
+    if False:
+        train_files = glob(f'{base_dir}/train/*_w1.tif')
+        train_files = [f for f in train_files if os.path.exists(f.replace('w1.tif','nucleimask.png'))]
+        test_files = glob(f'{base_dir}/test/*_w1.tif')
+        train(train_files, test_files,save_dir=base_dir, initial_model='nuclei')
+    
+    train_files = glob(f'{base_dir}/train/*_w1.png')
+    train_files = [f for f in train_files if os.path.exists(f.replace('w1.tif','cellmask.png'))]
+    test_files = glob(f'{base_dir}/test/*_w1.png')
     train(train_files, test_files,save_dir=base_dir, initial_model='cyto')
