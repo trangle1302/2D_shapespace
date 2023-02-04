@@ -169,9 +169,11 @@ def get_cell_nuclei_masks2(encoded_image_id, encoded_image_dir):
 def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytooutline.png", nuclei_mask_extension = "w2nucleioutline.png"):
     #parent_dir = "/data/2Dshapespace/S-BIAD34/Files/HPA040393"
     cyto = imageio.imread(f"{parent_dir}/{img_id}_{cell_mask_extension}")
-    cyto = rgb_2_gray_unique(cyto)
+    if len(cyto.shape) > 1:
+        cyto = rgb_2_gray_unique(cyto)
     nu = imageio.imread(f"{parent_dir}/{img_id}_{nuclei_mask_extension}")
-    nu = rgb_2_gray_unique(nu)
+    if len(nu.shape) > 1:
+        nu = rgb_2_gray_unique(nu)
 
     assert cyto.shape == nu.shape
     # Relabel the cytosol region based on nuclei labels
@@ -367,9 +369,56 @@ def process_img_ccd(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "w
                 max_val = 65535 #protein.max()
                 protein = (skimage.transform.resize(protein, cell_mask.shape)*max_val).astype(d_type)
         else:
-            cell_mask, nuclei_mask, protein = get_cell_nuclei_masks_ccd(data_dir, img_id)
+            cell_mask, nuclei_mask, protein = get_cell_nuclei_masks_ccd(data_dir, img_id, cell_mask_extension = cell_mask_extension, nuclei_mask_extension = nuclei_mask_extension)
             imageio.imwrite(f"{save_dir}/{img_id}_cellmask.png", cell_mask)
             imageio.imwrite(f"{save_dir}/{img_id}_nuclei_mask.png", nuclei_mask)
+        save_path = f"{save_dir}/{img_id}_"
+        cell_idx = np.unique(cell_mask)
+        cell_idx_finished = glob.glob(f"{save_path}*.npy")
+        cell_idx_finished = [int(f.replace(save_path,"").replace(".npy","")) for f in cell_idx_finished]
+
+        cell_idx = list(set(cell_idx).difference(set(cell_idx_finished)))
+        if len(cell_idx) > 0:
+            get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, remove_size=20, plot=False)
+        with open(f'{log_dir}/images_done.pkl', 'ab') as success_list:
+            pickle.dump(img_id, success_list)
+    if False:#except:
+        with open(f'{log_dir}/images_failed.pkl', 'wb') as error_list:
+            pickle.dump(img_id, error_list)
+
+
+def process_img_ccd2(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "cytomask.png", nuclei_mask_extension = "nucleimask.png"):
+    # for resegmentation of cell and nuclei masks with transfer learning from cellpose2
+    data_dir = os.path.join(mask_dir, ab_id)
+    save_dir = os.path.join(save_dir, ab_id)
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
+    img_ids = [os.path.basename(f).replace("_w3.TIF","") for f in glob.glob(f"{data_dir}/*_w3.TIF")]
+    if len(img_ids) == 0:
+        img_ids = [os.path.basename(f).replace("_w3.tif","") for f in glob.glob(f"{data_dir}/*_w3.tif")]
+    
+    #check if these images have nuclei mask, cytosol mask and protein channel
+    img_ids_filtered_ = []
+    for img_id in img_ids:
+        if os.path.exists(f"{data_dir}/{img_id}_{cell_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_{nuclei_mask_extension}") and os.path.exists(f"{data_dir}/{img_id}_w4_Rescaled.tif"):
+            img_ids_filtered_ += [img_id]
+
+    img_ids_filtered = []
+    for img_id in img_ids_filtered_:
+        if os.path.exists(f"{save_dir}/{img_id}_cellmask.png") & os.path.exists(f"{save_dir}/{img_id}_nuclei_mask.png"):
+            # If cellmask and nucleimask are already matched, read them
+            cell_mask = imageio.imread(f"{save_dir}/{img_id}_cellmask.png")
+            nuclei_mask = imageio.imread(f"{save_dir}/{img_id}_nucleimask.png") 
+            protein = imageio.imread(f"{data_dir}/{img_id}_w4_Rescaled.tif")
+            # resize protein channel if different shapes
+            if protein.shape != cell_mask.shape:
+                d_type = 'uint16' #protein.dtype
+                max_val = 65535 #protein.max()
+                protein = (skimage.transform.resize(protein, cell_mask.shape)*max_val).astype(d_type)
+        else:
+            cell_mask, nuclei_mask, protein = get_cell_nuclei_masks_ccd(data_dir, img_id, cell_mask_extension = cell_mask_extension, nuclei_mask_extension = nuclei_mask_extension)
+            imageio.imwrite(f"{save_dir}/{img_id}_cellmask.png", cell_mask)
+            imageio.imwrite(f"{save_dir}/{img_id}_nucleimask.png", nuclei_mask)
         save_path = f"{save_dir}/{img_id}_"
         cell_idx = np.unique(cell_mask)
         cell_idx_finished = glob.glob(f"{save_path}*.npy")
@@ -419,7 +468,8 @@ def publicHPA():
     imlist = list(imlist.difference(finished_imlist))
     print(f"...Processing {len(imlist)} ab x 5 img each with masks in {num_cores}")
     inputs = tqdm(imlist)
-    processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cytooutline.png", nuclei_mask_extension = "cytooutline.png") for i in inputs)
+    #processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cytooutline.png", nuclei_mask_extension = "cytooutline.png") for i in inputs)
+    processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cytomask.png", nuclei_mask_extension = "nucleimask.png") for i in inputs)
     with open(f'{log_dir}/processedlist.pkl', 'wb') as f:
         pickle.dump(processed_list, f)
 
@@ -430,7 +480,7 @@ def cellcycle():
     mask_dir = "/data/2Dshapespace/S-BIAD34/Files"
     
     cell_line = "U-2 OS"
-    save_dir = "/data/2Dshapespace/S-BIAD34/cell_masks"
+    save_dir = "/data/2Dshapespace/S-BIAD34/cell_masks2"
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
     
@@ -462,7 +512,8 @@ def cellcycle():
     inputs = tqdm(ablist)
     import time
     s = time.time()
-    processed_list = Parallel(n_jobs=num_cores)(delayed(process_img_ccd)(i, mask_dir, save_dir, log_dir) for i in inputs)
+    #processed_list = Parallel(n_jobs=num_cores)(delayed(process_img_ccd)(i, mask_dir, save_dir, log_dir) for i in inputs)
+    processed_list = Parallel(n_jobs=num_cores)(delayed(process_img_ccd2)(i, mask_dir, save_dir, log_dir) for i in inputs)
     with open(f'{log_dir}/processedlist.pkl', 'wb') as f:
         pickle.dump(processed_list, f)
     print(f"Finished in {(time.time() - s)/3600}h")
