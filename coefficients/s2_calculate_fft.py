@@ -46,8 +46,8 @@ def calculate_fft_hpa():
 def calculate_fft_ccd():
     dataset = "S-BIAD34"
     d = f"/data/2Dshapespace/{dataset}"
-    sc_mask_dir = f"{d}/cell_masks"
-    save_path = f"{d}/fftcoefs/fft_major_axis_polarized"
+    sc_mask_dir = f"{d}/cell_masks2"
+    save_path = f"{d}/fftcoefs/fft_cell_major_axis_polarized"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     log_dir = f"{d}/logs"
@@ -63,6 +63,14 @@ def calculate_fft_ccd():
     inputs = tqdm(imlist)
     print(f"Processing {len(imlist)} in {num_cores} cores, saving to {save_path}")
     processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.001,0.999])) for i in inputs)
+    with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
+        pickle.dump(processed_list, success_list)
+
+    save_path = f"{d}/fftcoefs/fft_nuclei_major_axis_polarized"
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    print(f"Processing {len(imlist)} in {num_cores} cores, saving to {save_path}")
+    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_nucleus)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.001,0.999])) for i in inputs)
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
         pickle.dump(processed_list, success_list)
 
