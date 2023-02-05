@@ -166,6 +166,12 @@ def get_cell_nuclei_masks2(encoded_image_id, encoded_image_dir):
     protein = imageio.imread(encoded_image_dir +'/' + encoded_image_id + '_green.png')
     return cell_mask, nuclei_mask, protein
 
+def coords_to_str(coords):
+    l = []
+    for c in coords:
+        l += [','.join(str(x) for x in c)]
+    return l
+
 def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytooutline.png", nuclei_mask_extension = "w2nucleioutline.png", add_cyto_nuclei=True):
     #parent_dir = "/data/2Dshapespace/S-BIAD34/Files/HPA040393"
     cyto = imageio.imread(f"{parent_dir}/{img_id}_{cell_mask_extension}")
@@ -185,11 +191,11 @@ def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytoo
     for region in nu_regionprops:
         new_label = region.label
         match = dict()
-        x1 = [str(x) for x in region.coords]
+        x1 = coords_to_str(region.coords) #[str(x) for x in region.coords]
         for r in cyto_regionprops:
             if r.label in matched_ID:
                 continue
-            x2 = [str(x) for x in r.coords]
+            x2 = coords_to_str(r.coords) #[str(x) for x in r.coords]
             overlap_px = set(x1).intersection(x2)
             if len(overlap_px)> 0:
                 match[str(r.label)] = len(overlap_px)
@@ -211,14 +217,15 @@ def get_cell_nuclei_masks_ccd(parent_dir, img_id, cell_mask_extension = "w2cytoo
         # remove small patches
         cell_mask_ = skimage.morphology.erosion(cell_mask_, skimage.morphology.square(5))
         cell_mask_ = skimage.morphology.dilation(cell_mask_, skimage.morphology.square(5))
+        cell_mask = cell_mask_
 
     # load protein channel, resize if different shape
     protein = imageio.imread(f"{parent_dir}/{img_id}_w4_Rescaled.tif")
-    if protein.shape != cell_mask_.shape:
+    if protein.shape != cell_mask.shape:
         d_type = 'uint16' #protein.dtype
         max_val = 65535 #protein.max()
         protein = (skimage.transform.resize(protein, cell_mask_.shape)*max_val).astype(d_type)
-    return cell_mask_, nuclei_mask, protein
+    return cell_mask, nuclei_mask, protein
 
 def get_single_cell_mask2(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, plot=False):
     regions_c = skimage.measure.regionprops(cell_mask)
