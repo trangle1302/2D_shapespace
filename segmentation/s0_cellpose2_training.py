@@ -12,6 +12,10 @@ def sharpen(image):
     img_rescale = exposure.rescale_intensity(image, in_range=(p5, p98))
     return img_rescale
 
+def adaptive_hist(image):    
+    img_adapteq = exposure.equalize_adapthist(image, kernel_size=110, clip_limit=0.05)
+    return img_adapteq
+
 def train(train_files, test_files, save_dir, initial_model='nuclei'):
     use_GPU=True
     n_epochs = 400
@@ -27,7 +31,8 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
             w1 = io.imread(f)
             w2 = io.imread(f.replace('w1.tif','w2.tif'))
             w3 = io.imread(f.replace('w1.tif','w3.tif'))
-            img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+            #img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+            img = np.stack([sharpen(w1),adaptive_hist(w2), adaptive_hist(w3)])
             train_data += [img]
             train_labels += [nuclei]
 
@@ -37,7 +42,8 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
             w1 = io.imread(f)
             w2 = io.imread(f.replace('w1.tif','w2.tif'))
             w3 = io.imread(f.replace('w1.tif','w3.tif'))
-            img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+            #img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+            img = np.stack([sharpen(w1),adaptive_hist(w2), adaptive_hist(w3)])
             test_data += [img]
             test_labels += [nuclei]
 
@@ -62,6 +68,7 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
             nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
             nuclei = nuclei/nuclei.max()
             img = np.stack([np.zeros_like(w1), sharpen(w1), nuclei])
+
             test_data += [img]
             test_labels += [io.imread(f.replace('w1.tif','cellmask.png'))]
 
@@ -132,13 +139,13 @@ def plot(data, groundtruths, predicted_masks, save_path):
 if __name__ == "__main__": 
     #base_dir = '/content/gdrive/MyDrive/Files'
     base_dir = '/data/2Dshapespace/S-BIAD34/resegmentation'
-    if False:
+    if True:
         train_files = glob(f'{base_dir}/train/*_w1.tif')
         train_files = [f for f in train_files if os.path.exists(f.replace('w1.tif','nucleimask.png'))]
         test_files = glob(f'{base_dir}/test/*_w1.tif')
         train(train_files, test_files,save_dir=base_dir, initial_model='nuclei')
-    
-    train_files = glob(f'{base_dir}/train/*_w1.tif')
-    train_files = [f for f in train_files if os.path.exists(f.replace('w1.tif','cellmask.png'))]
-    test_files = glob(f'{base_dir}/test/*_w1.tif')
-    train(train_files, test_files,save_dir=base_dir, initial_model='cyto')
+    if False:
+        train_files = glob(f'{base_dir}/train/*_w1.tif')
+        train_files = [f for f in train_files if os.path.exists(f.replace('w1.tif','cellmask.png'))]
+        test_files = glob(f'{base_dir}/test/*_w1.tif')
+        train(train_files, test_files,save_dir=base_dir, initial_model='cyto')

@@ -16,6 +16,10 @@ def sharpen(image):
     img_rescale = exposure.rescale_intensity(image, in_range=(p2, p98))
     return img_rescale
 
+def adaptive_hist(image):    
+    img_adapteq = exposure.equalize_adapthist(image, kernel_size=110, clip_limit=0.05)
+    return img_adapteq
+
 def predict(model_path, files, plot_dir, diameter=0):    
     # declare model
     model = models.CellposeModel(gpu=True, 
@@ -36,7 +40,8 @@ def predict(model_path, files, plot_dir, diameter=0):
             w3 = io.imread(f.replace('w1.tif','w3.tif'))
             try:
                 if w1.max()>0 and w2.max()>0 and w3.max() > 0:
-                    img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+                    #img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+                    img = np.stack([sharpen(w1),adaptive_hist(w2), adaptive_hist(w3)])
                 else: #fail because empty channel
                     img = []
             except: #fail because reading error
