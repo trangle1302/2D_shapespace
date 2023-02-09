@@ -397,9 +397,6 @@ def get_coefs_nucleus(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
         with open(f"{save_dir}/fftcoefs_{n_coef}.txt", "a") as F:
             F.write(",".join(map(str,[im]+np.concatenate([fcoef_c, fcoef_n]).ravel().tolist())) + '\n')
 
-        with open(f"{save_dir}/fftcoefs_nucleus_{n_coef}.txt", "a") as F:
-            F.write(",".join(map(str,[im]+fcoef_n.tolist())) + '\n')
-
         with open(f"{save_dir}/shift_error_meta_fft{n_coef}.txt", "a") as F:
             # Saving: image_name, theta_alignment_rotation, shift_centroid, reconstruct_err_c, reconstruct_err_n
             F.write(";".join(map(str,[im, theta, centroid, e_c, e_n])) + '\n')
