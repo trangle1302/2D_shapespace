@@ -118,7 +118,7 @@ if __name__ == "__main__":
         os.makedirs(f'{base_dir}/resegmentation/QCs/nuclei', exist_ok=True)
         predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
     
-    if True:
+    if False:
         #files_finished = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
         #files_finished = [f.replace('nucleimask.png','w1.tif') for f in files_finished]
         #print(f'Found {len(files_finished)} FOVs with nucleimasks.png done')
@@ -130,7 +130,7 @@ if __name__ == "__main__":
         os.makedirs(f'{base_dir}/resegmentation/QCs/nuclei', exist_ok=True)
         predict(model_path = f'{base_dir}/resegmentation/models/S-BIAD34_nuclei', files = files, plot_dir = f'{base_dir}/resegmentation/QCs/nuclei')
     
-    if False:
+    if True:
         files = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
         files = [f.replace('nucleimask.png','w1.tif') for f in files]
         print(f'========== Segmenting {len(files)} fovs ==========')
