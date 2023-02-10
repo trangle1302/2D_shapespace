@@ -36,6 +36,7 @@ class PlotShapeModes:
         self.midpoints = None
         self.std = None
         self.protein_intensities = None
+        self.percent_var = np.round(pca.explained_variance_ratio_ * 100,2)
 
         mean = self.matrix.mean()  # .clip(0, None).mean()
         # mean = abs(self.matrix).mean(axis=0)
@@ -248,6 +249,8 @@ class PlotShapeModes:
             ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
             ax[i].plot(ix_c.real, iy_c.real, "m")
             ax[i].axis("scaled")
+        pc_var = int(filter(str.isdigit, pc_name))
+        plt.suptitle(f"{pc_name} - {pc_var}%", fontsize=16)
         plt.savefig(f"{save_dir}/shapevar_{pc_name}.png")
         plt.show()
         plt.close()
