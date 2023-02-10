@@ -60,7 +60,7 @@ def get_cell_nuclei_masks(image_id, cell_json, base_url):
 
     return cell_mask2, nuclei_mask, protein
     
-def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, rm_border=True, remove_size=100, plot=False):
+def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_path, rm_border=True, remove_size=100, plot=False, clean_small_lines = True):
     if rm_border:
         nuclei_mask = skimage.segmentation.clear_border(nuclei_mask)
         keep_value = np.unique(nuclei_mask)
@@ -81,7 +81,7 @@ def get_single_cell_mask(cell_mask, nuclei_mask, protein, keep_cell_list, save_p
         mask = cell_mask[minr:maxr, minc:maxc].astype(np.uint8)
         mask[mask != region_c.label] = 0
         mask[mask == region_c.label] = 1
-        if True: #erose and dilate to remove the small line
+        if clean_small_lines: #erose and dilate to remove the small line
             mask = skimage.morphology.erosion(mask, skimage.morphology.square(5))
             mask = skimage.morphology.dilation(mask, skimage.morphology.square(5))
             # get new bbox
@@ -434,7 +434,7 @@ def process_img_ccd2(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "
         print(f'{ab_id}_{img_id} found {len(cell_idx)} cells')
         cell_idx = list(set(cell_idx).difference(set(cell_idx_finished)))
         if len(cell_idx) > 0:
-            get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, remove_size=20, plot=False)
+            get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, remove_size=20, plot=False, clean_small_lines=False)
         with open(f'{log_dir}/images_done.pkl', 'ab') as success_list:
             pickle.dump(img_id, success_list)
     if False:#except:
@@ -517,6 +517,9 @@ def cellcycle():
     #process_img_ccd(abid, mask_dir, save_dir, log_dir)
     #done = pd.read_pickle(f'{log_dir}/images_done.pkl')
     #ablist = list(set(ablist).difference(set(done))))
+    print(ablist[:5])
+    ablist.sort()
+    print(ablist[:5])
     inputs = tqdm(ablist)
     import time
     s = time.time()

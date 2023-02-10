@@ -66,9 +66,25 @@ def calculate_fft_ccd():
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
         pickle.dump(processed_list, success_list)
 
-    save_path = f"{d}/fftcoefs/fft_nuclei_major_axis_polarized"
+def calculate_fft_ccd_nu():
+    dataset = "S-BIAD34"
+    d = f"/data/2Dshapespace/{dataset}"
+    sc_mask_dir = f"{d}/cell_masks2"
+
+    save_path = f"{d}/fftcoefs/fft_nuclei_major_axis"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
+    log_dir = f"{d}/logs"
+    if True:
+        abids = os.listdir(sc_mask_dir)
+        imlist = [glob.glob(f"{sc_mask_dir}/{ab}/*.npy") for ab in abids]
+        imlist = [item for sublist in imlist for item in sublist]
+        imlist = [im for im in imlist if os.path.getsize(im)>0]
+    if False:
+        import pandas as pd
+        imlist = pd.read_csv(f"{d}/failed_img.csv").iloc[:,0].values.tolist()
+    num_cores = 4 #multiprocessing.cpu_count() - 10 # save 10 core for some other processes
+    inputs = tqdm(imlist)
     print(f"Processing {len(imlist)} in {num_cores} cores, saving to {save_path}")
     processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_nucleus)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.001,0.999])) for i in inputs)
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
@@ -76,6 +92,7 @@ def calculate_fft_ccd():
 
 if __name__ == "__main__": 
     s_t = time.time()
-    calculate_fft_hpa()
+    #calculate_fft_hpa()
     #calculate_fft_ccd()
+    calculate_fft_ccd_nu()
     print(f"Done in {np.round((time.time()-s_t)/3600,2)} h.")

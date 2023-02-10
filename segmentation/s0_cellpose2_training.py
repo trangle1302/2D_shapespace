@@ -12,11 +12,15 @@ def sharpen(image):
     img_rescale = exposure.rescale_intensity(image, in_range=(p5, p98))
     return img_rescale
 
+def adaptive_hist(image):    
+    img_adapteq = exposure.equalize_adapthist(image, kernel_size=110, clip_limit=0.05)
+    return img_adapteq
+
 def train(train_files, test_files, save_dir, initial_model='nuclei'):
     use_GPU=True
     n_epochs = 400
     learning_rate = 0.05
-    weight_decay = 0.001
+    weight_decay = 0.002
     if initial_model == 'nuclei':
         model_name = 'S-BIAD34_nuclei'
         channels = [2, 3]
@@ -27,7 +31,12 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
             w1 = io.imread(f)
             w2 = io.imread(f.replace('w1.tif','w2.tif'))
             w3 = io.imread(f.replace('w1.tif','w3.tif'))
-            img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+            nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
+            #nuclei = adaptive_hist(nuclei)
+            #img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+            #w23 = np.clip(adaptive_hist(w2) + adaptive_hist(w3), 0, 1)
+            #print(w23.dtype, w23.max(), w23.shape)
+            img = np.stack([sharpen(w1),adaptive_hist(w2), adaptive_hist(w3)])
             train_data += [img]
             train_labels += [nuclei]
 
@@ -37,7 +46,11 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
             w1 = io.imread(f)
             w2 = io.imread(f.replace('w1.tif','w2.tif'))
             w3 = io.imread(f.replace('w1.tif','w3.tif'))
-            img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+            nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
+            #nuclei = adaptive_hist(nuclei)
+            #img = np.stack([sharpen(w1),sharpen(w2), sharpen(w3)])
+            #w23 = np.clip(adaptive_hist(w2) + adaptive_hist(w3), 0, 1)
+            img = np.stack([sharpen(w1),adaptive_hist(w2), adaptive_hist(w3)])
             test_data += [img]
             test_labels += [nuclei]
 
@@ -50,7 +63,7 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
         for k, f in enumerate(train_files):
             w1 = io.imread(f)
             nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
-            nuclei = nuclei/nuclei.max()
+            nuclei = adaptive_hist(nuclei)
             img = np.stack([np.zeros_like(w1), sharpen(w1), nuclei])
             train_data += [img]
             train_labels += [io.imread(f.replace('w1.tif','cellmask.png'))]
@@ -60,8 +73,9 @@ def train(train_files, test_files, save_dir, initial_model='nuclei'):
         for k, f in enumerate(test_files):
             w1 = io.imread(f)
             nuclei = io.imread(f.replace('w1.tif','nucleimask.png'))
-            nuclei = nuclei/nuclei.max()
+            nuclei = adaptive_hist(nuclei)
             img = np.stack([np.zeros_like(w1), sharpen(w1), nuclei])
+
             test_data += [img]
             test_labels += [io.imread(f.replace('w1.tif','cellmask.png'))]
 
@@ -137,8 +151,8 @@ if __name__ == "__main__":
         train_files = [f for f in train_files if os.path.exists(f.replace('w1.tif','nucleimask.png'))]
         test_files = glob(f'{base_dir}/test/*_w1.tif')
         train(train_files, test_files,save_dir=base_dir, initial_model='nuclei')
-    
-    train_files = glob(f'{base_dir}/train/*_w1.tif')
-    train_files = [f for f in train_files if os.path.exists(f.replace('w1.tif','cellmask.png'))]
-    test_files = glob(f'{base_dir}/test/*_w1.tif')
-    train(train_files, test_files,save_dir=base_dir, initial_model='cyto')
+    if True:
+        train_files = glob(f'{base_dir}/train/*_w1.tif')
+        train_files = [f for f in train_files if os.path.exists(f.replace('w1.tif','cellmask.png'))]
+        test_files = glob(f'{base_dir}/test/*_w1.tif')
+        train(train_files, test_files,save_dir=base_dir, initial_model='cyto')
