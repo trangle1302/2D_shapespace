@@ -249,7 +249,7 @@ class PlotShapeModes:
             ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
             ax[i].plot(ix_c.real, iy_c.real, "m")
             ax[i].axis("scaled")
-        pc_var = int(filter(str.isdigit, pc_name))
+        pc_var = int(list(filter(str.isdigit, pc_name))[0]) 
         plt.suptitle(f"{pc_name} - {pc_var}%", fontsize=16)
         plt.savefig(f"{save_dir}/shapevar_{pc_name}.png")
         plt.show()
