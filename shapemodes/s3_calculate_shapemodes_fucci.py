@@ -161,8 +161,8 @@ def main():
             print(f"{n_pc} to explain {percent} % variance")
         n_pc = np.sum(scree.cumsum() < 95) + 1
         pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
-        #pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
-        pc_keep = [f"PC{c}" for c in range(1, 1 + 6)]
+        pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
+        #pc_keep = [f"PC{c}" for c in range(1, 1 + 6)]
         matrix_of_features_transform = pca.transform(df_)
         df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
         df_trans.columns = pc_names
