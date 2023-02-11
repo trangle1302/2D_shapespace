@@ -74,15 +74,16 @@ def main():
     n_coef = 128
     n_samples = -1#5000
     n_cv = 1
+    mode = "cell_nuclei" #"nuclei" #
     cell_line = "S-BIAD34"#"U-2 OS"
-    alignment = "fft_nuclei_major_axis"
+    alignment = "fft_cell_major_axis_polarized" #  #"fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" # 
     #project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     log_dir = f"{project_dir}/logs"
     #fft_dir = f"{project_dir}/fftcoefs/{fun}"
-    fft_path = os.path.join(fft_dir, f"fftcoefs_nucleus_{n_coef}.txt")
+    fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
     """
     protein_dir = Path(f"{project_dir}/cell_masks") #Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
     #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
@@ -120,12 +121,17 @@ def main():
                             continue
                     #data_dict = {data_dict[0]:data_dict[1:]}
                     lines[data_[0]]=data_[1:]
-        
+
         df = pd.DataFrame(lines).transpose()
+        if mode == "nuclei":
+            df = df.iloc[:,len(df)//2:]
+        elif mode == "cell":
+            df = df.iloc[:,:len(df)//2]
+        print(cell_line, alignment, mode, df.shape)
         print(df.index[0])
         if fun == "fft":
             df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
-        shape_mode_path = f"{project_dir}/shapemode/{alignment}"
+        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
         
@@ -178,6 +184,7 @@ def main():
             complex_type=use_complex,
             fourier_algo=fun,
             inverse_func=inverse_func,
+            mode = mode,
         )
         pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
         
@@ -185,8 +192,8 @@ def main():
         cells_assigned = dict()
         for pc in pc_keep:
             pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
-            pm.plot_pc_dist(pc)
-            pm.plot_pc_hist(pc)
+            #pm.plot_pc_dist(pc)
+            #pm.plot_pc_hist(pc)
             pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
 
             pc_indexes_assigned, bin_links = pm.assign_cells(pc) 
