@@ -298,9 +298,9 @@ class PlotShapeModes:
                 ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
                 ax[i].plot(ix_c.real, iy_c.real, "m")
             ax[i].axis("scaled")
-        pc_var = int(list(filter(str.isdigit, pc_name))[0]) 
+        pc_var = self.percent_var[int(list(filter(str.isdigit, pc_name))[0]) -1]
         plt.suptitle(f"{pc_name} - {pc_var}%", fontsize=16)
-        plt.savefig(f"{save_dir}/shapevar_{pc_name}_{self.mode}.png")
+        plt.savefig(f"{save_dir}/shapevar_{pc_name}_{self.mode}.png", bbox_inches='tight', pad_inches=0)
         plt.show()
         plt.close()
         
