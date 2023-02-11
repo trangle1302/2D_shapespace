@@ -76,7 +76,7 @@ def main():
     n_cv = 1
     mode = "nuclei" #"cell_nuclei" #
     cell_line = "S-BIAD34"#"U-2 OS"
-    alignment = "fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" #   #"fft_cell_major_axis_polarized" # 
+    alignment = "fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" # 
     #project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
@@ -169,6 +169,7 @@ def main():
             n_pc = np.sum(scree.cumsum() < percent) + 1
             print(f"{n_pc} to explain {percent} % variance")
         n_pc = np.sum(scree.cumsum() < 95) + 1
+        n_pc = (8 if n_pc <8 else n_pc) #keep at least 8 PCs or 95% whichever covers the other 
         pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
         pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
         #pc_keep = [f"PC{c}" for c in range(1, 1 + 6)]
@@ -189,7 +190,10 @@ def main():
             inverse_func=inverse_func,
             mode = mode,
         )
-        pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
+        if mode == "cell_nucleus":
+            pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
+        elif mode == "nuclei":
+            pm.plot_avg_nucleus(dark=False, save_dir=shape_mode_path)
         
         n_ = 10# number of random cells to plot
         cells_assigned = dict()
