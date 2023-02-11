@@ -25,21 +25,39 @@ elif fun == "efd":
     inverse_func = coefs.backward_efd
 
 def calculate_fft_hpa():
-    cell_line = "U-2 OS"
-    save_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/cell_masks"
-    d = Path(save_dir)
-    save_path = Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/fftcoefs/fft_major_axis_polarized")
+    dataset = "U-2_OS"
+    mask_dir = f"/data/2Dshapespace/{dataset}/cell_masks"
+    save_path = Path(f"/data/2Dshapespace/{dataset}/fftcoefs/fft_cell_major_axis_polarized")
     if not os.path.exists(save_path):
         os.makedirs(save_path)
-    log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
+    log_dir = f"/data/2Dshapespace/{dataset}/logs"
 
-    imlist= glob.glob(f"{save_dir}/*.npy")
+    imlist= glob.glob(f"{mask_dir}/*.npy")
     imlist = [im for im in imlist if os.path.getsize(im)>0]
     
     num_cores = multiprocessing.cpu_count() - 10 # save 10 core for some other processes
     inputs = tqdm(imlist)
-    print(f"Processing {len(imlist)} in {num_cores} cores")
+    print(f"Processing {len(imlist)} in {num_cores} cores, saving to {save_path}")
     processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_im)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.001,0.999])) for i in inputs)
+    with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
+        pickle.dump(processed_list, success_list)
+
+def calculate_fft_ccd_nu():
+    dataset = "U-2_OS"
+    mask_dir = f"/data/2Dshapespace/{dataset}/cell_masks"
+    d = Path(save_dir)
+    save_path = Path(f"/data/2Dshapespace/{dataset}/fftcoefs/fft_nuclei_major_axis")
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
+
+    imlist= glob.glob(f"{mask_dir}/*.npy")
+    imlist = [im for im in imlist if os.path.getsize(im)>0]
+    
+    num_cores = multiprocessing.cpu_count() - 10 # save 10 core for some other processes
+    inputs = tqdm(imlist)
+    print(f"Processing {len(imlist)} in {num_cores} cores, saving to {save_path}")
+    processed_list = Parallel(n_jobs=num_cores)(delayed(alignment.get_coefs_nucleus)(i, save_path, log_dir, n_coef=128, func=get_coef_fun, plot=np.random.choice([True,False], p=[0.001,0.999])) for i in inputs)
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
         pickle.dump(processed_list, success_list)
 
@@ -92,7 +110,8 @@ def calculate_fft_ccd_nu():
 
 if __name__ == "__main__": 
     s_t = time.time()
-    #calculate_fft_hpa()
+    calculate_fft_hpa()
+    calculate_fft_hpa_nu()
     #calculate_fft_ccd()
-    calculate_fft_ccd_nu()
+    #calculate_fft_ccd_nu()
     print(f"Done in {np.round((time.time()-s_t)/3600,2)} h.")
