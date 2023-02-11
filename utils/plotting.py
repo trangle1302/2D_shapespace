@@ -24,6 +24,7 @@ class PlotShapeModes:
         complex_type=True,
         fourier_algo = 'fft',
         inverse_func=coefs.inverse_wavelet,
+        mode = "cell_nuclei"
     ):
         self.pca = pca
         self.sc = scaler
@@ -37,6 +38,7 @@ class PlotShapeModes:
         self.std = None
         self.protein_intensities = None
         self.percent_var = np.round(pca.explained_variance_ratio_ * 100,2)
+        self.mode = mode # "cell_nuclei", "nuclei" ("cell" option has not been implemented)
 
         mean = self.matrix.mean()  # .clip(0, None).mean()
         # mean = abs(self.matrix).mean(axis=0)
@@ -119,15 +121,13 @@ class PlotShapeModes:
                 fcoef = self.sc.inverse_transform(fcoef)
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]
-
             ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
             ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+
         elif self.fourier_algo == "efd":
             fcoef_c = fcoef[: len(fcoef) // 2]
             fcoef_n = fcoef[len(fcoef) // 2 :]
-            print(len(fcoef), len(fcoef_n), len(fcoef_c))
             ix_n, iy_n = self.inverse_func(fcoef_n, n_points=self.n*2)
-            print(len(ix_n), len(iy_n))
             ix_c, iy_c = self.inverse_func(fcoef_c, n_points=self.n*2)
 
         if dark:
@@ -146,6 +146,42 @@ class PlotShapeModes:
         plt.plot(ix_c, iy_c,"m")
         plt.axis("scaled")
         plt.savefig(f"{save_dir}/Avg_cell.jpg", bbox_inches="tight")
+        plt.close()
+
+
+    def plot_avg_nucleus(self, dark=True, save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots"):
+        midpoint = self.midpoints.copy()
+        fcoef = self.pca.inverse_transform(midpoint)
+        if self.fourier_algo == "fft":
+            if not self.complex:
+                real = fcoef[: len(fcoef) // 2]
+                imag = fcoef[len(fcoef) // 2 :]
+                fcoef = [complex(r, i) for r, i in zip(real, imag)]
+            if self.sc != None:
+                fcoef = self.sc.inverse_transform(fcoef)
+            if len(fcoef) == self.n*2: # If there's equal number of column as n_coefs needed to reconstruct a shape
+                fcoef_n = fcoef
+            else: # else: each row is in the format of [fcoef_c, fcoef_n]
+                fcoef_n = fcoef[self.n * 2 :] 
+            ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
+    
+        elif self.fourier_algo == "efd":
+            raise NotImplementedError
+
+        if dark:
+            plt.style.use('dark_background')
+            plt.rcParams['savefig.facecolor'] = '#191919'
+            plt.rcParams['figure.facecolor'] ='#191919'
+            plt.rcParams['axes.facecolor'] ='#191919'
+        else:
+            plt.style.use('default')
+        np.savez(f"{save_dir}/Avg_nucleus.npz", ix_n=ix_n.real, iy_n=iy_n.real, ix_c=ix_c.real, iy_c=iy_c.real)
+
+        ix_n, iy_n = equidistance(ix_n.real, iy_n.real, self.n * 10)
+        plt.title("Average nucleus")
+        plt.plot(ix_n, iy_n,"#8ab0cf")
+        plt.axis("scaled")
+        plt.savefig(f"{save_dir}/Avg_nucleus.jpg", bbox_inches="tight")
         plt.close()
         
     def get_equipoints(self):
@@ -217,8 +253,13 @@ class PlotShapeModes:
         else:
             plt.style.use('default')
         fig, ax = plt.subplots(1, len(self.stdpoints[pc_name]), figsize=(15, 4),sharex=True, sharey=True)
-        nuc = []
-        mem = []
+        if self.mode == "nuclei":
+            nuc = []
+        elif self.mode == "cell":
+            mem = []
+        elif self.mode == "cell_nuclei":
+            nuc = []
+            mem = []
         for i, p in enumerate(self.stdpoints[pc_name]):
             # for i, p in enumerate(self.equipoints[pc_name]):
             # for i, p in enumerate(self.lmpoints[pc_name]):
@@ -232,6 +273,7 @@ class PlotShapeModes:
                     real = fcoef[: len(fcoef) // 2]
                     imag = fcoef[len(fcoef) // 2 :]
                     fcoef = [complex(r, i) for r, i in zip(real, imag)]
+                
                 fcoef_c = fcoef[0 : self.n * 2]
                 fcoef_n = fcoef[self.n * 2 :]
                 ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
@@ -244,18 +286,25 @@ class PlotShapeModes:
 
             # ix_n, iy_n = self.inverse_fun(fcoef[0:self.n], fcoef[2*self.n:3*self.n])
             # ix_c, iy_c = self.inverse_fun(fcoef[self.n:2*self.n], fcoef[3*self.n:])
-            nuc += [np.concatenate([ix_n.real, iy_n.real])]
-            mem += [np.concatenate([ix_c.real, iy_c.real])]
-            ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
-            ax[i].plot(ix_c.real, iy_c.real, "m")
+            if self.mode == "nuclei":
+                nuc += [np.concatenate([ix_n.real, iy_n.real])]
+                ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
+            elif self.mode == "cell":                   
+                mem += [np.concatenate([ix_c.real, iy_c.real])]
+                ax[i].plot(ix_c.real, iy_c.real, "m")
+            elif self.mode == "cell_nuclei":                    
+                nuc += [np.concatenate([ix_n.real, iy_n.real])]
+                mem += [np.concatenate([ix_c.real, iy_c.real])]
+                ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
+                ax[i].plot(ix_c.real, iy_c.real, "m")
             ax[i].axis("scaled")
         pc_var = int(list(filter(str.isdigit, pc_name))[0]) 
         plt.suptitle(f"{pc_name} - {pc_var}%", fontsize=16)
-        plt.savefig(f"{save_dir}/shapevar_{pc_name}.png")
+        plt.savefig(f"{save_dir}/shapevar_{pc_name}_{self.mode}.png")
         plt.show()
         plt.close()
         
-        np.savez(f"{save_dir}/shapevar_{pc_name}.npz", 
+        np.savez(f"{save_dir}/shapevar_{pc_name}_{self.mode}.npz", 
             nuc=np.array(nuc), 
             mem=np.array(mem))
         
@@ -277,19 +326,38 @@ class PlotShapeModes:
                     real = fcoef[: len(fcoef) // 2]
                     imag = fcoef[len(fcoef) // 2 :]
                     fcoef = [complex(r, i) for r, i in zip(real, imag)]
-                fcoef_c = fcoef[0 : self.n * 2]
-                fcoef_n = fcoef[self.n * 2 :]
-                ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
-                ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+                if self.mode == "nuclei":
+                    if len(fcoef) == self.n*2: # If there's equal number of column as n_coefs needed to reconstruct a shape
+                        fcoef_n = fcoef
+                    else: # else: each row is in the format of [fcoef_c, fcoef_n]
+                        fcoef_n = fcoef[self.n * 2 :]                        
+                    nu.set_data(ix_n.real, iy_n.real)
+                elif self.mode == "cell":
+                    raise NotImplementedError   
+                elif self.mode == "cell_nuclei":
+                    fcoef_c = fcoef[0 : self.n * 2]
+                    fcoef_n = fcoef[self.n * 2 :]
+                    ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
+                    ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
+                    
+                    nu.set_data(ix_n.real, iy_n.real)
+                    cell.set_data(ix_c.real, iy_c.real)
+                
+                else: 
+                    raise NotImplementedError
+                
             elif self.fourier_algo == "efd":
-                fcoef_c = fcoef[: len(fcoef) // 2]
-                fcoef_n = fcoef[len(fcoef) // 2 :]
-                ix_n, iy_n = self.inverse_func(fcoef_n, n_points=self.n*2)
-                ix_c, iy_c = self.inverse_func(fcoef_c, n_points=self.n*2)
+                if self.mode == "cell_nuclei":
+                    fcoef_c = fcoef[: len(fcoef) // 2]
+                    fcoef_n = fcoef[len(fcoef) // 2 :]
+                    ix_n, iy_n = self.inverse_func(fcoef_n, n_points=self.n*2)
+                    ix_c, iy_c = self.inverse_func(fcoef_c, n_points=self.n*2)
+                    
+                    nu.set_data(ix_n.real, iy_n.real)
+                    cell.set_data(ix_c.real, iy_c.real)                
+                else:
+                    raise NotImplementedError
 
-            nu.set_data(ix_n.real, iy_n.real)
-            cell.set_data(ix_c.real, iy_c.real)
-        
         if dark:
             plt.style.use('dark_background')
             plt.rcParams['savefig.facecolor'] = '#191919'
@@ -299,8 +367,13 @@ class PlotShapeModes:
             plt.style.use('default')
         fig, ax = plt.subplots(figsize=(8,8))
         fig.suptitle(pc_name, y=0.95)
-        (nu,) = plt.plot([], [], "#8ab0cf", lw=5)
-        (cell,) = plt.plot([], [], "m", lw=5)
+        if self.mode == "nuclei":
+            (nu,) = plt.plot([], [], "#8ab0cf", lw=5)
+        elif self.mode == "cell":
+            (cell,) = plt.plot([], [], "m", lw=5)
+        elif self.mode == "cell_nuclei":
+            (nu,) = plt.plot([], [], "#8ab0cf", lw=5)
+            (cell,) = plt.plot([], [], "m", lw=5)
         ax.axis("scaled")
         #ax.set_facecolor('#191919')        
         #fig.patch.set_facecolor('#191919')
