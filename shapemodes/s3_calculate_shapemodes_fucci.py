@@ -74,9 +74,9 @@ def main():
     n_coef = 128
     n_samples = -1#5000
     n_cv = 1
-    mode = "cell_nuclei" #"nuclei" #
+    mode = "nuclei" #"cell_nuclei" #
     cell_line = "S-BIAD34"#"U-2 OS"
-    alignment = "fft_cell_major_axis_polarized" #  #"fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" # 
+    alignment = "fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" #   #"fft_cell_major_axis_polarized" # 
     #project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
@@ -123,15 +123,17 @@ def main():
                     lines[data_[0]]=data_[1:]
 
         df = pd.DataFrame(lines).transpose()
-        if mode == "nuclei":
-            df = df.iloc[:,len(df)//2:]
-        elif mode == "cell":
-            df = df.iloc[:,:len(df)//2]
-        print(cell_line, alignment, mode, df.shape)
-        print(df.index[0])
         if fun == "fft":
             df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
+        
+        if mode == "nuclei":
+            df = df.iloc[:,(df.shape[1]//2):]
+        elif mode == "cell":
+            df = df.iloc[:,:(df.shape[1]//2)]
+        print(cell_line, alignment, mode, df.shape)
+
         shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}"
+        print(f"Saving to {shape_mode_path}")
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
         
@@ -141,11 +143,12 @@ def main():
                 df_ = pd.concat(
                     [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)], axis=1
                 )
-                pca = PCA()#IncrementalPCA(whiten=True) #PCA()
+                pca = PCA() #IncrementalPCA(whiten=True) #PCA()
                 pca.fit(df_)
                 plotting.display_scree_plot(pca, save_dir=shape_mode_path)
             else:
                 df_ = df
+                print(f"Number of samples {df_.shape[0]}, number of coefs {df_.shape[1]}")
                 pca = dimreduction.ComplexPCA(n_components=df_.shape[1])
                 pca.fit(df_)
                 plotting.display_scree_plot(pca, save_dir=shape_mode_path)
