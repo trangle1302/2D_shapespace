@@ -42,14 +42,13 @@ def calculate_fft_hpa():
     with open(f'{log_dir}/images_fft_done.pkl', 'wb') as success_list:
         pickle.dump(processed_list, success_list)
 
-def calculate_fft_ccd_nu():
+def calculate_fft_hpa_nu():
     dataset = "U-2_OS"
     mask_dir = f"/data/2Dshapespace/{dataset}/cell_masks"
-    d = Path(save_dir)
     save_path = Path(f"/data/2Dshapespace/{dataset}/fftcoefs/fft_nuclei_major_axis")
     if not os.path.exists(save_path):
         os.makedirs(save_path)
-    log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
+    log_dir = f"/data/2Dshapespace/{dataset}/logs"
 
     imlist= glob.glob(f"{mask_dir}/*.npy")
     imlist = [im for im in imlist if os.path.getsize(im)>0]
@@ -110,7 +109,7 @@ def calculate_fft_ccd_nu():
 
 if __name__ == "__main__": 
     s_t = time.time()
-    calculate_fft_hpa()
+    #calculate_fft_hpa()
     calculate_fft_hpa_nu()
     #calculate_fft_ccd()
     #calculate_fft_ccd_nu()
