@@ -155,9 +155,7 @@ def main():
                 # adding weighed contribution of this image
                 #print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
                 avg_img += warped / len(ls_)
-                #if ab_id in ["HPA049341","HPA061027","HPA060948","HPA063464","HPA065871"]:
-                if ab_id in ["HPA065938","HPA040923","HPA032080","HPA030741"]:
-                #if np.random.choice([True,False], p=[0.001,0.999]):
+                if ab_id in ["HPA049341","HPA061027","HPA060948","HPA063464","HPA065938","HPA040923","HPA032080","HPA030741"] and np.random.choice([True,False], p=[0.1,0.9]):
                     # Plot landmark points at morphing
                     fig, ax = plt.subplots(1,6, figsize=(15,35))
                     ax[0].imshow(nu_, alpha = 0.3)
