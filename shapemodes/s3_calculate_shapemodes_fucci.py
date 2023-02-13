@@ -77,26 +77,11 @@ def main():
     mode = "nuclei" #"cell_nuclei" #
     cell_line = "S-BIAD34"#"U-2 OS"
     alignment = "fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" # 
-    #project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
-    #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     log_dir = f"{project_dir}/logs"
-    #fft_dir = f"{project_dir}/fftcoefs/{fun}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
-    """
-    protein_dir = Path(f"{project_dir}/cell_masks") #Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
-    #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-    mappings = pd.read_csv(f"/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-    mappings = mappings[mappings['atlas_name']=='U-2 OS']
-    #print(mappings.target.value_counts())
-    print(mappings.shape, mappings.columns)
-    id_with_intensity = glob.glob(f"{protein_dir}/*.png")
-    mappings["Link"] =[f"{protein_dir}/{id.split('_',1)[1]}_protein.png" for id in mappings.id]
-    mappings = mappings[mappings.Link.isin(id_with_intensity)]
-    print(mappings.shape, mappings.target.value_counts())
-    print(mappings.Link[:3].values)
-    """
+
     with open(fft_path) as f:
         count = sum(1 for _ in f)
     
