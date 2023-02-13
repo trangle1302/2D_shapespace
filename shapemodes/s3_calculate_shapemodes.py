@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append("..")
 from shapemodes import dimreduction
-from coefficients import alignment, coefs
+from coefficients import coefs
 from warps.parameterize import get_coordinates
 from utils import plotting, helpers
 from sklearn.decomposition import PCA, IncrementalPCA
@@ -74,11 +74,13 @@ def main():
     n_coef = 128
     n_samples = -1 #5000
     n_cv = 1
+    mode = "cell_nuclei"
     cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
+    alignment = "fft_cell_major_axis_polarized"
     # project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
-    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized"
+    fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     log_dir = f"{project_dir}/logs"
     #fft_dir = f"{project_dir}/fftcoefs/{fun}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
@@ -134,7 +136,15 @@ def main():
         print(df.index[0])
         if fun == "fft":
             df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
-        shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/fft_major_axis_polarized"
+        
+        
+        if mode == "nuclei":
+            df = df.iloc[:,(df.shape[1]//2):]
+        elif mode == "cell":
+            df = df.iloc[:,:(df.shape[1]//2)]
+        print(cell_line, alignment, mode, df.shape)
+
+        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
         
@@ -164,15 +174,16 @@ def main():
             pca.fit(df_)
             plotting.display_scree_plot(pca, save_dir=shape_mode_path)
 
-        matrix_of_features_transform = pca.transform(df_)
         scree = pca.explained_variance_ratio_ * 100
         for percent in np.arange(70,100,5):
             n_pc = np.sum(scree.cumsum() < percent) + 1
             print(f"{n_pc} to explain {percent} % variance")
         n_pc = np.sum(scree.cumsum() < 95) + 1
+        n_pc = (8 if n_pc <8 else n_pc)
         pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
         pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
         #pc_keep = [f"PC{c}" for c in range(1, 1 + 6)]
+        matrix_of_features_transform = pca.transform(df_)
         df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
         df_trans.columns = pc_names
         df_trans.index = df.index
@@ -188,14 +199,15 @@ def main():
             fourier_algo=fun,
             inverse_func=inverse_func,
         )
-        pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
+        if mode == "cell_nucleus":
+            pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
+        elif mode == "nuclei":
+            pm.plot_avg_nucleus(dark=False, save_dir=shape_mode_path)
         
         n_ = 10# number of random cells to plot
         cells_assigned = dict()
         for pc in pc_keep:
             pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
-            pm.plot_pc_dist(pc)
-            pm.plot_pc_hist(pc)
             pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
 
             pc_indexes_assigned, bin_links = pm.assign_cells(pc) 
