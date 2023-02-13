@@ -173,22 +173,6 @@ def main():
                 img = rotate(img, theta)
                 nu_ = rotate(cell_shape[1,:,:], theta)
                 cell_ = rotate(cell_shape[0,:,:], theta)
-                             
-                flip_ud = True # Set True for polarized version of cell mass
-                flip_lr = True # Set True for polarized version of cell mass
-                shape = nu_.shape
-                center_ = center_of_mass(nu_)
-                if flip_ud:
-                    if center_[0] < shape[0]//2:
-                        cell_ = np.flipud(cell_)
-                        nu_ = np.flipud(nu_)
-                        img = np.flipud(img)
-                if flip_lr:
-                    if center_[1] < shape[1]//2:
-                        cell_ = np.fliplr(cell_)
-                        nu_ = np.fliplr(nu_)
-                        img = np.fliplr(img)
-
 
                 img_resized = resize(img, (shape_x, shape_y), mode='constant')
                 nu_resized = resize(nu_, (shape_x, shape_y), mode='constant') * 255
