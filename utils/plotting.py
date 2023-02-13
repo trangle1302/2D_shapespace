@@ -277,8 +277,8 @@ class PlotShapeModes:
                         fcoef_n = fcoef
                     else: # else: each row is in the format of [fcoef_c, fcoef_n]
                         fcoef_n = fcoef[self.n * 2 :] 
-                    nuc += [np.concatenate([ix_n.real, iy_n.real])]
                     ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
+                    nuc += [np.concatenate([ix_n.real, iy_n.real])]
                     ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
                 elif self.mode == "cell":                   
                     raise NotImplementedError
