@@ -55,10 +55,11 @@ def main():
     bin_ = args.merged_bins
     PC = args.pc
     cell_line = 'S-BIAD34'
+    alignment = "fft_cell_major_axis_polarized" #"fft_nuclei_major_axis"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-    shape_mode_path = f"{project_dir}/shapemode/fft_major_axis_polarized"  
-    fft_dir = f"{project_dir}/fftcoefs/fft_major_axis_polarized"  
-    data_dir = f"{project_dir}/cell_masks" 
+    shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei"  
+    fft_dir = f"{project_dir}/fftcoefs/{alignment}"  
+    data_dir = f"{project_dir}/cell_masks2" 
     save_dir = f"{project_dir}/morphed_protein_avg" 
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
     n_landmarks = 32 # number of landmark points frgs='+',or each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
@@ -70,16 +71,17 @@ def main():
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
+    print(cells_assigned.keys())
     #mappings = pd.read_csv(f"{project_dir}/experimentB-processed.txt", sep="\t")
     #print(f"...Found {len(mappings['Antibody id'].unique())} antibodies")
 
     pro_count = {}
-    for b in np.arange(11):
+    for b in np.arange(7):
         pc_cells = cells_assigned[PC][b]
         antibodies = [c.split("/")[-2] for c in pc_cells]
         cells_per_ab = Counter(antibodies)
         pro_count[f"bin{b}"] = cells_per_ab
-        #print(len(pc_cells), len(cells_per_ab.keys()))
+        print(len(pc_cells), len(cells_per_ab.keys()))
  
     df = pd.DataFrame(pro_count)
     df["total"] = df.sum(axis=1)
@@ -87,7 +89,7 @@ def main():
     idx_keep = [all(r.values >= 5) for _, r in df.iterrows()]
     ab_keep = df.index.values[idx_keep].tolist()
     print(f"Keeping {sum(idx_keep)} ab with >=5 cells/bin") 
-    avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}.npz")
+    avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}_cell_nuclei.npz")
 
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
         lines = F.readlines()
@@ -169,7 +171,7 @@ def main():
                 #print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
                 avg_img += warped / len(ls_)
                 #if ab_id in ["HPA049341","HPA061027","HPA060948","HPA063464","HPA065871"]:
-                if ab_id in ["HPA065938","HPA040923","HPA032080"]:
+                if ab_id in ["HPA065938","HPA040923","HPA032080","HPA030741"]:
                 #if np.random.choice([True,False], p=[0.001,0.999]):
                     # Plot landmark points at morphing
                     fig, ax = plt.subplots(1,6, figsize=(15,35))
