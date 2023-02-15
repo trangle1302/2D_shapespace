@@ -74,9 +74,9 @@ def main():
     n_coef = 128
     n_samples = -1 #5000
     n_cv = 1
-    mode = "cell_nuclei"
+    mode = "nuclei" #"cell_nuclei"
     cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
-    alignment = "fft_cell_major_axis_polarized"
+    alignment = "fft_nuclei_major_axis"#"fft_cell_major_axis_polarized"
     # project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
@@ -199,7 +199,7 @@ def main():
             fourier_algo=fun,
             inverse_func=inverse_func,
         )
-        if mode == "cell_nucleus":
+        if mode == "cell_nuclei":
             pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
         elif mode == "nuclei":
             pm.plot_avg_nucleus(dark=False, save_dir=shape_mode_path)
