@@ -187,7 +187,7 @@ def main():
             inverse_func=inverse_func,
             mode = mode,
         )
-        if mode == "cell_nucleus":
+        if mode == "cell_nuclei":
             pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
         elif mode == "nuclei":
             pm.plot_avg_nucleus(dark=False, save_dir=shape_mode_path)
