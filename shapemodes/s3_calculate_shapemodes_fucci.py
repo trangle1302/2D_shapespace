@@ -74,9 +74,9 @@ def main():
     n_coef = 128
     n_samples = -1#5000
     n_cv = 1
-    mode = "nuclei" #"cell_nuclei" #
+    mode = "cell_nuclei"#"nuclei" #"cell_nuclei" #
     cell_line = "S-BIAD34"#"U-2 OS"
-    alignment = "fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" # 
+    alignment = "fft_cell_major_axis_polarized"#"fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" # 
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     log_dir = f"{project_dir}/logs"
@@ -117,11 +117,18 @@ def main():
             df = df.iloc[:,:(df.shape[1]//2)]
         print(cell_line, alignment, mode, df.shape)
 
-        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}"
+        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}_nux2"
         print(f"Saving to {shape_mode_path}")
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
         
+        # multiply nucleus by 2:
+        print(df.shape)
+        print(df.iloc[100,500])
+        n_col = df.shape[1]
+        df.iloc[:,n_col//2:] = df.iloc[:, n_col//2:].applymap(lambda s: s*2)
+        #df = df.applymap(lambda s: s*2, subset = pd.IndexSlice[:,n_col//2 :])
+        print(df.iloc[100,500])
         use_complex = False
         if fun == "fft":
             if not use_complex:
@@ -164,6 +171,11 @@ def main():
         df_trans.index = df.index
         df_trans[list(set(pc_names) - set(pc_keep))] = 0
         print(matrix_of_features_transform.shape, df_trans.shape)
+        
+        # Divide nuclei coefs by 2
+        #df_trans = df_trans.applymap(lambda s: s/2, subset = pd.IndexSlice[:, n_col//2 :])
+        df_trans.iloc[:,n_col//2:] = df_trans.iloc[:, n_col//2:].applymap(lambda s: s/2)
+        print(df_trans.iloc[100,500])
         pm = plotting.PlotShapeModes(
             pca,
             df_trans,
@@ -198,6 +210,8 @@ def main():
                 cells_ = np.random.choice(b_, n_)
                 for i, c in enumerate(cells_):
                     pro_path = c.replace("/data/2Dshapespace","/scratch/users/tle1302").replace(".npy","_protein.png")
+                    print(pro_path)
+                    breakme
                     if os.path.exists(pro_path):
                         ax[i, b_index].imshow(plt.imread(pro_path))
                     else:
