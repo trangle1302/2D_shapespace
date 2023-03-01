@@ -175,7 +175,7 @@ def main():
         # Divide nuclei coefs by 2
         #df_trans = df_trans.applymap(lambda s: s/2, subset = pd.IndexSlice[:, n_col//2 :])
         df_trans.iloc[:,n_col//2:] = df_trans.iloc[:, n_col//2:].applymap(lambda s: s/2)
-        print(df_trans.iloc[100,500])
+        print('After pca', df_trans.iloc[100,500])
         pm = plotting.PlotShapeModes(
             pca,
             df_trans,
@@ -209,9 +209,8 @@ def main():
             for b_index, b_ in enumerate(bin_links):
                 cells_ = np.random.choice(b_, n_)
                 for i, c in enumerate(cells_):
-                    pro_path = c.replace("/data/2Dshapespace","/scratch/users/tle1302").replace(".npy","_protein.png")
+                    pro_path = c.replace("/data/2Dshapespace","/scratch/users/tle1302/2Dshapespace").replace(".npy","_protein.png")
                     print(pro_path)
-                    breakme
                     if os.path.exists(pro_path):
                         ax[i, b_index].imshow(plt.imread(pro_path))
                     else:
