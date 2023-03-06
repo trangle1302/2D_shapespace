@@ -364,6 +364,10 @@ class PlotShapeModes:
                 elif self.mode == "cell_nuclei":
                     fcoef_c = fcoef[0 : self.n * 2]
                     fcoef_n = fcoef[self.n * 2 :]
+                    
+                    if True: # nu_coef*2 so need to divide by 2
+                        fcoef_n = [x_/2 for x_ in fcoef_n]
+                        
                     ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
                     ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
                     
