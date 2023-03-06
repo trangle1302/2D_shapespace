@@ -174,8 +174,8 @@ def main():
         
         # Divide nuclei coefs by 2
         #df_trans = df_trans.applymap(lambda s: s/2, subset = pd.IndexSlice[:, n_col//2 :])
-        df_trans.iloc[:,n_col//2:] = df_trans.iloc[:, n_col//2:].applymap(lambda s: s/2)
-        print('After pca', df_trans.iloc[100,500])
+        #df_trans.iloc[:,n_col//2:] = df_trans.iloc[:, n_col//2:].applymap(lambda s: s/2)
+        #print('After pca', df_trans.iloc[100,500])
         pm = plotting.PlotShapeModes(
             pca,
             df_trans,
