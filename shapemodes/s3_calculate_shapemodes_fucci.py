@@ -201,6 +201,7 @@ def main():
             pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
 
             pc_indexes_assigned, bin_links = pm.assign_cells(pc) 
+            """
             #print(pc_indexes_assigned, len(pc_indexes_assigned))
             #print(bin_links, len(bin_links))
             #print([len(b) for b in bin_links])
@@ -217,7 +218,13 @@ def main():
                         continue
             fig.savefig(f"{shape_mode_path}/{pc}_example_cells.png", bbox_inches=None)
             plt.close()
-        
+            """
+            plotting.plot_example_cells(bin_links, 
+                                        n_coef=n_coef, 
+                                        cells_per_bin=10, 
+                                        shape_coef_path=fft_path, 
+                                        save_path=f"{shape_mode_path}/{pc}_example_cells.png")
+            
         with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
             json.dump(cells_assigned, fp)
         
