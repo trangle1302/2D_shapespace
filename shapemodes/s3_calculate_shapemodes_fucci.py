@@ -117,7 +117,7 @@ def main():
             df = df.iloc[:,:(df.shape[1]//2)]
         print(cell_line, alignment, mode, df.shape)
 
-        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}_nux2"
+        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}_nux4"
         print(f"Saving to {shape_mode_path}")
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
@@ -126,7 +126,7 @@ def main():
         print(df.shape)
         print(df.iloc[100,500])
         n_col = df.shape[1]
-        df.iloc[:,n_col//2:] = df.iloc[:, n_col//2:].applymap(lambda s: s*2)
+        df.iloc[:,n_col//2:] = df.iloc[:, n_col//2:].applymap(lambda s: s*4)
         #df = df.applymap(lambda s: s*2, subset = pd.IndexSlice[:,n_col//2 :])
         print(df.iloc[100,500])
         use_complex = False
