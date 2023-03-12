@@ -9,7 +9,7 @@ from skimage.measure import find_contours
 from skimage.morphology import convex_hull_image
 from scipy.ndimage import center_of_mass, rotate
 #from warps import TPSpline
-from warps import tpspline_rewrite as TPSpline
+from warps import TPSpline_rewrite as TPSpline
 
 def find_landmarks(nuclei, cell, n_points=32, border_points = False):
     assert nuclei.shape == cell.shape
