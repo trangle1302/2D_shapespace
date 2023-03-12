@@ -117,7 +117,7 @@ def main():
             df = df.iloc[:,:(df.shape[1]//2)]
         print(cell_line, alignment, mode, df.shape)
 
-        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}_nux2"
+        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}_nux4"
         print(f"Saving to {shape_mode_path}")
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
@@ -126,7 +126,7 @@ def main():
         print(df.shape)
         print(df.iloc[100,500])
         n_col = df.shape[1]
-        df.iloc[:,n_col//2:] = df.iloc[:, n_col//2:].applymap(lambda s: s*2)
+        df.iloc[:,n_col//2:] = df.iloc[:, n_col//2:].applymap(lambda s: s*4)
         #df = df.applymap(lambda s: s*2, subset = pd.IndexSlice[:,n_col//2 :])
         print(df.iloc[100,500])
         use_complex = False
@@ -174,8 +174,8 @@ def main():
         
         # Divide nuclei coefs by 2
         #df_trans = df_trans.applymap(lambda s: s/2, subset = pd.IndexSlice[:, n_col//2 :])
-        df_trans.iloc[:,n_col//2:] = df_trans.iloc[:, n_col//2:].applymap(lambda s: s/2)
-        print('After pca', df_trans.iloc[100,500])
+        #df_trans.iloc[:,n_col//2:] = df_trans.iloc[:, n_col//2:].applymap(lambda s: s/2)
+        #print('After pca', df_trans.iloc[100,500])
         pm = plotting.PlotShapeModes(
             pca,
             df_trans,
@@ -201,6 +201,7 @@ def main():
             pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
 
             pc_indexes_assigned, bin_links = pm.assign_cells(pc) 
+            """
             #print(pc_indexes_assigned, len(pc_indexes_assigned))
             #print(bin_links, len(bin_links))
             #print([len(b) for b in bin_links])
@@ -217,7 +218,13 @@ def main():
                         continue
             fig.savefig(f"{shape_mode_path}/{pc}_example_cells.png", bbox_inches=None)
             plt.close()
-        
+            """
+            plotting.plot_example_cells(bin_links, 
+                                        n_coef=n_coef, 
+                                        cells_per_bin=10, 
+                                        shape_coef_path=fft_path, 
+                                        save_path=f"{shape_mode_path}/{pc}_example_cells.png")
+            
         with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
             json.dump(cells_assigned, fp)
         

@@ -82,14 +82,14 @@ def main():
     org = args.org
     PC = args.pc
     print(f"Processing {org} in {PC}")
-    #project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
-    project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
+    project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
+    #project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
     shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei"  
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     data_dir = f"{project_dir}/cell_masks" 
-    save_dir = f"{project_dir}/morphed_protein_avg" 
+    save_dir = f"{project_dir}/morphed_protein_avg_ERMT" 
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
-    n_landmarks = 32 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
+    n_landmarks = 64 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     print(save_dir, plot_dir)
     os.makedirs(save_dir,exist_ok=True)
     os.makedirs(plot_dir,exist_ok=True)
@@ -97,8 +97,8 @@ def main():
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
-    mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-    #mappings = pd.read_csv("/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    mappings = pd.read_csv("/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
     mappings = mappings[mappings.atlas_name=="U-2 OS"]
     mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
     
@@ -153,9 +153,9 @@ def main():
             #    continue
             ls_ = [img_id for img_id in ls_ if os.path.exists(f"{data_dir}/{img_id}_protein.png")]
             ls_ = [img_id for img_id in ls_ if os.path.exists(f"{data_dir}/{img_id}.npy")]
-            if len(ls_) > 500:
+            if len(ls_) > 1000:
                 import random
-                ls_ = random.sample(ls_, 500)
+                ls_ = random.sample(ls_, 1000)
             for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
                 for line in lines:
                     if line.find(img_id) != -1 :
