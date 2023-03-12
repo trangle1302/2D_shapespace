@@ -3,12 +3,10 @@ import numpy as np
 
 def _U(r): 
     """ Radial basis function (smooth kernels centered around control points)
-    Parameters:
-        (N,N) 
-    Returns:
-        (N,N) radial basis
+    r^2 log(r)
     """
-    return np.power(r,2) * np.log(np.power(r,2))
+    #print(r.min(), r.max())
+    return np.power(r,2) * np.log(r)
 
 def _K(points):
     """ Surface function
@@ -32,17 +30,27 @@ def _L(points):
     L = np.bmat([[K,P],[P.T, O]])
     return L
 
-def _f_xy(points, x, y, Wa):
+def _f_xy(points, xx, yy, Wa):
     """ Each smooth function f is divided into 2 parts: 
     sum of function U(r) (bound) and affine part representing f-> infinity 
+    Parameters:
+        points: from_points coordinates (x,y) in any convenient cartesian coordinate system
+        xx: to_point x coordinate mesh
+        yy: to_point y coordinate mesh
+        Wa: [W | a1 ax ay]^T 
+
+    Returns:
+        predicted value mesh
     """
     W = Wa[:-3]
-    a1, ax, ay = Wa[-3:]
-    dx = points[:,0]-x
-    dy = points[:,1]-y
-    r = np.sqrt(dx**2 + dy**2)
-    U = _U()
-    f_xy = a1 + ax*x + ay*y + np.dot(W, U).sum(axis=0)
+    a1 = Wa.item((0,0))
+    ax = Wa.item((1,0))
+    ay = Wa.item((2,0))
+    sum_ = np.zeros_like(xx)
+    for i, Pi in enumerate(points):
+        wi = W[i,0]
+        sum_ += wi * _U(np.sqrt((xx-Pi[0])**2 + (yy-Pi[1])**2))
+    f_xy = a1 + ax*xx + ay*yy + sum_
     return f_xy
 
 def warp_f(from_points, to_points, mesh_x, mesh_y):
@@ -53,16 +61,18 @@ def warp_f(from_points, to_points, mesh_x, mesh_y):
     L = _L(from_points)
     # V is the destination landmark, Nx2
     # Y = [V | 0 0 0]^T
-    Y = np.concatenate((to_points,np.zeros((3,2))), axis=0)
+    Y = np.concatenate((to_points, np.zeros((3,2))), axis=0)
     # weights [W | a1 ax ay]
-    Wa = np.dot(np.linalg.pinv(L),Y)    
-    x_warp = _f_xy(Wa[:,0], from_points, mesh_x, mesh_y)
-    y_warp = _f_xy(Wa[:,1], from_points, mesh_x, mesh_y)
+    Wa = np.dot(np.linalg.pinv(L), Y)
+    #print(from_points.shape, to_points.shape, Y.shape)    
+    #print("WA shape: ",Wa.shape)
+    x_warp = _f_xy(from_points, mesh_x, mesh_y, Wa[:,0])
+    y_warp = _f_xy(from_points, mesh_x, mesh_y, Wa[:,1])
     return x_warp, y_warp
 
 def inverse_warp(from_points, to_points, output_bbox, approximate_grid):
     x_min, y_min, x_max, y_max = output_bbox
-    
+
     # higher approximate_grid means coarser deformation fields (x_warp, y_warp)
     if approximate_grid is None: approximate_grid = 1
     x_steps = (x_max - x_min) // approximate_grid
@@ -70,8 +80,9 @@ def inverse_warp(from_points, to_points, output_bbox, approximate_grid):
     x, y = np.mgrid[x_min:x_max:x_steps*1j, y_min:y_max:y_steps*1j]
     
     # calcuate deformation fields (x_warp and y_warp) from the to_points to the from_points
+    # (later remap with cv2.remap)
     x_warp, y_warp = warp_f(to_points, from_points, x, y)
-
+    #print(x_warp, y_warp)
     if approximate_grid != 1:
         # linearly interpolate the zoomed transform grid
         new_x, new_y = np.mgrid[x_min:x_max+1, y_min:y_max+1]
@@ -88,7 +99,7 @@ def inverse_warp(from_points, to_points, output_bbox, approximate_grid):
         t10 = x_warp[(ix1, y_indices)]
         t11 = x_warp[(ix1, iy1)]
         transform_x = t00*x1*y1 + t01*x1*y_fracs + t10*x_fracs*y1 + t11*x_fracs*y_fracs
-
+        #print(transform_x)
         t00 = y_warp[(x_indices, y_indices)]
         t01 = y_warp[(x_indices, iy1)]
         t10 = y_warp[(ix1, y_indices)]
