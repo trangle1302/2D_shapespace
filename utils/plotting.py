@@ -120,7 +120,9 @@ class PlotShapeModes:
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
             fcoef_c = fcoef[0 : self.n * 2]
-            fcoef_n = fcoef[self.n * 2 :]
+            fcoef_n = fcoef[self.n * 2 :]        
+            if True: # nu_coef*2 so need to divide by 2
+                fcoef_n = [x_/4 for x_ in fcoef_n]
             ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
             ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
 
@@ -277,6 +279,10 @@ class PlotShapeModes:
                         fcoef_n = fcoef
                     else: # else: each row is in the format of [fcoef_c, fcoef_n]
                         fcoef_n = fcoef[self.n * 2 :] 
+                    
+                    if True: # nu_coef*2 so need to divide by 2
+                        fcoef_n = [x_/4 for x_ in fcoef_n]
+
                     ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
                     nuc += [np.concatenate([ix_n.real, iy_n.real])]
                     ax[i].plot(ix_n.real, iy_n.real, "#8ab0cf")
@@ -285,6 +291,10 @@ class PlotShapeModes:
                 elif self.mode == "cell_nuclei":                
                     fcoef_c = fcoef[0 : self.n * 2]
                     fcoef_n = fcoef[self.n * 2 :]
+                                        
+                    if True: # nu_coef*2 so need to divide by 2
+                        fcoef_n = [x_/4 for x_ in fcoef_n]
+
                     ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
                     ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])    
                     nuc += [np.concatenate([ix_n.real, iy_n.real])]
@@ -343,6 +353,10 @@ class PlotShapeModes:
                         fcoef_n = fcoef
                     else: # else: each row is in the format of [fcoef_c, fcoef_n]
                         fcoef_n = fcoef[self.n * 2 :]  
+                                            
+                    if True: # nu_coef*2 so need to divide by 2
+                        fcoef_n = [x_/4 for x_ in fcoef_n]
+
                     ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])                      
                     nu.set_data(ix_n.real, iy_n.real)
                 elif self.mode == "cell":
@@ -350,6 +364,10 @@ class PlotShapeModes:
                 elif self.mode == "cell_nuclei":
                     fcoef_c = fcoef[0 : self.n * 2]
                     fcoef_n = fcoef[self.n * 2 :]
+                    
+                    if True: # nu_coef*2 so need to divide by 2
+                        fcoef_n = [x_/4 for x_ in fcoef_n]
+                        
                     ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
                     ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
                     
