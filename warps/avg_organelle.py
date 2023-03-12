@@ -1,13 +1,14 @@
 import os
 import sys
 sys.path.append("..") 
-from imageio import imread, imwrite
+from imageio import imread, imwrite # callisto
+#from imageio.v2 import imread, imwrite # sherlock
 import numpy as np
 from utils import helpers
 import matplotlib.pyplot as plt
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
-from warps import TPSpline, image_warp
+from warps import image_warp
 import json
 import pandas as pd
 from tqdm import tqdm
@@ -87,7 +88,7 @@ def main():
     shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei"  
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     data_dir = f"{project_dir}/cell_masks" 
-    save_dir = f"{project_dir}/morphed_protein_avg_ERMT" 
+    save_dir = f"{project_dir}/morphed_protein_avg_nux4" 
     plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
     n_landmarks = 64 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     print(save_dir, plot_dir)
@@ -153,9 +154,9 @@ def main():
             #    continue
             ls_ = [img_id for img_id in ls_ if os.path.exists(f"{data_dir}/{img_id}_protein.png")]
             ls_ = [img_id for img_id in ls_ if os.path.exists(f"{data_dir}/{img_id}.npy")]
-            if len(ls_) > 1000:
+            if len(ls_) > 20:
                 import random
-                ls_ = random.sample(ls_, 1000)
+                ls_ = random.sample(ls_, 20)
             for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
                 for line in lines:
                     if line.find(img_id) != -1 :
@@ -168,7 +169,7 @@ def main():
                 img = imread(f"{data_dir}/{img_id}_protein.png")
                 if img.dtype == 'uint16':
                     img = (img / 256).astype(np.uint8)
-                #print(img.max(), img.dtype, len(ls_))
+                #print("Original image: ", img.max(), img.dtype, len(ls_))
                 img = rotate(img, theta)
                 nu_ = rotate(cell_shape[1,:,:], theta)
                 cell_ = rotate(cell_shape[0,:,:], theta)
@@ -182,11 +183,12 @@ def main():
                 
                 pts_convex = (pts_avg + pts_ori) / 2
                 warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
+                print(warped1.max(), img_resized.max())
                 warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
                 #imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
 
                 # adding weighed contribution of this image
-                # print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype,  (warped / len(ls_)).max())
+                print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype,  (warped / len(ls_)).max())
                 avg_img += warped / len(ls_)
                 
                 if np.random.choice([True,False], p=[0.001,0.999]):
