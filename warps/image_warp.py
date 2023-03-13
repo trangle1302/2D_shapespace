@@ -35,9 +35,9 @@ def find_landmarks(nuclei, cell, n_points=32, border_points = False):
     
     if len(cell_contour)>1:
         cell_contour = np.vstack(cell_contour)
-        x,y = helpers.equidistance(cell_contour[:,0], cell_contour[:,1], n_points=n_points*2)
+        x,y = helpers.equidistance(cell_contour[:,0], cell_contour[:,1], n_points=n_points)
     else:
-        x,y = helpers.equidistance(cell_contour[0][:,0], cell_contour[0][:,1], n_points=n_points*2)
+        x,y = helpers.equidistance(cell_contour[0][:,0], cell_contour[0][:,1], n_points=n_points)
 
     cell_contour = np.array([[x[i], y[i]] for i in range(n_points)])
 
@@ -76,6 +76,6 @@ def warp_image(pts_from, pts_to, img, midpoint=False, plot=True, save_dir=""):
             ax[2].set_title('midpoint to avg_shape')
     else:
         transform = TPSpline._make_inverse_warp(pts_from, pts_to, (0, 0, x_max, y_max), approximate_grid=2)
-        print("Max y: ", transform[1].astype('float32').max(), "Max x: ", transform[0].astype('float32').max(), img.max())
+        #print("Max y: ", transform[1].astype('float32').max(), "Max x: ", transform[0].astype('float32').max(), img.max())
         warped = cv2.remap(img, transform[1].astype('float32'), transform[0].astype('float32'), cv2.INTER_LINEAR)
     return warped
