@@ -213,10 +213,13 @@ def main():
             pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
 
             pc_indexes_assigned, bin_links = pm.assign_cells(pc) 
+            
             #print(pc_indexes_assigned, len(pc_indexes_assigned))
             #print(bin_links, len(bin_links))
             #print([len(b) for b in bin_links])
-            cells_assigned[pc] = [list(b) for b in bin_links]
+            cells_assigned[pc] = [list(b) for b in bin_links]            
+            print(cells_assigned[pc][:3])
+            """
             fig, ax = plt.subplots(n_, len(bin_links)) # (number of random cells, number of  bin)
             for b_index, b_ in enumerate(bin_links):
                 cells_ = np.random.choice(b_, n_)
@@ -224,6 +227,12 @@ def main():
                     ax[i, b_index].imshow(plt.imread(c.replace("/data/2Dshapespace","/scratch/users/tle1302/2Dshapespace").replace(".npy","_protein.png")))
             fig.savefig(f"{shape_mode_path}/{pc}_example_cells.png", bbox_inches=None)
             plt.close()
+            """
+            plotting.plot_example_cells(bin_links, 
+                                        n_coef=n_coef, 
+                                        cells_per_bin=5, 
+                                        shape_coef_path=fft_path, 
+                                        save_path=f"{shape_mode_path}/{pc}_example_cells.png")
         
         with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
             json.dump(cells_assigned, fp)

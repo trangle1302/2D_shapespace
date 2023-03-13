@@ -201,6 +201,7 @@ def main():
             pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
 
             pc_indexes_assigned, bin_links = pm.assign_cells(pc) 
+            print(cells_assigned[pc][:3])
             """
             #print(pc_indexes_assigned, len(pc_indexes_assigned))
             #print(bin_links, len(bin_links))
