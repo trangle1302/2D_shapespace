@@ -1,7 +1,7 @@
 import os
 import sys
 sys.path.append("..") 
-from imageio import imread, imwrite # callisto
+#from imageio import imread, imwrite # callisto
 #from imageio.v2 import imread, imwrite # sherlock
 import numpy as np
 from utils import helpers
@@ -83,9 +83,13 @@ def main():
     org = args.org
     PC = args.pc
     print(f"Processing {org} in {PC}")
-    project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
-    #project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-    shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei"  
+    try: #if True:
+        from imageio import imread, imwrite # callisto
+        project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
+    except:
+        from imageio.v2 import imread, imwrite # sherlock 
+        project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
+    shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei_nux4"  
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     data_dir = f"{project_dir}/cell_masks" 
     save_dir = f"{project_dir}/morphed_protein_avg_nux4" 

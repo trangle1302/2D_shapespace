@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append("..") 
 #from imageio import imread, imwrite # callisto
-from imageio.v2 import imread, imwrite # sherlock
+#from imageio.v2 import imread, imwrite # sherlock
 import numpy as np
 from utils import helpers
 import matplotlib.pyplot as plt
@@ -57,8 +57,12 @@ def main():
     PC = args.pc
     cell_line = 'S-BIAD34'
     alignment = "fft_cell_major_axis_polarized" #"fft_nuclei_major_axis"
-    project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
-    #project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
+    try: #if True:
+        from imageio import imread, imwrite # callisto
+        project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
+    except:
+        from imageio.v2 import imread, imwrite # sherlock
+        project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
     shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei_nux4"  
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"  
     data_dir = f"{project_dir}/cell_masks2" 
