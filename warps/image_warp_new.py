@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from skimage.measure import find_contours
 from skimage.morphology import convex_hull_image
 from scipy.ndimage import center_of_mass, rotate
-from warps import TPSpline
-#from warps import TPSpline_rewrite as TPSpline
+#from warps import TPSpline
+from warps import TPSpline_rewrite as TPSpline
 
 def find_landmarks(nuclei, cell, n_points=32, border_points = False):
     assert nuclei.shape == cell.shape
@@ -35,9 +35,9 @@ def find_landmarks(nuclei, cell, n_points=32, border_points = False):
     
     if len(cell_contour)>1:
         cell_contour = np.vstack(cell_contour)
-        x,y = helpers.equidistance(cell_contour[:,0], cell_contour[:,1], n_points=n_points*2)
+        x,y = helpers.equidistance(cell_contour[:,0], cell_contour[:,1], n_points=n_points)
     else:
-        x,y = helpers.equidistance(cell_contour[0][:,0], cell_contour[0][:,1], n_points=n_points*2)
+        x,y = helpers.equidistance(cell_contour[0][:,0], cell_contour[0][:,1], n_points=n_points)
 
     cell_contour = np.array([[x[i], y[i]] for i in range(n_points)])
 
@@ -59,8 +59,8 @@ def warp_image(pts_from, pts_to, img, midpoint=False, plot=True, save_dir=""):
     y_max = img.shape[1]
     if midpoint:
         midpoint = (pts_from + pts_to) /2
-        transform1 = TPSpline._make_inverse_warp(pts_from, midpoint, (0, 0, x_max, y_max), approximate_grid=2)
-        transform2 = TPSpline._make_inverse_warp(midpoint, pts_to, (0, 0, x_max, y_max), approximate_grid=2)
+        transform1 = TPSpline.inverse_warp(pts_from, midpoint, (0, 0, x_max, y_max), approximate_grid=4)
+        transform2 = TPSpline.inverse_warp(midpoint, pts_to, (0, 0, x_max, y_max), approximate_grid=4)
         warped1 = cv2.remap(img, transform1[1].astype('float32'), transform1[0].astype('float32'), cv2.INTER_LINEAR)
         warped = cv2.remap(warped1, transform2[1].astype('float32'), transform2[0].astype('float32'), cv2.INTER_LINEAR)
         if plot:
@@ -75,7 +75,7 @@ def warp_image(pts_from, pts_to, img, midpoint=False, plot=True, save_dir=""):
             ax[2].scatter(pts_to[:,1], pts_to[:,0], c=np.arange(len(pts_to)),cmap='Reds')
             ax[2].set_title('midpoint to avg_shape')
     else:
-        transform = TPSpline._make_inverse_warp(pts_from, pts_to, (0, 0, x_max, y_max), approximate_grid=2)
+        transform = TPSpline.inverse_warp(pts_from, pts_to, (0, 0, x_max, y_max), approximate_grid=2)
         print("Max y: ", transform[1].astype('float32').max(), "Max x: ", transform[0].astype('float32').max(), img.max())
         warped = cv2.remap(img, transform[1].astype('float32'), transform[0].astype('float32'), cv2.INTER_LINEAR)
     return warped
