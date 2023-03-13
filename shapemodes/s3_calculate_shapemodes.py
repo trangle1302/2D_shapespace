@@ -76,7 +76,7 @@ def main():
     n_cv = 1
     mode = "nuclei" #"cell_nuclei"
     cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
-    alignment = "fft_nuclei_major_axis"#"fft_cell_major_axis_polarized"
+    alignment = "fft_cell_major_axis_polarized" #"fft_nuclei_major_axis"#"fft_cell_major_axis_polarized"
     # project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
     #log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
@@ -144,10 +144,12 @@ def main():
             df = df.iloc[:,:(df.shape[1]//2)]
         print(cell_line, alignment, mode, df.shape)
 
-        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}"
+        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}_nux4"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
-        
+
+        n_col = df.shape[1]
+        df.iloc[:,n_col//2:] = df.iloc[:, n_col//2:].applymap(lambda s: s*4)        
         use_complex = False
         if fun == "fft":
             if not use_complex:
