@@ -6,7 +6,8 @@ def _U(r):
     r^2 log(r)
     """
     #print(r.min(), r.max())
-    return np.power(r,2) * np.log(r)
+    #return np.power(r,2) * np.log(r)
+    return (r**2) * np.where(r<1e-100, 0, np.log(r))
 
 def _K(points):
     """ Surface function
