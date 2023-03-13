@@ -154,9 +154,9 @@ def main():
             #    continue
             ls_ = [img_id for img_id in ls_ if os.path.exists(f"{data_dir}/{img_id}_protein.png")]
             ls_ = [img_id for img_id in ls_ if os.path.exists(f"{data_dir}/{img_id}.npy")]
-            if len(ls_) > 20:
+            if len(ls_) > 500:
                 import random
-                ls_ = random.sample(ls_, 20)
+                ls_ = random.sample(ls_, 500)
             for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
                 for line in lines:
                     if line.find(img_id) != -1 :
@@ -183,12 +183,12 @@ def main():
                 
                 pts_convex = (pts_avg + pts_ori) / 2
                 warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
-                print(warped1.max(), img_resized.max())
+                #print(warped1.max(), img_resized.max())
                 warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
                 #imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
 
                 # adding weighed contribution of this image
-                print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype,  (warped / len(ls_)).max())
+                #print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype,  (warped / len(ls_)).max())
                 avg_img += warped / len(ls_)
                 
                 if np.random.choice([True,False], p=[0.001,0.999]):
