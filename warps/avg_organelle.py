@@ -89,7 +89,7 @@ def main():
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     data_dir = f"{project_dir}/cell_masks" 
     save_dir = f"{project_dir}/morphed_protein_avg_nux4" 
-    plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
+    plot_dir = f"{project_dir}/morphed_protein_avg_plots_nux4" 
     n_landmarks = 64 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     print(save_dir, plot_dir)
     os.makedirs(save_dir,exist_ok=True)

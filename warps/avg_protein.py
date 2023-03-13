@@ -1,8 +1,8 @@
 import os
 import sys
 sys.path.append("..") 
-from imageio import imread, imwrite # callisto
-#from imageio.v2 import imread, imwrite # sherlock
+#from imageio import imread, imwrite # callisto
+from imageio.v2 import imread, imwrite # sherlock
 import numpy as np
 from utils import helpers
 import matplotlib.pyplot as plt
@@ -63,7 +63,7 @@ def main():
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"  
     data_dir = f"{project_dir}/cell_masks2" 
     save_dir = f"{project_dir}/morphed_protein_avg_nux4" 
-    plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
+    plot_dir = f"{project_dir}/morphed_protein_avg_plots_nux4" 
     n_landmarks = 32 # number of landmark points frgs='+',or each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     #print(save_dir, plot_dir)
     
