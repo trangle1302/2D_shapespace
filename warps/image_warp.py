@@ -61,8 +61,8 @@ def warp_image(pts_from, pts_to, img, midpoint=False, plot=True, save_dir=""):
         midpoint = (pts_from + pts_to) /2
         transform1 = TPSpline._make_inverse_warp(pts_from, midpoint, (0, 0, x_max, y_max), approximate_grid=2)
         transform2 = TPSpline._make_inverse_warp(midpoint, pts_to, (0, 0, x_max, y_max), approximate_grid=2)
-        warped1 = cv2.remap(img, transform1[1].astype('float32'), transform1[0].astype('float32'), cv2.INTER_LINEAR)
-        warped = cv2.remap(warped1, transform2[1].astype('float32'), transform2[0].astype('float32'), cv2.INTER_LINEAR)
+        warped1 = cv2.remap(img, transform1[1].astype('float32'), transform1[0].astype('float32'), cv2.INTER_CUBIC)
+        warped = cv2.remap(warped1, transform2[1].astype('float32'), transform2[0].astype('float32'), cv2.INTER_CUBIC)
         if plot:
             fig, ax = plt.subplots(1,3, figsize=(15,30))
             ax[0].imshow(img)
@@ -77,5 +77,5 @@ def warp_image(pts_from, pts_to, img, midpoint=False, plot=True, save_dir=""):
     else:
         transform = TPSpline._make_inverse_warp(pts_from, pts_to, (0, 0, x_max, y_max), approximate_grid=2)
         #print("Max y: ", transform[1].astype('float32').max(), "Max x: ", transform[0].astype('float32').max(), img.max())
-        warped = cv2.remap(img, transform[1].astype('float32'), transform[0].astype('float32'), cv2.INTER_LINEAR)
+        warped = cv2.remap(img, transform[1].astype('float32'), transform[0].astype('float32'), cv2.INTER_CUBIC)
     return warped
