@@ -195,12 +195,13 @@ def main():
         n_ = 10# number of random cells to plot
         cells_assigned = dict()
         for pc in pc_keep:
-            pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
+            #pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
             #pm.plot_pc_dist(pc)
             #pm.plot_pc_hist(pc)
-            pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
+            #pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
 
-            pc_indexes_assigned, bin_links = pm.assign_cells(pc) 
+            pc_indexes_assigned, bin_links = pm.assign_cells(pc)
+            cells_assigned[pc] = [list(b) for b in bin_links] 
             print(cells_assigned[pc][:3])
             """
             #print(pc_indexes_assigned, len(pc_indexes_assigned))
@@ -219,13 +220,13 @@ def main():
                         continue
             fig.savefig(f"{shape_mode_path}/{pc}_example_cells.png", bbox_inches=None)
             plt.close()
-            """
+            
             plotting.plot_example_cells(bin_links, 
                                         n_coef=n_coef, 
-                                        cells_per_bin=10, 
+                                        cells_per_bin=5, 
                                         shape_coef_path=fft_path, 
                                         save_path=f"{shape_mode_path}/{pc}_example_cells.png")
-            
+            """            
         with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
             json.dump(cells_assigned, fp)
         
