@@ -117,18 +117,20 @@ def main():
         ls = [pc_cells[b] for b in bin_]
         ls = helpers.flatten_list(ls)
         #print("examples of antibodies", ab_keep[:5])
-        ab_keep = ["HPA050556","HPA051349","HPA036914","HPA040748"]
+        #ab_keep = ["HPA030782","HPA050556","HPA051349","HPA036914","HPA040748"]
         for ab_id in ab_keep:
             if os.path.exists(f"{save_dir}/{PC}/{ab_id}_bin{bin_[0]}.png"):
                 continue
-            print(f"Preparing for {PC}/{ab_id}_bin{bin_[0]}.png") 
-            # 1 empty avg_img for each protein_pc_bin combination 
+            print(f"Preparing for {PC}/{ab_id}_bin{bin_[0]}.png")
+            print(len(ls), len([f for f in ls if f.__contains__(ab_id)])) 
+            # 1 empty avg_img (initialization) for each protein_pc_bin combination 
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64') 
 
             if not os.path.isdir(f"{plot_dir}/{PC}/{ab_id}"):
                 os.makedirs(f"{plot_dir}/{PC}/{ab_id}")
             ls_ = [f for f in ls if f.__contains__(ab_id)]
             ls_ = [os.path.basename(l).replace(".npy","") for l in ls_]
+            print(f"There are {len(ls_)} proteins for this {ab_id}_bin{bin_[0]} ")
             for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{ab_id}", total=len(ls_)):
                 for line in lines:
                     if line.find(img_id) != -1 :
