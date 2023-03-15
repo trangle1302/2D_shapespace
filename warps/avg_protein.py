@@ -57,10 +57,10 @@ def main():
     PC = args.pc
     cell_line = 'S-BIAD34'
     alignment = "fft_cell_major_axis_polarized" #"fft_nuclei_major_axis"
-    try: #if True:
+    if False:
         from imageio import imread, imwrite # callisto
         project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
-    except:
+    else:
         from imageio.v2 import imread, imwrite # sherlock
         project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
     shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei_nux4"  
@@ -139,8 +139,8 @@ def main():
                 
                 cell_shape = np.load(f"{data_dir}/{ab_id}/{img_id}.npy")
                 img_ori = imread(f"{data_dir}/{ab_id}/{img_id}_protein.png")
-                if img.dtype == 'uint16':
-                    img = (img / 256).astype(np.uint8)
+                if img_ori.dtype == 'uint16':
+                    img_ori = (img_ori / 256).astype(np.uint8)
                 #print(f"Image value max {img.max()}, image dtype: {img.dtype}") 
                 img = rotate(img_ori, theta)
                 nu_ = rotate(cell_shape[1,:,:], theta)
