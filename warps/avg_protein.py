@@ -149,10 +149,10 @@ def main():
                 cell_ = rotate(cell_shape[0,:,:], theta)
 
                 center_cell = center_of_mass(cell_)
-                center_nuclei = center_of_mass(nuclei_)
-                if center_cell[0] > center_nuclei[0]: # Move 1 quadrant counter-clockwise
+                center_nuclei = center_of_mass(nu_)
+                if center_cell[1] > center_nuclei[1]: # Move 1 quadrant counter-clockwise
                     cell_ = rotate(cell_, 180)
-                    nuclei_ = rotate(nuclei_, 180)
+                    nu_ = rotate(nu_, 180)
                     img = rotate(img, 180)
 
                 img_resized = resize(img, (shape_x, shape_y), mode='constant')
@@ -170,7 +170,7 @@ def main():
                 # adding weighed contribution of this image
                 #print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
                 avg_img += warped / len(ls_)
-                if np.random.choice([True,False], p=[0.001,0.999]) or ab_id in ["HPA001644", "HPA050627"]:
+                if np.random.choice([True,False], p=[0.01,0.99]) or ab_id in ["HPA001644", "HPA050627"]:
                     #if ab_id in ["HPA049341","HPA061027","HPA060948","HPA063464","HPA065938","HPA040923","HPA032080","HPA030741"] and np.random.choice([True,False], p=[0.1,0.9]):
                     # Plot landmark points at morphing
                     fig, ax = plt.subplots(1,6, figsize=(15,35))
