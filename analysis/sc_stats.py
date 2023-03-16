@@ -57,7 +57,7 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, gmnn, cdt1, protein, cell_mask
         cdt1_[mask_n != 1] = 0
         cdt1_sum = cdt1_.sum()
         line = ",".join(map(str,[ab_id, img_id+"_"+str(cell_label), # Identifier
-                                 cell_area, nu_area, # Nucleus and cell area
+                                 cell_area, nu_area, region_n.eccentricity, # Nucleus and cell area
                                  pr_sum, pr_nu_sum, # protein total intensity in whole cell and nucleus region, pr_cytosol_mean = (pr_sum-pr_nu)/(cell_area-nu_area)
                                  mt_sum, gmnn_sum, cdt1_sum])) + "\n"
         lines += [line]
@@ -70,7 +70,7 @@ def main():
     s = time.time()
     with open(f"{d}/single_cell_statistics.csv","a") as f:
         # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
-        f.write("ab_id,cell_id,cell_area,nu_area,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum\n")
+        f.write("ab_id,cell_id,cell_area,nu_area,nu_eccentricity,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum\n")
         for cell_mask_path in cell_masks: 
             # Reading all channels and masks
             cell_mask = imageio.imread(cell_mask_path)
@@ -89,6 +89,6 @@ def main():
             lines = get_sc_statistics(cell_mask, nuclei_mask, mt, gmnn, cdt1, protein, cell_mask_path)
             f.writelines(lines)
     print(f"Finished in {(time.time()-s)/3600}h")
-    
+
 if __name__ == "__main__":
     main()
