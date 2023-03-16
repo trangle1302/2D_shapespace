@@ -86,9 +86,11 @@ def main():
     try: #if True:
         from imageio import imread, imwrite # callisto
         project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
+        meta_path = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
     except:
         from imageio.v2 import imread, imwrite # sherlock 
         project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
+        meta_path = "/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
     shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei_nux4"  
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     data_dir = f"{project_dir}/cell_masks" 
@@ -102,8 +104,7 @@ def main():
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
-    #mappings = pd.read_csv("/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
-    mappings = pd.read_csv("/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv")
+    mappings = pd.read_csv(meta_path)
     mappings = mappings[mappings.atlas_name=="U-2 OS"]
     mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
     
