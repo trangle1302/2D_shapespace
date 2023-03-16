@@ -3,7 +3,6 @@ Implementation of a thin-plate-spline warping transform that warps from the from
     to the to_points, and then warp the given images by that transform. 
     Original paper: "Principal Warps: Thin-Plate Splines and the Decomposition of Deformations" by F.L. Bookstein.
     Useful blogpost: https://profs.etsmtl.ca/hlombaert/thinplates/
-
 """
 import cv2
 import numpy as np
@@ -93,29 +92,35 @@ def inverse_warp(from_points, to_points, output_bbox, approximate_grid):
     #print(x_warp, y_warp)
     if approximate_grid != 1:
         # linearly interpolate the zoomed transform grid
-        new_x, new_y = np.mgrid[x_min:x_max+1, y_min:y_max+1]
-        x_fracs, x_indices = np.modf((x_steps-1)*(new_x-x_min)/float(x_max-x_min))
-        y_fracs, y_indices = np.modf((y_steps-1)*(new_y-y_min)/float(y_max-y_min))
-        x_indices = x_indices.astype(int)
-        y_indices = y_indices.astype(int)
-        x1 = 1 - x_fracs
-        y1 = 1 - y_fracs
-        ix1 = (x_indices+1).clip(0, x_steps-1)
-        iy1 = (y_indices+1).clip(0, y_steps-1)
-        t00 = x_warp[(x_indices, y_indices)]
-        t01 = x_warp[(x_indices, iy1)]
-        t10 = x_warp[(ix1, y_indices)]
-        t11 = x_warp[(ix1, iy1)]
-        transform_x = t00*x1*y1 + t01*x1*y_fracs + t10*x_fracs*y1 + t11*x_fracs*y_fracs
-        #print(transform_x)
-        t00 = y_warp[(x_indices, y_indices)]
-        t01 = y_warp[(x_indices, iy1)]
-        t10 = y_warp[(ix1, y_indices)]
-        t11 = y_warp[(ix1, iy1)]
-        transform_y = t00*x1*y1 + t01*x1*y_fracs + t10*x_fracs*y1 + t11*x_fracs*y_fracs
-
+        transform_x, transform_y = interpolate_deformation_grids(x_warp, y_warp, (x_max-x_min, y_max-y_min), method="linear")
         transform = [transform_x, transform_y]
     return transform 
+
+def interpolate_deformation_grids(x_grid, y_grid, new_size, method="linear"):
+    from scipy.interpolate import griddata
+    # Get the original size of the deformation grids
+    orig_size = x_grid.shape
+
+    # Create new x and y coordinate grids based on the new size
+    new_x = np.linspace(0, orig_size[1] - 1, new_size[1])
+    new_y = np.linspace(0, orig_size[0] - 1, new_size[0])
+    new_x_grid, new_y_grid = np.meshgrid(new_x, new_y)
+
+    # Reshape the original deformation grids to 1D arrays
+    orig_x_grid = x_grid.reshape(-1)
+    orig_y_grid = y_grid.reshape(-1)
+
+    # Interpolate the deformation grids at the new coordinates
+    new_x_deform = griddata((np.arange(orig_size[1]), np.arange(orig_size[0])),
+                            orig_x_grid, (new_x_grid, new_y_grid), method=method)
+    new_y_deform = griddata((np.arange(orig_size[1]), np.arange(orig_size[0])),
+                            orig_y_grid, (new_x_grid, new_y_grid), method=method)
+
+    # Reshape the interpolated grids to the desired size
+    new_x_deform = new_x_deform.reshape(new_size)
+    new_y_deform = new_y_deform.reshape(new_size)
+
+    return new_x_deform, new_y_deform
 
 def warp_image(from_pts, to_pts, image, output_bbox, interpolation_order = 1, approximate_grid=2):
     """
@@ -154,78 +159,3 @@ def warp_image(from_pts, to_pts, image, output_bbox, interpolation_order = 1, ap
     else:
         raise NotImplementedError
     return cv2.remap(image, transform_x.astype('float32'), transform_y.astype('float32'), intp)
-
-
-
-'''
-def tps_transform(X, Y, lamda=0.01):
-    """
-    This function calculates the Thin Plate Spline transformation for given input and target points.
-    Parameters:
-        X: array-like, shape=(n_samples, n_features), input points.
-        Y: array-like, shape=(n_samples, n_features), target points.
-        lamda: float, regularization parameter to avoid overfitting, default=0.01.
-    Returns:
-        W: array-like, shape=(n_samples,), weights to apply the transformation.
-        A: array-like, shape=(n_samples, n_samples), matrix representing the transformation.
-    """
-    # calculate pairwise distances between input points
-    pairwise_dist = cdist(X, X)
-    # calculate K matrix
-    K = pairwise_dist ** 2 * np.log(pairwise_dist + 1e-6)
-    # add regularization to K matrix
-    K += np.eye(X.shape[0]) * lamda
-    # add ones column to X
-    P = np.concatenate((np.ones((X.shape[0], 1)), X), axis=1)
-    # calculate L matrix
-    L = np.concatenate((np.concatenate((K, P), axis=1), np.concatenate((P.T, np.zeros((3, 3))), axis=1)), axis=0)
-    # calculate Y matrix
-    Y_aug = np.concatenate((Y, np.zeros((3, Y.shape[1]))), axis=0)
-    # calculate weights
-    W = solve(L, Y_aug)
-    # calculate transformation matrix
-    A = W[:X.shape[0], :]
-    return W, A
-
-def tps_apply(X, X_new, W, A):
-    """
-    This function applies the Thin Plate Spline transformation to new points.
-    Parameters:
-        X: array-like, shape=(n_samples, n_features), input points.
-        X_new: array-like, shape=(n_samples, n_features), new points to transform.
-        W: array-like, shape=(n_samples,), weights to apply the transformation.
-        A: array-like, shape=(n_samples, n_samples), matrix representing the transformation.
-    Returns:
-        Y_new: array-like, shape=(n_samples, n_features), transformed new points.
-    """
-    # calculate pairwise distances between new points and input points
-    pairwise_dist = cdist(X_new, X)
-    # calculate K matrix
-    K = pairwise_dist ** 2 * np.log(pairwise_dist + 1e-6)
-    # add ones column to X_new
-    P_new = np.concatenate((np.ones((X_new.shape[0], 1)), X_new), axis=1)
-    # calculate Y_new
-    Y_new = np.dot(K, W[:X.shape[0], :]) + np.dot(P_new, A)
-    return Y_new
-
-def calculate_deformation_fields(X1, X2, n_landmarks):
-    """
-    This function calculates the deformation fields of X and Y in 2 images based on n landmark points.
-    Parameters:
-        X1: array-like, shape=(n_samples, n_features), the n landmark points in the first image.
-        X2: array-like, shape=(n_samples, n_features), the n landmark points in the second image.
-        n_landmarks: int, the number of landmark points.
-    Returns:
-        dx: array-like, shape=(n_landmarks,), deformation field of X.
-        dy: array-like, shape=(n_landmarks,), deformation field of Y.
-    """
-    # calculate the transformation matrix A
-    _, A = tps_transform(X1, X2)
-    # apply the transformation matrix A to the landmark points in X1
-    X1_transformed = np.dot(A, np.concatenate((np.ones((n_landmarks, 1)), X1), axis=1).T).T
-    # calculate the deformation fields by subtracting the transformed landmark points from the original landmark points
-    dx = X1_transformed[:, 1] - X2[:, 0]
-    dy = X1_transformed[:, 2] - X2[:, 1]
-    return dx, dy
-
-'''
