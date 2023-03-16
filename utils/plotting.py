@@ -925,3 +925,21 @@ def plot_example_cells(bin_links, n_coef=128, cells_per_bin=5, shape_coef_path="
     if save_path != None:
         fig.savefig(save_path, bbox_inches=None)
         plt.close()
+
+import imageio
+from PIL import Image
+
+def create_gif(image_paths, save_gif_path, duration=0.5):
+    """
+    Parameters:
+        - image_paths: path of image slices, ORDERED!
+        - duration: seconds that each frame last
+    Return
+        None, gif saved in save_gif_path 
+    """
+    images = []
+    for path in image_paths:
+        with Image.open(path) as im:
+            images.append(im)
+    images += [images[1:-1].reverse()]
+    imageio.mimsave(save_gif_path, images, duration=duration)
