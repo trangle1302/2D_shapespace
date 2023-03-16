@@ -1,3 +1,10 @@
+"""
+Implementation of a thin-plate-spline warping transform that warps from the from_points
+    to the to_points, and then warp the given images by that transform. 
+    Original paper: "Principal Warps: Thin-Plate Splines and the Decomposition of Deformations" by F.L. Bookstein.
+    Useful blogpost: https://profs.etsmtl.ca/hlombaert/thinplates/
+
+"""
 import cv2
 import numpy as np
 
@@ -111,10 +118,7 @@ def inverse_warp(from_points, to_points, output_bbox, approximate_grid):
     return transform 
 
 def warp_image(from_pts, to_pts, image, output_bbox, interpolation_order = 1, approximate_grid=2):
-    """Implementation of a thin-plate-spline warping transform that warps from the from_points
-    to the to_points, and then warp the given images by that transform. 
-    The paper: "Principal Warps: Thin-Plate Splines and the Decomposition of Deformations" by F.L. Bookstein.
-
+    """
     Parameters:
         - from_pts and to_pts: Nx2 arrays containing N 2D landmark points.
         - image: image to wrap with the given warp transform
