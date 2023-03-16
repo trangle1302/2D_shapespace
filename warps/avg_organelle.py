@@ -178,6 +178,13 @@ def main():
                 nu_ = rotate(cell_shape[1,:,:], theta)
                 cell_ = rotate(cell_shape[0,:,:], theta)
 
+                center_cell = center_of_mass(cell_)
+                center_nuclei = center_of_mass(nu_)
+                if center_cell[1] > center_nuclei[1]: # Move 1 quadrant counter-clockwise
+                    cell_ = rotate(cell_, 180)
+                    nu_ = rotate(nu_, 180)
+                    img = rotate(img, 180)
+                    
                 img_resized = resize(img, (shape_x, shape_y), mode='constant')
                 nu_resized = resize(nu_, (shape_x, shape_y), mode='constant') * 255
                 cell_resized = resize(cell_, (shape_x, shape_y), mode='constant') * 255
