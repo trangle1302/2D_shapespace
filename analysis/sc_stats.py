@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import glob
+import time
 
 def check_size(image, shape, d_type = 'uint16', max_val = 65535):
     if image.shape!= shape:
@@ -66,7 +67,7 @@ def main():
     d = "/data/2Dshapespace/S-BIAD34"
     cell_masks = glob.glob(f"{d}/cell_masks2/*/*_cellmask.png")
     print(f"{len(cell_masks)} FOVs found with masks")
-    
+    s = time.time()
     with open(f"{d}/single_cell_statistics.csv","a") as f:
         # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
         f.write("ab_id,cell_id,cell_area,nu_area,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum\n")
@@ -87,6 +88,7 @@ def main():
 
             lines = get_sc_statistics(cell_mask, nuclei_mask, mt, gmnn, cdt1, protein, cell_mask_path)
             f.writelines(lines)
-
+    print(f"Finished in {(time.time()-s)/3600}h")
+    
 if __name__ == "__main__":
     main()
