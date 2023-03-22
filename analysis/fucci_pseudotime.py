@@ -36,7 +36,7 @@ def histedges_equalA(x, nbin):
                      tmp,
                      np.sort(x))
 
-def stretch_time(time_data,nbins=1000):
+def stretch_time(time_data, nbins=1000):
     #This function is supposed to create uniform density space
     _, bins, patches = plt.hist(time_data, histedges_equalN(time_data, nbins), normed=True)
     #data_hist = plt.hist(time_data,nbins)
@@ -89,11 +89,8 @@ def center_data(log_green_fucci, log_red_fucci):
 
 def calculate_pseudotime(log_gmnn, log_cdt1):
     fucci_data = np.column_stack([log_gmnn, log_cdt1])
-    x0 = np.ones(5)
     x = fucci_data[:,0]
     y = fucci_data[:,1]
-
-    t_test = np.linspace(np.min(x),np.max(x))
     
     print('find center')
     center_estimate = np.mean(fucci_data[:,0]), np.mean(fucci_data[:,1])
@@ -150,7 +147,7 @@ def calculate_pseudotime(log_gmnn, log_cdt1):
     
     #cart_data_ur = pol2cart(np.repeat(R_2,len(centered_data)), pol_data[1])
 
-    if True:
+    if False:
         fig, ax = plt.subplots(1,2, figsize=(20,10))
         ax[0].plot(pol_sort_norm_rev)
         ax[0].set(xlabel='Number of cells', ylabel='Pseudotime')
@@ -165,13 +162,12 @@ def main():
     sc_stats["GMNN_nu_mean"] = sc_stats.GMNN_nu_sum/sc_stats.nu_area
     sc_stats["CDT1_nu_mean"] = sc_stats.CDT1_nu_sum/sc_stats.nu_area
     gmnn = np.log10(sc_stats.GMNN_nu_mean)
-    cdt1 = np.log10(sc_stats.CDT1_nu_mean)
-
-
-    fucci_data = np.column_stack([gmnn, cdt1])
-    plt.hist2d(gmnn, cdt1, bins=200)
-    
+    cdt1 = np.log10(sc_stats.CDT1_nu_mean)    
     pseudotime = calculate_pseudotime(gmnn, cdt1)
+    plt.scatter(gmnn, cdt1, s=0.1, c= )
+    plt.xlabel('log10[GMNN_mean]')
+    plt.ylabel('log10[CDT1_mean]')
+
 
 if __name__ == '__main__':
     main()
