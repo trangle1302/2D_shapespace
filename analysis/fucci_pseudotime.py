@@ -73,9 +73,7 @@ def pol2cart(rho, phi):
     y = rho * np.sin(phi)
     return (x, y)
 
-def center_data(fucci_info):
-    log_green_fucci = np.log10(fucci_info['fucci_green_mean'])
-    log_red_fucci = np.log10(fucci_info['fucci_red_mean'])
+def center_data(log_green_fucci, log_red_fucci):
     fucci_data = np.column_stack([log_green_fucci,log_red_fucci])
     
     x = fucci_data[:,0] 
@@ -89,6 +87,78 @@ def center_data(fucci_info):
     centered_data = fucci_data-center_2.x
     return centered_data
 
+def calculate_pseudotime(log_gmnn, log_cdt1):
+    fucci_data = np.column_stack([log_gmnn, log_cdt1])
+    x0 = np.ones(5)
+    x = fucci_data[:,0]
+    y = fucci_data[:,1]
+
+    t_test = np.linspace(np.min(x),np.max(x))
+    
+    print('find center')
+    center_estimate = np.mean(fucci_data[:,0]), np.mean(fucci_data[:,1])
+    center_2 = least_squares(f_2, center_estimate, args=(x, y))
+    
+    #Calculate average radius
+    xc_2, yc_2 = center_2.x
+    Ri_2       = np.sqrt((x-xc_2)**2 + (y-yc_2)**2)
+    R_2        = Ri_2.mean()
+
+    #Center data
+    centered_data = fucci_data-center_2.x
+    
+    #Convert data to polar
+    pol_data = cart2pol(centered_data[:,0],centered_data[:,1])
+    pol_sort_inds = np.argsort(pol_data[1])
+    pol_sort_rho = pol_data[0][pol_sort_inds]
+    pol_sort_phi = pol_data[1][pol_sort_inds]
+    centered_data_sort0 = centered_data[pol_sort_inds,0] #cartesian x
+    centered_data_sort1 = centered_data[pol_sort_inds,1] #cartesian y
+    
+    # plot polar coordinates
+    phi = pol_data[1]
+    r = pol_data[0]
+    area = 200 * r**2
+    fig = plt.figure()
+    ax = fig.add_subplot(111, polar=True)
+    c = ax.scatter(phi, r, c=phi, s=area, cmap='hsv', alpha=0.75)
+    
+    
+    #rezero to minimum --resoning, cells disappear during mitosis, so we should have the fewest detected cells there
+    bins = plt.hist(pol_sort_phi,1000)
+    start_phi = bins[1][np.argmin(bins[0])] #pseudotime = 0 and 1
+
+    #move those points to the other side
+    more_than_start = np.greater(pol_sort_phi,start_phi)
+    less_than_start = np.less_equal(pol_sort_phi,start_phi)
+    pol_sort_rho_reorder = np.concatenate((pol_sort_rho[more_than_start],pol_sort_rho[less_than_start]))
+    pol_sort_inds_reorder = np.concatenate((pol_sort_inds[more_than_start],pol_sort_inds[less_than_start]))
+    pol_sort_phi_reorder = np.concatenate((pol_sort_phi[more_than_start],pol_sort_phi[less_than_start]+np.pi*2))
+    #pol_sort_centered_data0 = np.concatenate((centered_data_sort0[more_than_start],centered_data_sort0[less_than_start]))
+    #pol_sort_centered_data1 = np.concatenate((centered_data_sort1[more_than_start],centered_data_sort1[less_than_start]))
+    #pol_sort_fred = np.concatenate((fred_sort[more_than_start],fred_sort[less_than_start]))#+abs(np.min(fred_sort))
+    #pol_sort_fgreen = np.concatenate((fgreen_sort[more_than_start],fgreen_sort[less_than_start]))#+abs(np.min(fgreen_sort))
+
+    #shift and re-scale "time"
+    pol_sort_shift = pol_sort_phi_reorder+np.abs(np.min(pol_sort_phi_reorder))
+    pol_sort_norm = pol_sort_shift/np.max(pol_sort_shift)
+    #pol_sort_shift = (pol_sort_shift - min)/(max-min)
+    #reverse "time" since the cycle goes counter-clockwise wrt the fucci plot
+    pol_sort_norm_rev = 1-pol_sort_norm
+    #stretch time so that each data point is 1
+    pol_sort_norm_stretch = stretch_time(pol_sort_norm_rev)
+    
+    #cart_data_ur = pol2cart(np.repeat(R_2,len(centered_data)), pol_data[1])
+
+    if True:
+        fig, ax = plt.subplots(1,2, figsize=(20,10))
+        ax[0].plot(pol_sort_norm_rev)
+        ax[0].set(xlabel='Number of cells', ylabel='Pseudotime')
+        ax[1].plot(pol_sort_norm_stretch)
+        ax[1].set(xlabel='Number of cells', ylabel='Pseudotime')
+    return pol_sort_norm_stretch[pol_sort_inds_reorder]
+
+
 def main():    
     project_dir = f"/data/2Dshapespace/S-BIAD34"
     sc_stats = pd.read_csv(f"{project_dir}/single_cell_statistics.csv") 
@@ -100,80 +170,8 @@ def main():
 
     fucci_data = np.column_stack([gmnn, cdt1])
     plt.hist2d(gmnn, cdt1, bins=200)
-
-
-    centered_data = center_data(green_fucci, red_fucci)
-    if True:
-        x0 = np.ones(5)
-        x = fucci_data[:,0]
-        y = fucci_data[:,1]
-
-        t_test = np.linspace(np.min(x),np.max(x))
-        
-        print('find center')
-        center_estimate = np.mean(fucci_data[:,0]), np.mean(fucci_data[:,1])
-        center_2 = least_squares(f_2, center_estimate, args=(x, y))
-        
-        #Calculate average radius
-        xc_2, yc_2 = center_2.x
-        Ri_2       = calc_R(*center_2.x,x,y)
-        R_2        = Ri_2.mean()
-
-        #Center data
-        centered_data = fucci_data-center_2.x
-        
-        #Convert data to polar
-        pol_data = cart2pol(centered_data[:,0],centered_data[:,1])
-        pol_sort_inds = np.argsort(pol_data[1])
-        pol_sort_rho = pol_data[0][pol_sort_inds]
-        pol_sort_phi = pol_data[1][pol_sort_inds]
-        centered_data_sort0 = centered_data[pol_sort_inds,0] #cartesian x
-        centered_data_sort1 = centered_data[pol_sort_inds,1] #cartesian y
-        
-        # plot polar coordinates
-        phi = pol_data[1]
-        r = pol_data[0]
-        area = 200 * r**2
-        fig = plt.figure()
-        ax = fig.add_subplot(111, polar=True)
-        c = ax.scatter(phi, r, c=phi, s=area, cmap='hsv', alpha=0.75)
-        
-        
-        #rezero to minimum --resoning, cells disappear during mitosis, so we should have the fewest detected cells there
-        bins = plt.hist(pol_sort_phi,1000)
-        start_phi = bins[1][np.argmin(bins[0])] #pseudotime = 0 and 1
-
-        #move those points to the other side
-        more_than_start = np.greater(pol_sort_phi,start_phi)
-        less_than_start = np.less_equal(pol_sort_phi,start_phi)
-        pol_sort_rho_reorder = np.concatenate((pol_sort_rho[more_than_start],pol_sort_rho[less_than_start]))
-        pol_sort_inds_reorder = np.concatenate((pol_sort_inds[more_than_start],pol_sort_inds[less_than_start]))
-        pol_sort_phi_reorder = np.concatenate((pol_sort_phi[more_than_start],pol_sort_phi[less_than_start]+np.pi*2))
-        #pol_sort_centered_data0 = np.concatenate((centered_data_sort0[more_than_start],centered_data_sort0[less_than_start]))
-        #pol_sort_centered_data1 = np.concatenate((centered_data_sort1[more_than_start],centered_data_sort1[less_than_start]))
-        #pol_sort_fred = np.concatenate((fred_sort[more_than_start],fred_sort[less_than_start]))#+abs(np.min(fred_sort))
-        #pol_sort_fgreen = np.concatenate((fgreen_sort[more_than_start],fgreen_sort[less_than_start]))#+abs(np.min(fgreen_sort))
-
-        #shift and re-scale "time"
-        pol_sort_shift = pol_sort_phi_reorder+np.abs(np.min(pol_sort_phi_reorder))
-        pol_sort_norm = pol_sort_shift/np.max(pol_sort_shift)
-        #pol_sort_shift = (pol_sort_shift - min)/(max-min)
-        #reverse "time" since the cycle goes counter-clockwise wrt the fucci plot
-        pol_sort_norm_rev = 1-pol_sort_norm
-        #stretch time so that each data point is 1
-        pol_sort_norm_stretch = stretch_time(pol_sort_norm_rev)
-        
-        #cart_data_ur = pol2cart(np.repeat(R_2,len(centered_data)), pol_data[1])
-        
-        fucci_info['pseudotime'] = pol_sort_norm_stretch[pol_sort_inds_reorder]
-
-        fig, ax = plt.subplots(1,2, figsize=(20,10))
-        ax[0].plot(pol_sort_norm_rev)
-        ax[0].set(xlabel='Number of cells', ylabel='Pseudotime')
-        ax[1].plot(pol_sort_norm_stretch)
-        ax[1].set(xlabel='Number of cells', ylabel='Pseudotime')
-
-
+    
+    pseudotime = calculate_pseudotime(gmnn, cdt1)
 
 if __name__ == '__main__':
     main()
