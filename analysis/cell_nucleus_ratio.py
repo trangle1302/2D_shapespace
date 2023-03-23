@@ -15,16 +15,6 @@ def check_nucleus_cell_size(image_path, save_dir):
     image_name = os.path.basename(image_path).split(".")[0]
     with open(f"{save_dir}/cell_nu_ratio.txt","a") as f:
         f.write(",".join(map(str,[image_path, image_name, nu_area, cell_area, cell_nu_ratio])) + '\n')
-    """
-    if cell_nu_ratio > 8:
-        with open(f"{save_dir}/bad_cell_list.txt", "a") as F:
-            # Saving: image_name
-            image_name = os.path.basename(image_path).split(".")[0]
-            F.write(",".join(map(str,[image_path,image_name,])) + '\n')
-        return True
-    else:
-        return False
-    """
 
 def main():
     s = time.time()
