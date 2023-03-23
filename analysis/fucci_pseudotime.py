@@ -18,6 +18,24 @@ from copy import deepcopy
 from scipy.optimize import least_squares
 from  matplotlib.colors import LinearSegmentedColormap
 
+class FucciCellCycle:
+    def __init__(self):
+        # Length of the cell cycle observed for the FUCCI cell line through live cell imaging exp
+        self.G1_LEN = 10.833 #hours (plus 10.833, so 13.458hrs for the S/G2 cutoff)
+        self.G1_S_TRANS = 2.625 #hours (plus 10.833 and 2.625 so 25.433 hrs for the G2/M cutoff)
+        self.S_G2_LEN = 11.975 #hours (this should be from the G2/M cutoff above to the end)
+        self.M_LEN = 0.5 # We excluded M-phase from this analysis
+        self.TOT_LEN = self.G1_LEN+self.G1_S_TRANS+self.S_G2_LEN
+        self.G1_PROP = self.G1_LEN / self.TOT_LEN
+        self.G1_S_PROP = self.G1_S_TRANS / self.TOT_LEN + self.G1_PROP
+        self.S_G2_PROP = self.S_G2_LEN / self.TOT_LEN + self.G1_S_PROP
+
+def mvavg(yvals, mv_window):
+    '''Calculate the moving average'''
+    return np.convolve(yvals, np.ones((mv_window,))/mv_window, mode='valid')
+def mvpercentiles(yvals_binned):
+    '''Calculate moving percentiles given moving-window binned values'''
+    return np.percentile(yvals_binned, [10, 25, 50, 75, 90], axis=1)
 
 def frange(start, stop, step):
     i = start
@@ -84,7 +102,7 @@ def center_data(log_green_fucci, log_red_fucci):
     centered_data = fucci_data-center_2.x
     return centered_data
 
-def calculate_pseudotime(log_gmnn, log_cdt1):
+def calculate_pseudotime(log_gmnn, log_cdt1, save_dir = ""):
     fucci_data = np.column_stack([log_gmnn, log_cdt1])
     x = fucci_data[:,0]
     y = fucci_data[:,1]
@@ -129,12 +147,28 @@ def calculate_pseudotime(log_gmnn, log_cdt1):
     pol_sort_norm_rev = stretch_time(pol_sort_norm_rev)
     pol_unsort = np.argsort(pol_sort_inds_reorder)
     fucci_time = pol_sort_norm_rev[pol_unsort]
-    if False:
-        fig, ax = plt.subplots(1,2, figsize=(20,10))
-        ax[0].plot(pol_sort_norm_rev)
-        ax[0].set(xlabel='Number of cells', ylabel='Pseudotime')
-        ax[1].plot(pol_sort_norm_stretch)
-        ax[1].set(xlabel='Number of cells', ylabel='Pseudotime')
+    if save_dir!="":
+        WINDOW_FUCCI_PSEUDOTIME = 100
+        fucci = FucciCellCycle()
+        plt.figure()
+        WINDOW_FUCCI_PSEUDOTIMEs = np.asarray([np.arange(start, start + WINDOW_FUCCI_PSEUDOTIME) for start in np.arange(len(pol_sort_norm_rev) - WINDOW_FUCCI_PSEUDOTIME + 1)])
+        mvperc_red = mvpercentiles(pol_sort_centered_data1[WINDOW_FUCCI_PSEUDOTIMEs])
+        mvperc_green = mvpercentiles(pol_sort_centered_data0[WINDOW_FUCCI_PSEUDOTIMEs])
+        mvavg_xvals = mvavg(pol_sort_norm_rev, WINDOW_FUCCI_PSEUDOTIME)
+        plt.fill_between(mvavg_xvals * fucci.TOT_LEN, mvperc_green[1], mvperc_green[-2], color="lightgreen", label="25th & 75th Percentiles")
+        plt.fill_between(mvavg_xvals * fucci.TOT_LEN, mvperc_red[1], mvperc_red[-2], color="lightcoral", label="25th & 75th Percentiles")
+        
+        mvavg_red = mvavg(pol_sort_centered_data1, WINDOW_FUCCI_PSEUDOTIME)
+        mvavg_green = mvavg(pol_sort_centered_data0, WINDOW_FUCCI_PSEUDOTIME)
+        plt.plot(mvavg_xvals * fucci.TOT_LEN, mvavg_red, color="r", label="Mean Intensity")
+        plt.plot(mvavg_xvals * fucci.TOT_LEN, mvavg_green, color="g", label="Mean Intensity")
+        plt.xlabel('Cell Cycle Time, hrs')
+        plt.ylabel('Log10 Tagged CDT1 & GMNN Intensity')
+        plt.xticks(size=14)
+        plt.yticks(size=14)
+        # plt.ylim(0, 1)
+        plt.tight_layout()
+        plt.savefig(f"{save_dir}/cellcycle_time.png")
     return fucci_time
 
 def main():    
@@ -145,13 +179,14 @@ def main():
     sc_stats["CDT1_nu_mean"] = sc_stats.CDT1_nu_sum/sc_stats.nu_area
     gmnn = np.log10(sc_stats.GMNN_nu_mean)
     cdt1 = np.log10(sc_stats.CDT1_nu_mean)    
-    pseudotime = calculate_pseudotime(gmnn.copy(), cdt1.copy())
+    pseudotime = calculate_pseudotime(gmnn.copy(), cdt1.copy(), save_dir=project_dir)
     sc_stats["GMNN_nu_mean"] = gmnn
     sc_stats["CDT1_nu_mean"] = cdt1
     sc_stats["pseudotime"] = pseudotime
     sc_stats.to_csv(f"{project_dir}/fucci.csv", index=False)
-    #cmap = LinearSegmentedColormap.from_list('rg',["r", "y", "g"])(pseudotime)
-    colors = plt.cm.get_cmap('YlOrRd')(pseudotime)
+    colors = LinearSegmentedColormap.from_list('rg',["r", "y", "g"])(pseudotime)
+    #colors = plt.cm.get_cmap('YlOrRd')(pseudotime)
+    plt.figure()
     plt.scatter(gmnn, cdt1, s=0.1, c = colors)
     plt.xlabel('log10[GMNN_mean]')
     plt.ylabel('log10[CDT1_mean]')
