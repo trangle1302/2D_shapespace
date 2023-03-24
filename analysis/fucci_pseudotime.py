@@ -172,8 +172,8 @@ def calculate_pseudotime(log_gmnn, log_cdt1, save_dir = ""):
     return fucci_time
 
 def main():    
-    #project_dir = f"/data/2Dshapespace/S-BIAD34"
-    project_dir = "/mnt/c/Users/trang.le/Desktop/shapemode/S-BIAD34"
+    project_dir = f"/data/2Dshapespace/S-BIAD34"
+    #project_dir = "/mnt/c/Users/trang.le/Desktop/shapemode/S-BIAD34"
     sc_stats = pd.read_csv(f"{project_dir}/single_cell_statistics.csv") 
     sc_stats["GMNN_nu_mean"] = sc_stats.GMNN_nu_sum/sc_stats.nu_area
     sc_stats["CDT1_nu_mean"] = sc_stats.CDT1_nu_sum/sc_stats.nu_area
@@ -183,7 +183,7 @@ def main():
     sc_stats["GMNN_nu_mean"] = gmnn
     sc_stats["CDT1_nu_mean"] = cdt1
     sc_stats["pseudotime"] = pseudotime
-    sc_stats.to_csv(f"{project_dir}/fucci.csv", index=False)
+    sc_stats.to_csv(f"{project_dir}/single_cell_statistics.csv", index=False)
     colors = LinearSegmentedColormap.from_list('rg',["r", "y", "g"])(pseudotime)
     #colors = plt.cm.get_cmap('YlOrRd')(pseudotime)
     plt.figure()
