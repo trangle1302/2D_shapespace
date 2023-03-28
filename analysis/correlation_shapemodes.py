@@ -6,17 +6,32 @@ import json
 import numpy as np
 from collections import Counter
  
+def get_pc_cell_assignment(cells_assigned, PC):
+    assignments = dict()
+    pc_cells = cells_assigned[PC]
+    for b in range(len(pc_cells)):
+        cells_ = pc_cells[b]
+        for f in cells_:
+            assignments.insert({f : b})
+    df = pd.DataFrame(assignments)
+    print(df)
+    return df
+
 def main():    
     project_dir = f"/data/2Dshapespace/S-BIAD34"
     sc_stats = pd.read_csv(f"{project_dir}/single_cell_statistics.csv") 
-    cell_line = 'S-BIAD34'
+
     alignment = "fft_cell_major_axis_polarized"
     shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei_nux4" 
-
-    # Cell assignment
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
     print(cells_assigned.keys())
+
+    for PC in cells_assigned.keys():
+        df_ = get_pc_cell_assignment(cells_assigned, PC)
+        df_.columns()
+    breakme
+        sc_stats[f"{PC}_bin"] = b
 
     PC = "PC1"
     pro_count = {}
@@ -48,12 +63,10 @@ def main():
     for ab_id in ab_list:
         ab_df_ = sc_stats[sc_stats.an_id == ab_id]
         ab_sc_stats = []
-        for PC in cells_:
-            cells_assigned[PC]
         # plot 
         plt.figure()
         sb.set(style='whitegrid') 
-        sb.boxplot(x="timepoint", y="signal", hue="", data=fmri)
+        sb.boxplot(x="timepoint", y="signal", hue="", data=ab_sc_stats)
         plt.savefig(f"{project_dir}/{}")
 
 if __name__ == '__main__':
