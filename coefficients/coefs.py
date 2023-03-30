@@ -6,6 +6,29 @@ from utils.helpers import equidistance, find_nearest, find_centroid
 import matplotlib.pyplot as plt
 #import pyefd
 
+def dft_to_mag_phase(dft):
+    """ Convert FFT/DFT coefficients to magnitude and phase representation.
+    Parameters:
+        dft (array): An array of DFT coefficients.
+    Returns:
+        mag (array): An array of magnitudes.
+        phase (array): An array of phases.
+    """
+    mag = np.abs(dft)
+    phase = np.angle(dft)
+    return mag, phase
+
+def mag_phase_to_dft(mag, phase):
+    """ Convert magnitude and phase representations to FFT/DFT coefficients.
+    Parameters:
+        mag (array): An array of magnitudes.
+        phase (array): An array of phases.        
+    Returns:
+        dft (array): An array of DFT coefficients.
+    """
+    dft = mag * np.exp(1j * phase)
+    return dft
+
 def forward_fft(x, y, n=64, hamming=False, repeat=False):
     """Fuction to convert coordinates to fft coefs
     n: number of fft coefficients to keep for x and y
