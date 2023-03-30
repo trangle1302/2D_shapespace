@@ -86,7 +86,7 @@ def inverse_fft(fft_x, fft_y, hamming=False, repeat=False):
 
 
 ### TO-TRY: separate fft of cell and nucleus, and add back offset to 1st DC of nucleus
-def fourier_coeffs(shape_coords, n=64, align=False):
+def fourier_coeffs(shape_coords, n=64, align=False, plot=False):
     coords = shape_coords
 
     x = np.array([p[0] for p in coords])
@@ -118,18 +118,18 @@ def fourier_coeffs(shape_coords, n=64, align=False):
 
     ix_, iy_ = inverse_fft(fft_x, fft_y)
     ix, iy = equidistance(ix_.real, iy_.real, len(coords))
-    """
-    fig, ax = plt.subplots(1, 3, figsize=(6, 3))
-    ax[0].plot(x, y)
-    ax[0].axis("scaled")
-    ax[1].plot(x, label="x coord")
-    ax[1].plot(y, label="y coord")
-    ax[1].legend()
-    ax[2].plot(ix, iy)
-    ax[2].scatter(ix[0], iy[0], c="r")
-    ax[2].axis("scaled")
-    plt.tight_layout()
-    """
+    if plot:
+        fig, ax = plt.subplots(1, 3, figsize=(6, 3))
+        ax[0].plot(x, y)
+        ax[0].axis("scaled")
+        ax[1].plot(x, label="x coord")
+        ax[1].plot(y, label="y coord")
+        ax[1].legend()
+        ax[2].plot(ix, iy)
+        ax[2].scatter(ix[0], iy[0], c="r")
+        ax[2].axis("scaled")
+        plt.tight_layout()
+    
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
 
     return coeffs, error
@@ -157,7 +157,7 @@ def inverse_wavelet(cAx, cAy, wavelet_type="db5"):
     return ix_, iy_
 
 
-def wavelet_coefs(shape, n=64):
+def wavelet_coefs(shape, n=64, plot=False):
     coords = shape
 
     start = np.random.randint(len(coords))
@@ -177,20 +177,20 @@ def wavelet_coefs(shape, n=64):
 
     ix, iy = equidistance(ix_, iy_, len(coords))
 
-    """
-    fig, ax = plt.subplots(1,3, figsize=(12,4))
-    #ax[0].imshow(shape)
-    ax[0].plot(x,y)
-    ax[0].scatter(x[0], y[0], color='r')
-    ax[0].axis('scaled')
-    ax[1].plot(x, label = "x coord")
-    ax[1].plot(y, label = "y coord")
-    ax[1].legend()
-    ax[2].plot(ix,iy)
-    ax[2].scatter(ix[0], iy[0], color='r')
-    ax[2].axis('scaled')
-    plt.tight_layout()
-    """
+    if plot:
+        fig, ax = plt.subplots(1,3, figsize=(12,4))
+        #ax[0].imshow(shape)
+        ax[0].plot(x,y)
+        ax[0].scatter(x[0], y[0], color='r')
+        ax[0].axis('scaled')
+        ax[1].plot(x, label = "x coord")
+        ax[1].plot(y, label = "y coord")
+        ax[1].legend()
+        ax[2].plot(ix,iy)
+        ax[2].scatter(ix[0], iy[0], color='r')
+        ax[2].axis('scaled')
+        plt.tight_layout()
+    
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
     return coeffs, error
 
