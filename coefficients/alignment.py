@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from skimage.measure import find_contours, regionprops
 from scipy.ndimage import center_of_mass, rotate
+from skimage.transform import rotate
 from utils import helpers
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -82,6 +83,7 @@ def align_cell_major_axis(data, protein_ch, plot=True):
     cell = data[0, :, :]
     region = regionprops(cell)[0]
     theta = region.orientation * 180 / np.pi  # radiant to degree conversion
+    (y0, x0) = region.centroid # cell centroid returns in (row, col)
     cell_ = rotate(cell, 90 - theta)
     nuclei_ = rotate(nuclei, 90 - theta)
     protein_ch_ = rotate(protein_ch, 90-theta)
@@ -121,8 +123,25 @@ def align_cell_major_axis_polarized(data, protein_ch, plot=True):
     nuclei = data[1, :, :]
     cell = data[0, :, :]
     region = regionprops(cell)[0]
+    # orientation = Major axis orientation in clockwise direction as radians
     theta = region.orientation * (180 / np.pi)  # radiant to degree conversion
-    theta = 90 - theta
+    """
+    (r0, c0) = region.centroid # cell centroid returns in (row, col)
+    cell_ = rotate(cell, theta, center=(c0, r0), resize=True)
+    nuclei_ = rotate(nuclei, theta, center=(c0, r0), resize=True)
+    center_cell = center_of_mass(cell_)
+    center_nuclei = center_of_mass(nuclei_)
+    shape = nuclei_.shape
+
+    if center_cell[1] > center_nuclei[1]: # Move 2 quadrant counter-clockwise
+        cell_ = rotate(cell_, 180)
+        nuclei_ = rotate(nuclei_, 180)
+        theta += 180
+    
+    theta = theta % 360 
+    protein_ch_ = rotate(protein_ch, theta, center=(c0, r0), resize=True)
+    """
+    #theta = 90 - theta
     cell_ = rotate(cell, theta)
     nuclei_ = rotate(nuclei, theta)
     center_cell = center_of_mass(cell_)
@@ -130,13 +149,14 @@ def align_cell_major_axis_polarized(data, protein_ch, plot=True):
     shape = nuclei_.shape
     
     # NOTE: np.rot90() flip counter-clockwise
-    if center_cell[1] > center_nuclei[1]: # Move 1 quadrant counter-clockwise
+    if center_cell[1] > center_nuclei[1]: # Move 2 quadrant counter-clockwise
         cell_ = rotate(cell_, 180)
         nuclei_ = rotate(nuclei_, 180)
-        theta += 180
+        #theta += 180
     
     theta = theta % 360 
     protein_ch_ = rotate(protein_ch, theta)
+
     if plot:
         center_ = center_of_mass(cell_)
         fig, ax = plt.subplots(1, 4, figsize=(8, 4))
