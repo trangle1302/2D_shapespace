@@ -41,7 +41,7 @@ class PlotShapeModes:
         self.mode = mode # "cell_nuclei", "nuclei" ("cell" option has not been implemented)
 
         mean = self.matrix.mean()  # .clip(0, None).mean()
-        print(f"mean of features_transform: {mean}")
+        print(f"mean of features_transform: {mean}") # this should be 0, since covariance matrix is zero-centered
         self.midpoints = mean
         self.std = self.matrix.std()
         self.equipoints = None
