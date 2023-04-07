@@ -41,36 +41,9 @@ class PlotShapeModes:
         self.mode = mode # "cell_nuclei", "nuclei" ("cell" option has not been implemented)
 
         mean = self.matrix.mean()  # .clip(0, None).mean()
-        # mean = abs(self.matrix).mean(axis=0)
+        print(f"mean of features_transform: {mean}")
         self.midpoints = mean
         self.std = self.matrix.std()
-        """
-        mean = []
-        # std = []
-        for c in self.matrix:
-
-            col = self.matrix[c]
-            real_ = [x.real for x in col]
-            real = real_  # [-abs(x) for x in real_]
-            # p = np.percentile(real_, [5, 95])
-            # real = [-abs(r) for r in real_ if p[0] <= r <= p[1]]
-
-            imag_ = [x.imag for x in col]
-            imag = imag_  # [-abs(x) for x in imag_]
-            # p = np.percentile(imag_, [5, 95])
-            # imag = [i for i in imag_ if p[0] <= i <= p[1]]
-            # std += [complex(np.std(real), np.std(imag))]
-            mean += [complex(np.mean(real), np.mean(imag))]
-            '''
-            col = self.matrix[c]
-            p = np.percentile(col, [5, 95])
-            col = [x for x in col if p[0] <= x <= p[1]]
-            std += [np.std(col)]
-            mean += [np.mean(col)]
-            '''
-        self.midpoints = pd.Series(mean, index=self.matrix.columns)
-        # self.std = pd.Series(std, index=self.matrix.columns)
-        """
         self.equipoints = None
         # self.get_equipoints()
         self.stdpoints = None
@@ -261,8 +234,6 @@ class PlotShapeModes:
             nuc = []
             mem = []
         for i, p in enumerate(self.stdpoints[pc_name]):
-            # for i, p in enumerate(self.equipoints[pc_name]):
-            # for i, p in enumerate(self.lmpoints[pc_name]):
             cell_coef = self.midpoints.copy()
             cell_coef[pc_name] = p
             fcoef = self.pca.inverse_transform(cell_coef)
@@ -743,13 +714,14 @@ def plot_interpolation3(shape_path, pro_path,shift_dict, save_path, ori_fft, red
     plt.savefig(save_path, bbox_inches="tight")
     plt.close()
 
-def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func, fourier_algo = "fft"):
+def get_protein_intensity(pro_path, shift_dict, ori_fft, n_coef, inverse_func, fourier_algo = "fft", binarize=False):
     
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
-    #shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
-    #protein_ch = exposure.equalize_hist(protein_ch)
-    #thresh = threshold_mean(protein_ch)
-    #protein_ch[protein_ch < thresh] = 0 
+    if binarize:
+        #protein_ch = exposure.equalize_hist(protein_ch)
+        thresh = threshold_mean(protein_ch)
+        protein_ch[protein_ch < thresh] = 0         
+        protein_ch[protein_ch >= thresh] = 1
     
     cell__ = []
     if fourier_algo =="fft":
@@ -926,8 +898,6 @@ def plot_example_cells(bin_links, n_coef=128, cells_per_bin=5, shape_coef_path="
         fig.savefig(save_path, bbox_inches=None)
         plt.close()
 
-import imageio
-from PIL import Image
 
 def create_gif(image_paths, save_gif_path, duration=0.5):
     """
@@ -937,6 +907,8 @@ def create_gif(image_paths, save_gif_path, duration=0.5):
     Return
         None, gif saved in save_gif_path 
     """
+    import imageio
+    from PIL import Image
     images = []
     for path in image_paths:
         with Image.open(path) as im:
