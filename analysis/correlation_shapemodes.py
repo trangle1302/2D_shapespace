@@ -55,10 +55,8 @@ def main():
         print(f"{PC}: R-squared: {res.rvalue**2:.6f}")
         gamma_model = sm.GLM(sc_stats[PC], sc_stats[["pseudotime","cell_area"]],family=sm.families.Gamma()).fit()
         print(gamma_model.df_resid, gamma_model.pvalues)
-    #print(sc_stats[["PC1", "pseudotime"]].groupby("PC1").describe())
-    #print(sc_stats[["PC2", "pseudotime"]].groupby("PC2").describe())
-    #print(sc_stats[["PC3", "pseudotime"]].groupby("PC3").describe())
-    #print(sc_stats[["PC6", "pseudotime"]].groupby("PC6").describe())
+        print(sc_stats[[PC, "pseudotime"]].groupby(PC).describe())
+        
     sc_stats['MT_cell_mean'] = sc_stats['MT_cell_sum']/sc_stats.cell_area
     sc_stats['Protein_nu_mean'] = sc_stats['Protein_nu_sum']/sc_stats.nu_area
     sc_stats['Protein_cytosol_mean'] = (sc_stats['Protein_cell_sum'] - sc_stats['Protein_nu_sum'])/(sc_stats.cell_area - sc_stats.nu_area)
