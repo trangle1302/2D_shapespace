@@ -212,6 +212,14 @@ def main():
         shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}_nux4"
         calculate_shapemode(df, n_coef, mode, shape_mode_path=shape_mode_path)
         
+        # Shape modes of G1, G2/S, G2 cells:
+        sc_stats = pd.read_csv(f"{project_dir}/single_cell_statistics.csv", index=False)
+        for cells_in_phase in sc_stats.groupby("GMM"):
+            print(f"Index format: {df.index[:4]}")
+            df_ = df[df.index.isin(cells_in_phase.cell_id)]
+            save_dir = f"{project_dir}/shapemode/{alignment}_{mode}_{cells_in_phase.GMM.values[0]}"
+            calculate_shapemode(df_, n_coef, mode, shape_mode_path=save_dir)
+
 if __name__ == "__main__": 
     memory_limit() # Limitates maximun memory usage
     try:
