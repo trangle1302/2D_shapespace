@@ -236,7 +236,7 @@ def main():
     plt.savefig(f"{project_dir}/fucci_polar_pseudotime.png")
 
     # >>>>> Gaussian Mixture Model
-    data = np.concatenate(gmnn,cdt1)
+    data = np.column_stack([gmnn, cdt1])
     gmm, labels_numeric, labels_name = GMM_cellcycle(data)
     sc_stats["GMM_cc"] = labels_numeric
     sc_stats["GMM_cc_label"] = labels_name
