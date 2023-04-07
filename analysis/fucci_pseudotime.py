@@ -206,8 +206,13 @@ def plot_gmm(gmm, X, label=True, ax=None):
 
 def GMM_cellcycle(data):
     gmm = GaussianMixture(n_components=3, covariance_type='full').fit(data)
-    labels = gmm.predict(data)
-    return gmm, labels 
+    g1 = gmm.means_[:,0].argmin()
+    g1s = gmm.means_[:,1].argmax()
+    g2 = gmm.means_[:,1].argmin()
+    assert g1 != g2 and g1 != g1s
+    labels_numeric = gmm.predict(data)
+    labels_name = ['G1' if (i==g2) else 'G1/S' if (i==g1s) else 'G2' for i in labels_numeric]
+    return gmm, labels_numeric, labels_name
 
 def main():    
     project_dir = f"/data/2Dshapespace/S-BIAD34"
@@ -232,16 +237,17 @@ def main():
 
     # >>>>> Gaussian Mixture Model
     data = np.concatenate(gmnn,cdt1)
-    gmm, gmm_labels = GMM_cellcycle(data)
-    sc_stats["GMM_cc"] = gmm_labels
+    gmm, labels_numeric, labels_name = GMM_cellcycle(data)
+    sc_stats["GMM_cc"] = labels_numeric
+    sc_stats["GMM_cc_label"] = labels_name
     # save output
     sc_stats.to_csv(f"{project_dir}/single_cell_statistics.csv", index=False)
 
     # Plotting for visualization of cluster assignments
     fig, ax = plt.subplots()
     cdict = {0: 'red', 1: 'green', 2: 'yellow'}
-    for g in np.unique(gmm_labels):
-        idx = np.where(gmm_labels == g)
+    for g in np.unique(labels_numeric):
+        idx = np.where(labels_numeric == g)
         ax.scatter(data[idx, 0], data[idx, 1], c = cdict[g], label = g, s = 0.1, alpha=0.05)
     ax.legend()
     plt.xlabel('log(GMNN)')
