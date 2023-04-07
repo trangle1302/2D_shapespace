@@ -6,10 +6,10 @@ Created on Tue Mar 21, 2023
 @author: Anthony J. Cesnik, cesnik@stanford.edu
 @author: Trang Le, tle1302@stanford.edu
 """
-########################################################
-#### Polar-coordinate pseudo time model 
-########################################################
-# 
+###################################################################
+#### Polar-coordinate pseudo time model & Gaussian Mixture Model
+###################################################################
+#
 import os 
 import numpy as np
 import pandas as pd
@@ -17,6 +17,8 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 from scipy.optimize import least_squares
 from  matplotlib.colors import LinearSegmentedColormap
+from sklearn.mixture import GaussianMixture
+from matplotlib.patches import Ellipse
 
 class FucciCellCycle:
     def __init__(self):
@@ -171,6 +173,42 @@ def calculate_pseudotime(log_gmnn, log_cdt1, save_dir = ""):
         plt.savefig(f"{save_dir}/cellcycle_time.png")
     return fucci_time
 
+def draw_ellipse(position, covariance, ax=None, **kwargs):
+    """Draw an ellipse with a given position and covariance"""
+    ax = ax or plt.gca()
+    
+    # Convert covariance to principal axes
+    if covariance.shape == (2, 2):
+        U, s, Vt = np.linalg.svd(covariance)
+        angle = np.degrees(np.arctan2(U[1, 0], U[0, 0]))
+        width, height = 2 * np.sqrt(s)
+    else:
+        angle = 0
+        width, height = 2 * np.sqrt(covariance)
+    
+    # Draw the Ellipse
+    for nsig in range(1, 4):
+        ax.add_patch(Ellipse(position, nsig * width, nsig * height,
+                             angle, **kwargs))
+        
+def plot_gmm(gmm, X, label=True, ax=None):
+    ax = ax or plt.gca()
+    labels = gmm.predict(X)
+    if label:
+        ax.scatter(X[:, 0], X[:, 1], c=labels, s=2, alpha=0.005, cmap='viridis', zorder=2)
+    else:
+        ax.scatter(X[:, 0], X[:, 1], s=2, zorder=2, alpha=0.005)
+    ax.axis('equal')
+    
+    w_factor = gmm.weights_.max()
+    for pos, covar, w in zip(gmm.means_, gmm.covariances_, gmm.weights_):
+        draw_ellipse(pos, covar, alpha= w * w_factor)
+
+def GMM_cellcycle(data):
+    gmm = GaussianMixture(n_components=3, covariance_type='full').fit(data)
+    labels = gmm.predict(data)
+    return gmm, labels 
+
 def main():    
     project_dir = f"/data/2Dshapespace/S-BIAD34"
     #project_dir = "/mnt/c/Users/trang.le/Desktop/shapemode/S-BIAD34"
@@ -179,19 +217,40 @@ def main():
     sc_stats["CDT1_nu_mean"] = sc_stats.CDT1_nu_sum/sc_stats.nu_area
     gmnn = np.log10(sc_stats.GMNN_nu_mean)
     cdt1 = np.log10(sc_stats.CDT1_nu_mean)    
+
+    # >>>>> Gaussian Mixture Model
     pseudotime = calculate_pseudotime(gmnn.copy(), cdt1.copy(), save_dir=project_dir)
     sc_stats["GMNN_nu_mean"] = gmnn
     sc_stats["CDT1_nu_mean"] = cdt1
     sc_stats["pseudotime"] = pseudotime
-    sc_stats.to_csv(f"{project_dir}/single_cell_statistics.csv", index=False)
     colors = LinearSegmentedColormap.from_list('rg',["r", "y", "g"])(pseudotime)
-    #colors = plt.cm.get_cmap('YlOrRd')(pseudotime)
     plt.figure()
     plt.scatter(gmnn, cdt1, s=0.1, c = colors)
     plt.xlabel('log10[GMNN_mean]')
     plt.ylabel('log10[CDT1_mean]')
-    plt.savefig(f"{project_dir}/fucci.png")
+    plt.savefig(f"{project_dir}/fucci_polar_pseudotime.png")
 
+    # >>>>> Gaussian Mixture Model
+    data = np.concatenate(gmnn,cdt1)
+    gmm, gmm_labels = GMM_cellcycle(data)
+    sc_stats["GMM_cc"] = gmm_labels
+    # save output
+    sc_stats.to_csv(f"{project_dir}/single_cell_statistics.csv", index=False)
+
+    # Plotting for visualization of cluster assignments
+    fig, ax = plt.subplots()
+    cdict = {0: 'red', 1: 'green', 2: 'yellow'}
+    for g in np.unique(gmm_labels):
+        idx = np.where(gmm_labels == g)
+        ax.scatter(data[idx, 0], data[idx, 1], c = cdict[g], label = g, s = 0.1, alpha=0.05)
+    ax.legend()
+    plt.xlabel('log(GMNN)')
+    plt.ylabel('log(CDT1)')
+    plt.savefig(f"{project_dir}/fucci_GMM_points.png")
+    
+    plt.figure()
+    plot_gmm(gmm, data, label=True, ax=None)
+    plt.savefig(f"{project_dir}/fucci_GMM_probs.png")
 
 if __name__ == '__main__':
     main()
