@@ -126,7 +126,6 @@ def calculate_shapemode(df, n_coef, mode, shape_mode_path=""):
     n_pc = (8 if n_pc <8 else n_pc) #keep at least 8 PCs or 95% whichever covers the other 
     pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
     pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
-    #pc_keep = [f"PC{c}" for c in range(1, 1 + 6)]
     matrix_of_features_transform = pca.transform(df_)
     df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
     df_trans.columns = pc_names
@@ -134,10 +133,6 @@ def calculate_shapemode(df, n_coef, mode, shape_mode_path=""):
     df_trans[list(set(pc_names) - set(pc_keep))] = 0
     print(matrix_of_features_transform.shape, df_trans.shape)
     
-    # Divide nuclei coefs by 2
-    #df_trans = df_trans.applymap(lambda s: s/2, subset = pd.IndexSlice[:, n_col//2 :])
-    #df_trans.iloc[:,n_col//2:] = df_trans.iloc[:, n_col//2:].applymap(lambda s: s/2)
-    #print('After pca', df_trans.iloc[100,500])
     pm = plotting.PlotShapeModes(
         pca,
         df_trans,
@@ -154,41 +149,16 @@ def calculate_shapemode(df, n_coef, mode, shape_mode_path=""):
     elif mode == "nuclei":
         pm.plot_avg_nucleus(dark=False, save_dir=shape_mode_path)
     
-    n_ = 10# number of random cells to plot
+    n_ = 10 # number of random cells to plot
     cells_assigned = dict()
     for pc in pc_keep:
         #pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
         #pm.plot_pc_dist(pc)
         #pm.plot_pc_hist(pc)
         #pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
-
         pc_indexes_assigned, bin_links = pm.assign_cells(pc)
         cells_assigned[pc] = [list(b) for b in bin_links] 
         print(cells_assigned[pc][:3])
-        """
-        #print(pc_indexes_assigned, len(pc_indexes_assigned))
-        #print(bin_links, len(bin_links))
-        #print([len(b) for b in bin_links])
-        cells_assigned[pc] = [list(b) for b in bin_links]
-        fig, ax = plt.subplots(n_, len(bin_links)) # (number of random cells, number of  bin)
-        for b_index, b_ in enumerate(bin_links):
-            cells_ = np.random.choice(b_, n_)
-            for i, c in enumerate(cells_):
-                pro_path = c.replace("/data/2Dshapespace","/scratch/users/tle1302/2Dshapespace").replace(".npy","_protein.png")
-                print(pro_path)
-                if os.path.exists(pro_path):
-                    ax[i, b_index].imshow(plt.imread(pro_path))
-                else:
-                    continue
-        fig.savefig(f"{shape_mode_path}/{pc}_example_cells.png", bbox_inches=None)
-        plt.close()
-        
-        plotting.plot_example_cells(bin_links, 
-                                    n_coef=n_coef, 
-                                    cells_per_bin=5, 
-                                    shape_coef_path=fft_path, 
-                                    save_path=f"{shape_mode_path}/{pc}_example_cells.png")
-        """            
     with open(f'{shape_mode_path}/cells_assigned_to_pc_bins.json', 'w') as fp:
         json.dump(cells_assigned, fp)
 
