@@ -84,13 +84,14 @@ def calculate_shapemode(df, n_coef, mode, shape_mode_path=""):
     if not os.path.isdir(shape_mode_path):
         os.makedirs(shape_mode_path)
     
-    # multiply nucleus by 2:
-    print(df.shape)
-    print(df.iloc[100,500])
-    n_col = df.shape[1]
-    df.iloc[:,n_col//2:] = df.iloc[:, n_col//2:].applymap(lambda s: s*4)
-    #df = df.applymap(lambda s: s*2, subset = pd.IndexSlice[:,n_col//2 :])
-    print(df.iloc[100,500])
+    if False:
+        # multiply nucleus by 2:
+        print(df.shape)
+        print(df.iloc[100,500])
+        n_col = df.shape[1]
+        df.iloc[:,n_col//2:] = df.iloc[:, n_col//2:].applymap(lambda s: s*4)
+        #df = df.applymap(lambda s: s*2, subset = pd.IndexSlice[:,n_col//2 :])
+        print(df.iloc[100,500])
     use_complex = False
     if fun == "fft":
         if not use_complex:
@@ -152,10 +153,10 @@ def calculate_shapemode(df, n_coef, mode, shape_mode_path=""):
     n_ = 10 # number of random cells to plot
     cells_assigned = dict()
     for pc in pc_keep:
-        #pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
-        #pm.plot_pc_dist(pc)
-        #pm.plot_pc_hist(pc)
-        #pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
+        pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
+        pm.plot_pc_dist(pc)
+        pm.plot_pc_hist(pc)
+        pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
         pc_indexes_assigned, bin_links = pm.assign_cells(pc)
         cells_assigned[pc] = [list(b) for b in bin_links] 
         print(cells_assigned[pc][:3])
@@ -169,7 +170,7 @@ def main():
     mode = "cell_nuclei"#"nuclei" #"cell_nuclei" #
     cell_line = "S-BIAD34"#"U-2 OS"
     alignment = "fft_cell_major_axis_polarized"#"fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" # 
-    project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
+    project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}" #"/scratch/users/tle1302/2Dshapespace"
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     log_dir = f"{project_dir}/logs"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
@@ -199,7 +200,9 @@ def main():
                     #data_dict = {data_dict[0]:data_dict[1:]}
                     lines[data_[0]]=data_[1:]
 
+        
         df = pd.DataFrame(lines).transpose()
+        print(df.shape)
         if fun == "fft":
             df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
         
@@ -208,16 +211,26 @@ def main():
         elif mode == "cell":
             df = df.iloc[:,:(df.shape[1]//2)]
         print(cell_line, alignment, mode, df.shape)
-
-        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}_nux4"
-        calculate_shapemode(df, n_coef, mode, shape_mode_path=shape_mode_path)
-        
+        df["matchid"] = [k.replace("/data/2Dshapespace/S-BIAD34/cell_masks2/","").replace(".npy","") for k in df.index]
+        #print(df.matchid.values)
+        #breakme
+        #shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}"
+        #calculate_shapemode(df, n_coef, mode, shape_mode_path=shape_mode_path)
+        print(list(lines.keys())[:3])
         # Shape modes of G1, G2/S, G2 cells:
-        sc_stats = pd.read_csv(f"{project_dir}/single_cell_statistics.csv", index=False)
-        for cells_in_phase in sc_stats.groupby("GMM"):
-            print(f"Index format: {df.index[:4]}")
-            df_ = df[df.index.isin(cells_in_phase.cell_id)]
-            save_dir = f"{project_dir}/shapemode/{alignment}_{mode}_{cells_in_phase.GMM.values[0]}"
+        sc_stats = pd.read_csv(f"{project_dir}/single_cell_statistics.csv")
+        sc_stats["matchid"] = sc_stats.ab_id + "/" + sc_stats.cell_id
+        print(sc_stats.matchid[:3])
+        cc_groups = sc_stats.GMM_cc_label.unique().tolist()
+        for g in cc_groups:
+            cells_in_phase = sc_stats[sc_stats.GMM_cc_label==g]
+            df_ = df[df.matchid.isin(cells_in_phase.matchid)]
+            df_ = df_.drop(columns=['matchid'])
+            print(df_.shape)
+            #shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}_nux4"
+            #calculate_shapemode(df, n_coef, mode, shape_mode_path=shape_mode_path)
+            save_dir = f"{project_dir}/shapemode/{alignment}_{mode}_{g}"
+            print("Saving to: ", save_dir)
             calculate_shapemode(df_, n_coef, mode, shape_mode_path=save_dir)
 
 if __name__ == "__main__": 
