@@ -94,7 +94,7 @@ class PlotShapeModes:
                 fcoef = self.sc.inverse_transform(fcoef)
             fcoef_c = fcoef[0 : self.n * 2]
             fcoef_n = fcoef[self.n * 2 :]        
-            if True: # nu_coef*2 so need to divide by 2
+            if False: # nu_coef*2 so need to divide by 2
                 fcoef_n = [x_/4 for x_ in fcoef_n]
             ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
             ix_c, iy_c = self.inverse_func(fcoef_c[0 : self.n], fcoef_c[self.n :])
@@ -251,7 +251,7 @@ class PlotShapeModes:
                     else: # else: each row is in the format of [fcoef_c, fcoef_n]
                         fcoef_n = fcoef[self.n * 2 :] 
                     
-                    if True: # nu_coef*2 so need to divide by 2
+                    if False: # nu_coef*2 so need to divide by 2
                         fcoef_n = [x_/4 for x_ in fcoef_n]
 
                     ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
@@ -263,7 +263,7 @@ class PlotShapeModes:
                     fcoef_c = fcoef[0 : self.n * 2]
                     fcoef_n = fcoef[self.n * 2 :]
                                         
-                    if True: # nu_coef*2 so need to divide by 2
+                    if False: # nu_coef*2 so need to divide by 2
                         fcoef_n = [x_/4 for x_ in fcoef_n]
 
                     ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
@@ -325,7 +325,7 @@ class PlotShapeModes:
                     else: # else: each row is in the format of [fcoef_c, fcoef_n]
                         fcoef_n = fcoef[self.n * 2 :]  
                                             
-                    if True: # nu_coef*2 so need to divide by 2
+                    if False: # nu_coef*2 so need to divide by 2
                         fcoef_n = [x_/4 for x_ in fcoef_n]
 
                     ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])                      
@@ -336,7 +336,7 @@ class PlotShapeModes:
                     fcoef_c = fcoef[0 : self.n * 2]
                     fcoef_n = fcoef[self.n * 2 :]
                     
-                    if True: # nu_coef*2 so need to divide by 2
+                    if False: # nu_coef*2 so need to divide by 2
                         fcoef_n = [x_/4 for x_ in fcoef_n]
                         
                     ix_n, iy_n = self.inverse_func(fcoef_n[0 : self.n], fcoef_n[self.n :])
