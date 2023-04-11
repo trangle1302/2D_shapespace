@@ -170,7 +170,7 @@ def main():
     mode = "cell_nuclei"#"nuclei" #"cell_nuclei" #
     cell_line = "S-BIAD34"#"U-2 OS"
     alignment = "fft_cell_major_axis_polarized"#"fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" # 
-    project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}" #"/scratch/users/tle1302/2Dshapespace"
+    project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #f"/data/2Dshapespace/{cell_line.replace(' ','_')}" #"/scratch/users/tle1302/2Dshapespace"
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     log_dir = f"{project_dir}/logs"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
@@ -212,11 +212,12 @@ def main():
             df = df.iloc[:,:(df.shape[1]//2)]
         print(cell_line, alignment, mode, df.shape)
         df["matchid"] = [k.replace("/data/2Dshapespace/S-BIAD34/cell_masks2/","").replace(".npy","") for k in df.index]
-        #print(df.matchid.values)
-        #breakme
-        #shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}"
-        #calculate_shapemode(df, n_coef, mode, shape_mode_path=shape_mode_path)
-        print(list(lines.keys())[:3])
+        
+        df_ = df.drop(columns=['matchid'])
+        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}"
+        calculate_shapemode(df_, n_coef, mode, shape_mode_path=shape_mode_path)
+        #print(list(lines.keys())[:3])
+        
         # Shape modes of G1, G2/S, G2 cells:
         sc_stats = pd.read_csv(f"{project_dir}/single_cell_statistics.csv")
         sc_stats["matchid"] = sc_stats.ab_id + "/" + sc_stats.cell_id
