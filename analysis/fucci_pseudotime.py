@@ -211,7 +211,7 @@ def GMM_cellcycle(data):
     g2 = gmm.means_[:,1].argmin()
     assert g1 != g2 and g1 != g1s
     labels_numeric = gmm.predict(data)
-    labels_name = ['G1' if (i==g2) else 'G1/S' if (i==g1s) else 'G2' for i in labels_numeric]
+    labels_name = ['G1' if (i==g2) else 'G1S' if (i==g1s) else 'G2' for i in labels_numeric]
     return gmm, labels_numeric, labels_name
 
 def main():    
