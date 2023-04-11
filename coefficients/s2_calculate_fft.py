@@ -110,7 +110,7 @@ def calculate_fft_ccd_nu():
 if __name__ == "__main__": 
     s_t = time.time()
     #calculate_fft_hpa()
-    calculate_fft_hpa_nu()
-    #calculate_fft_ccd()
+    #calculate_fft_hpa_nu()
+    calculate_fft_ccd()
     #calculate_fft_ccd_nu()
     print(f"Done in {np.round((time.time()-s_t)/3600,2)} h.")
