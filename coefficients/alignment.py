@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from skimage.measure import find_contours, regionprops
 from scipy.ndimage import center_of_mass, rotate
-from skimage.transform import rotate
 from utils import helpers
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -141,7 +140,7 @@ def align_cell_major_axis_polarized(data, protein_ch, plot=True):
     theta = theta % 360 
     protein_ch_ = rotate(protein_ch, theta, center=(c0, r0), resize=True)
     """
-    #theta = 90 - theta
+    theta = 90 - theta
     cell_ = rotate(cell, theta)
     nuclei_ = rotate(nuclei, theta)
     center_cell = center_of_mass(cell_)
@@ -154,7 +153,7 @@ def align_cell_major_axis_polarized(data, protein_ch, plot=True):
         nuclei_ = rotate(nuclei_, 180)
         #theta += 180
     
-    theta = theta % 360 
+    #theta = theta % 360 
     protein_ch_ = rotate(protein_ch, theta)
 
     if plot:
