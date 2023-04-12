@@ -9,8 +9,8 @@ from skimage.measure import find_contours
 from skimage.morphology import convex_hull_image
 from scipy.ndimage import center_of_mass, rotate
 #from warps import TPSpline
-from warps import TPSpline_rewrite as TPSpline
-from warps.tsp import ThinPlateSpline
+#from warps import TPSpline_rewrite as TPSpline
+from warps import tsp
 
 def find_landmarks(nuclei, cell, n_points=32, border_points = False):
     assert nuclei.shape == cell.shape
@@ -54,7 +54,7 @@ def find_landmarks(nuclei, cell, n_points=32, border_points = False):
                         helpers.realign_contour_startpoint(cell_contour)])
     return landmarks
 
-
+"""
 def warp_image(pts_from, pts_to, img, midpoint=False, plot=True, save_dir=""):
     x_max = img.shape[0]
     y_max = img.shape[1]
@@ -80,9 +80,9 @@ def warp_image(pts_from, pts_to, img, midpoint=False, plot=True, save_dir=""):
         print("Max y: ", transform[1].astype('float32').max(), "Max x: ", transform[0].astype('float32').max(), img.max())
         warped = cv2.remap(img, transform[1].astype('float32'), transform[0].astype('float32'), cv2.INTER_LINEAR)
     return warped
-
+"""
 def warp_image(pts_from, pts_to, img):
-    tps = ThinPlateSpline(alpha=0.0)  # 0 Regularization
+    tps = tsp.ThinPlateSpline(alpha=0.0)  # 0 Regularization
     tps.fit(pts_from, pts_to)
     warped = tps.transform(img)
     return warped
