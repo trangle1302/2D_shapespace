@@ -20,7 +20,7 @@ class ThinPlateSpline:
         self.parameters = np.array([], dtype=np.float32)
         self.control_points = np.array([], dtype=np.float32)
 
-    def fit(self, X: np.ndarray, Y: np.ndarray) -> ThinPlateSpline:
+    def fit(self, X: np.ndarray, Y: np.ndarray):
         """Learn f that matches Y given X
         Args:
             X (ndarray): Control point at source space (X_c)
