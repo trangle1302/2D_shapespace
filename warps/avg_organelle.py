@@ -39,6 +39,10 @@ LABEL_TO_ALIAS = {
   19:'Multi-Location',
 }
 
+LABELS = ['Nucleoplasm','NuclearM','Nucleoli','NucleoliFC','NuclearS', 'NuclearB',
+        'EndoplasmicR', 'GolgiA', 'IntermediateF', 'ActinF', 'Microtubules', 'MitoticS', 'Centrosome',
+        'PlasmaM', 'Mitochondria', 'Aggresome', 'Cytosol', "Lipid droplets","Endosomes","Lysosomes","Peroxisomes","Vesicles","Cytoplasmic bodies", 'Negative', 'Multi-Location']
+
 all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
 
 def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
@@ -70,6 +74,22 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
     shape_x, shape_y = np.round(cell_contour[:,0].max()).astype('int'), np.round(cell_contour[:,1].max()).astype('int')
 
     return pts_avg, (shape_x, shape_y) 
+
+def unmerge_label(mappings_df, merged_label = "VesiclesPCP", subcomponents = ["Lipid droplets","Endosomes","Lysosomes","Peroxisomes","Vesicles","Cytoplasmic bodies"]):    
+    mappings_df["sc_locations"] = ""
+    mappings_df["sc_target"] = ""
+    for i,r in mappings_df.iterrows():
+        if r.target == merged_label:
+            sc_l = [l for l in r.locations.split(",") if l in subcomponents ]
+            mappings_df.loc[i, "sc_locations"] = ",".join(sc_l)
+            if len(sc_l) > 1:
+                mappings_df.loc[i, "sc_target"] = "Multi-Location"
+            else:
+                mappings_df.loc[i, "sc_target"] = sc_l[0]
+        else:
+            mappings_df.loc[i, "sc_locations"] = r.target
+            mappings_df.loc[i, "sc_target"] = r.target
+    return mappings_df
 
 def main():   
     s = time.time()
@@ -107,7 +127,7 @@ def main():
     mappings = pd.read_csv(meta_path)
     mappings = mappings[mappings.atlas_name=="U-2 OS"]
     mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
-    
+    mappings = unmerge_label(mappings)
     # created a folder where avg organelle for each bin is saved
     if not os.path.isdir(f"{save_dir}/{PC}"):
         os.makedirs(f"{save_dir}/{PC}")
@@ -123,12 +143,12 @@ def main():
         ls = helpers.flatten_list(ls)
         ls = [os.path.basename(l).replace(".npy","") for l in ls]
         df_sl = mappings[mappings.cell_idx.isin(ls)]
-        df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
+        df_sl = df_sl[df_sl.sc_target.isin(LABELS)] # rm Negative, Multi-loc
         org_percent[f"bin{i}"] = df_sl.target.value_counts().to_dict()
     
     df = pd.DataFrame(org_percent)
-    #print(df)
-
+    print(df)
+    breakme
     avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}_cell_nuclei.npz")
 
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
@@ -223,7 +243,10 @@ def main():
                     ax[4].set_title('midpoint to avg_shape')
                     fig.savefig(f"{plot_dir}/{PC}/{org}/{img_id}.png", bbox_inches='tight')
                     plt.close()
-            print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
+            try:
+                print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
+            except:
+                print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ")
             print(f"======>>> Saving to {save_dir}/{PC}/{org}_bin{bin_[0]}.png")
             imwrite(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png", (avg_img*255).astype(np.uint8))
             #:imwrite(f"{save_dir}/{PC}/bin{bin_[0]}_{org}.png", (avg_img*255).astype(np.uint8))
