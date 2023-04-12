@@ -8,7 +8,8 @@ from utils import helpers
 import matplotlib.pyplot as plt
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
-from warps import image_warp
+#from warps import image_warp
+from warps import image_warp_new as image_warp
 import json
 import pandas as pd
 from tqdm import tqdm
@@ -63,11 +64,11 @@ def main():
     else:
         from imageio.v2 import imread, imwrite # sherlock
         project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-    shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei_nux4"  
+    shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei"  
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"  
     data_dir = f"{project_dir}/cell_masks2" 
-    save_dir = f"{project_dir}/morphed_protein_avg_nux4" 
-    plot_dir = f"{project_dir}/morphed_protein_avg_plots_nux4" 
+    save_dir = f"{project_dir}/morphed_protein_avg" 
+    plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
     n_landmarks = 32 # number of landmark points frgs='+',or each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     #print(save_dir, plot_dir)
     
@@ -119,8 +120,8 @@ def main():
         #print("examples of antibodies", ab_keep[:5])
         #ab_keep = ["HPA030782","HPA050556","HPA051349","HPA036914","HPA040748"]
         for ab_id in ab_keep:
-            if os.path.exists(f"{save_dir}/{PC}/{ab_id}_bin{bin_[0]}.png"):
-                continue
+            #if os.path.exists(f"{save_dir}/{PC}/{ab_id}_bin{bin_[0]}.png"):
+            #    continue
             print(f"Preparing for {PC}/{ab_id}_bin{bin_[0]}.png")
             print(len(ls), len([f for f in ls if f.__contains__(ab_id)])) 
             # 1 empty avg_img (initialization) for each protein_pc_bin combination 
@@ -170,7 +171,7 @@ def main():
                 # adding weighed contribution of this image
                 #print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype)
                 avg_img += warped / len(ls_)
-                if np.random.choice([True,False], p=[0.01,0.99]) or ab_id in ["HPA001644", "HPA050627"]:
+                if True:#np.random.choice([True,False], p=[0.01,0.99]) or ab_id in ["HPA001644", "HPA050627"]:
                     #if ab_id in ["HPA049341","HPA061027","HPA060948","HPA063464","HPA065938","HPA040923","HPA032080","HPA030741"] and np.random.choice([True,False], p=[0.1,0.9]):
                     # Plot landmark points at morphing
                     fig, ax = plt.subplots(1,6, figsize=(15,35))
