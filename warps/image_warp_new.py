@@ -7,10 +7,10 @@ from utils import helpers
 import matplotlib.pyplot as plt
 from skimage.measure import find_contours
 from skimage.morphology import convex_hull_image
-from scipy.ndimage import center_of_mass, rotate
+from scipy.ndimage import center_of_mass, rotate, map_coordinates
 #from warps import TPSpline
 #from warps import TPSpline_rewrite as TPSpline
-from warps import tsp
+from warps import tps
 
 def find_landmarks(nuclei, cell, n_points=32, border_points = False):
     assert nuclei.shape == cell.shape
@@ -36,11 +36,11 @@ def find_landmarks(nuclei, cell, n_points=32, border_points = False):
     
     if len(cell_contour)>1:
         cell_contour = np.vstack(cell_contour)
-        x,y = helpers.equidistance(cell_contour[:,0], cell_contour[:,1], n_points=n_points)
+        x,y = helpers.equidistance(cell_contour[:,0], cell_contour[:,1], n_points=n_points*2)
     else:
-        x,y = helpers.equidistance(cell_contour[0][:,0], cell_contour[0][:,1], n_points=n_points)
+        x,y = helpers.equidistance(cell_contour[0][:,0], cell_contour[0][:,1], n_points=n_points*2)
 
-    cell_contour = np.array([[x[i], y[i]] for i in range(n_points)])
+    cell_contour = np.array([[x[i], y[i]] for i in range(n_points*2)])
 
     if border_points:
         (x_max, y_max) = cell.shape
@@ -82,7 +82,13 @@ def warp_image(pts_from, pts_to, img, midpoint=False, plot=True, save_dir=""):
     return warped
 """
 def warp_image(pts_from, pts_to, img):
-    tps = tsp.ThinPlateSpline(alpha=0.0)  # 0 Regularization
-    tps.fit(pts_from, pts_to)
-    warped = tps.transform(img)
+    tps_f = tps.ThinPlateSpline(alpha=0.1)  # 0 Regularization
+    tps_f.fit(pts_to, pts_from)
+    x,y = img.shape
+    #x, y = np.mgrid[x_min:x_max:x_steps*1j, y_min:y_max:y_steps*1j]
+    t_grid = np.indices((x,y), dtype=np.float64).transpose(1, 2, 0)
+    #print(img.shape, t_grid.shape, t_grid.reshape(-1, 2).shape)
+    from_grid = tps_f.transform(t_grid.reshape(-1, 2)).reshape(x, y, 2)
+    #print(from_grid.shape, from_grid.transpose(2, 0, 1).shape)
+    warped = map_coordinates(img, from_grid.transpose(2, 0, 1))
     return warped
