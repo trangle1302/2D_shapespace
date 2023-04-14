@@ -41,7 +41,8 @@ LABEL_TO_ALIAS = {
 
 LABELS = ['Nucleoplasm','NuclearM','Nucleoli','NucleoliFC','NuclearS', 'NuclearB',
         'EndoplasmicR', 'GolgiA', 'IntermediateF', 'ActinF', 'Microtubules', 'MitoticS', 'Centrosome',
-        'PlasmaM', 'Mitochondria', 'Aggresome', 'Cytosol', "Lipid droplets","Endosomes","Lysosomes","Peroxisomes","Vesicles","Cytoplasmic bodies", 'Negative', 'Multi-Location']
+        'PlasmaM', 'Mitochondria', 'Aggresome', 'Cytosol', "Lipid droplets","Endosomes","Lysosomes","Peroxisomes","Vesicles","Cytoplasmic bodies", 
+        'Negative', 'Multi-Location']
 
 all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
 
@@ -103,19 +104,19 @@ def main():
     org = args.org
     PC = args.pc
     print(f"Processing {org} in {PC}")
-    try: #if True:
+    if False: #try: #if True:
         from imageio import imread, imwrite # callisto
         project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
         meta_path = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
-    except:
+    if True: #except:
         from imageio.v2 import imread, imwrite # sherlock 
         project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
         meta_path = "/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
-    shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei_nux4"  
+    shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei"  
     fft_dir = f"{project_dir}/fftcoefs/{alignment}"
     data_dir = f"{project_dir}/cell_masks" 
-    save_dir = f"{project_dir}/morphed_protein_avg_nux4" 
-    plot_dir = f"{project_dir}/morphed_protein_avg_plots_nux4" 
+    save_dir = f"{project_dir}/morphed_protein_avg" 
+    plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
     n_landmarks = 64 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     print(save_dir, plot_dir)
     os.makedirs(save_dir,exist_ok=True)
@@ -124,10 +125,15 @@ def main():
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
-    mappings = pd.read_csv(meta_path)
-    mappings = mappings[mappings.atlas_name=="U-2 OS"]
-    mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
-    mappings = unmerge_label(mappings)
+    if os.path.exists(meta_path.replace(".csv","_splitVesiclesPCP.csv")):
+        mappings = pd.read_csv(meta_path.replace(".csv","_splitVesiclesPCP.csv"))
+    else:
+        mappings = pd.read_csv(meta_path)
+        mappings = mappings[mappings.atlas_name=="U-2 OS"]
+        mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
+        mappings = unmerge_label(mappings)
+        mappings.to_csv(meta_path.replace(".csv","_splitVesiclesPCP.csv"), index=False)
+    
     # created a folder where avg organelle for each bin is saved
     if not os.path.isdir(f"{save_dir}/{PC}"):
         os.makedirs(f"{save_dir}/{PC}")
@@ -144,11 +150,10 @@ def main():
         ls = [os.path.basename(l).replace(".npy","") for l in ls]
         df_sl = mappings[mappings.cell_idx.isin(ls)]
         df_sl = df_sl[df_sl.sc_target.isin(LABELS)] # rm Negative, Multi-loc
-        org_percent[f"bin{i}"] = df_sl.target.value_counts().to_dict()
+        org_percent[f"bin{i}"] = df_sl.sc_target.value_counts().to_dict()
     
     df = pd.DataFrame(org_percent)
     print(df)
-    breakme
     avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}_cell_nuclei.npz")
 
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
