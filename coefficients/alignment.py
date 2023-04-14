@@ -123,24 +123,9 @@ def align_cell_major_axis_polarized(data, protein_ch, plot=True):
     cell = data[0, :, :]
     region = regionprops(cell)[0]
     # orientation = Major axis orientation in clockwise direction as radians
-    theta = region.orientation * (180 / np.pi)  # radiant to degree conversion
-    """
-    (r0, c0) = region.centroid # cell centroid returns in (row, col)
-    cell_ = rotate(cell, theta, center=(c0, r0), resize=True)
-    nuclei_ = rotate(nuclei, theta, center=(c0, r0), resize=True)
-    center_cell = center_of_mass(cell_)
-    center_nuclei = center_of_mass(nuclei_)
-    shape = nuclei_.shape
-
-    if center_cell[1] > center_nuclei[1]: # Move 2 quadrant counter-clockwise
-        cell_ = rotate(cell_, 180)
-        nuclei_ = rotate(nuclei_, 180)
-        theta += 180
-    
-    theta = theta % 360 
-    protein_ch_ = rotate(protein_ch, theta, center=(c0, r0), resize=True)
-    """
-    theta = 90 - theta
+    # https://datascience.stackexchange.com/questions/79764/how-to-interpret-skimage-orientation-to-straighten-images#79767
+    angle_in_degrees = region.orientation * (180 / np.pi) + 90 # radiant to degree conversion 
+    theta = - angle_in_degrees
     cell_ = rotate(cell, theta)
     nuclei_ = rotate(nuclei, theta)
     center_cell = center_of_mass(cell_)
@@ -291,8 +276,8 @@ def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
         nuclei_coords = helpers.realign_contour_startpoint(nuclei_coords)
         if plot:
             fig, ax = plt.subplots(1, 3, figsize=(8, 4))
-            ax[0].imshow(nuclei, alpha=0.5)
-            ax[0].imshow(cell, alpha=0.5)
+            ax[0].imshow(data[1, :, :], alpha=0.5)
+            ax[0].imshow(data[0, :, :], alpha=0.5)
             
             nu_centroid = helpers.find_centroid(nuclei_coords)
             cell_centroid = helpers.find_centroid(cell_coords)
