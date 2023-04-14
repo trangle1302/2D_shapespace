@@ -64,7 +64,7 @@ def calculate_fft_ccd():
     dataset = "S-BIAD34"
     d = f"/data/2Dshapespace/{dataset}"
     sc_mask_dir = f"{d}/cell_masks2"
-    save_path = f"{d}/fftcoefs/fft_cell_major_axis_polarized"
+    save_path = f"{d}/fftcoefs/fft_cell_major_axis_polarized_tmp"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     log_dir = f"{d}/logs"
