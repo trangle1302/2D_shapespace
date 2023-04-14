@@ -35,7 +35,7 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
 
     if len(ix_n) != n_landmarks:
         ix_n, iy_n = helpers.equidistance(ix_n, iy_n, n_points=n_landmarks)
-        ix_c, iy_c = helpers.equidistance(ix_c, iy_c, n_points=n_landmarks)
+        ix_c, iy_c = helpers.equidistance(ix_c, iy_c, n_points=n_landmarks*2)
     nu_contour = np.stack([ix_n, iy_n]).T
     cell_contour = np.stack([ix_c, iy_c]).T
     #print(nu_contour.shape, cell_contour.shape)
@@ -125,8 +125,8 @@ def main():
             print(f"Preparing for {PC}/{ab_id}_bin{bin_[0]}.png")
             print(len(ls), len([f for f in ls if f.__contains__(ab_id)])) 
             # 1 empty avg_img (initialization) for each protein_pc_bin combination 
-            avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64') 
-
+            #avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64') 
+            avg_img = np.zeros((shape_x, shape_y), dtype='float64')
             if not os.path.isdir(f"{plot_dir}/{PC}/{ab_id}"):
                 os.makedirs(f"{plot_dir}/{PC}/{ab_id}")
             ls_ = [f for f in ls if f.__contains__(ab_id)]
@@ -162,10 +162,10 @@ def main():
                 #print(f"rotated img max: {img.max()}, resized img max: {img_resized.max()}")
                 #print(f"rotated nu max: {nu_.max()}, resized nu max: {nu_resized.max()}, rotated cell max: {cell_.max()}, resized cell max: {cell_resized.max()}")
                 pts_ori = image_warp.find_landmarks(nu_resized, cell_resized, n_points=n_landmarks, border_points = False)
-                
+                print(img_resized.shape, avg_img.shape, (shape_x, shape_y)) 
                 pts_convex = (pts_avg + pts_ori) / 2
-                warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
-                warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
+                warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized)#, plot=False, save_dir="")
+                warped = image_warp.warp_image(pts_convex, pts_avg, warped1)#, plot=False, save_dir="")
                 #imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
 
                 # adding weighed contribution of this image
@@ -182,7 +182,7 @@ def main():
                     ax[1].set_title('original protein intensity')         
                     ax[2].imshow(nu_resized, alpha = 0.3)
                     ax[2].imshow(cell_resized, alpha = 0.3)
-                    ax[2].set_title(f'resized shape+protein, theta = {np.round(theta,1)}°')
+                    ax[2].set_title(f'resized shape+protein \n theta = {np.round(theta,1)}°')
                     ax[3].imshow(img_resized)
                     ax[3].scatter(pts_ori[:,1], pts_ori[:,0], c=np.arange(len(pts_ori)),cmap='Reds',alpha=0.5)
                     ax[3].set_title('resized protein')
