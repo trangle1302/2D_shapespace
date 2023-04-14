@@ -6,6 +6,7 @@ Implementation of a thin-plate-spline warping transform that warps from the from
 """
 import cv2
 import numpy as np
+from scipy.dis
 
 def _U(r): 
     """ Radial basis function (smooth kernels centered around control points)
@@ -78,6 +79,7 @@ def warp_f(from_points, to_points, mesh_x, mesh_y):
     return x_warp, y_warp
 
 def inverse_warp(from_points, to_points, output_bbox, approximate_grid):
+    assert from_points.shape == to_points.shape
     x_min, y_min, x_max, y_max = output_bbox
 
     # higher approximate_grid means coarser deformation fields (x_warp, y_warp)
