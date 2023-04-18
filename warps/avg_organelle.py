@@ -8,6 +8,7 @@ from utils import helpers
 import matplotlib.pyplot as plt
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
+from skimage.filters import threshold_minimum
 from warps import image_warp
 import json
 import pandas as pd
@@ -223,7 +224,9 @@ def main():
                 #print(warped1.max(), img_resized.max())
                 warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
                 #imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
-
+                bin_thres = threshold_minimum(warped)
+                binary_warped = warped > bin_thres
+                binary_warped = binary_warped.astype('float64')
                 # adding weighed contribution of this image
                 #print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype,  (warped / len(ls_)).max())
                 avg_img += warped / len(ls_)
