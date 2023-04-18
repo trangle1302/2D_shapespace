@@ -102,16 +102,11 @@ def main():
     org = args.org
     PC = args.pc
     print(f"Processing {org} in {PC}")
-    """
-    if False: #try: #if True:
-        from imageio import imread, imwrite # callisto
-        project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
-        meta_path = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
-    if True: #except:
-        from imageio.v2 import imread, imwrite # sherlock 
-        project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-        meta_path = "/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
-    """
+    if cfg.SERVER == "callisto":
+        from imageio import imread, imwrite
+    elif cfg.SERVER == "sherlock":
+        from imageio.v2 import imread, imwrite
+
     shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_cell_nuclei"  
     fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
     data_dir = f"{cfg.PROJECT_DIR}/cell_masks" 
