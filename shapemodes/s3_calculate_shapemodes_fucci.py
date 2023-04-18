@@ -20,42 +20,6 @@ from ast import literal_eval
 import json
 import resource
 
-LABEL_TO_ALIAS = {
-  0: 'Nucleoplasm',
-  1: 'NuclearM',
-  2: 'Nucleoli',
-  3: 'NucleoliFC',
-  4: 'NuclearS',
-  5: 'NuclearB',
-  6: 'EndoplasmicR',
-  7: 'GolgiA',
-  8: 'IntermediateF',
-  9: 'ActinF',
-  10: 'Microtubules',
-  11: 'MitoticS',
-  12: 'Centrosome',
-  13: 'PlasmaM',
-  14: 'Mitochondria',
-  15: 'Aggresome',
-  16: 'Cytosol',
-  17: 'VesiclesPCP',
-  19: 'Negative',
-  19:'Multi-Location',
-}
-
-all_locations = dict((v, k) for k,v in LABEL_TO_ALIAS.items())
-#%% Coefficients
-fun = "fft"
-if fun == "fft":
-    get_coef_fun = coefs.fourier_coeffs 
-    inverse_func = coefs.inverse_fft 
-elif fun == "wavelet":
-    get_coef_fun = coefs.wavelet_coefs
-    inverse_func = coefs.inverse_wavelet
-elif fun == "efd":
-    get_coef_fun = coefs.elliptical_fourier_coeffs
-    inverse_func = coefs.backward_efd
-
 def memory_limit():
     soft, hard = resource.getrlimit(resource.RLIMIT_AS)
     #resource.setrlimit(resource.RLIMIT_AS, (get_memory() * 1024 / 2, hard))
@@ -70,7 +34,7 @@ def get_memory():
                 free_memory += int(sline[1])
     return free_memory
 
-def calculate_shapemode(df, n_coef, mode, shape_mode_path=""):
+def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path=""):
     """ Calculate shapemodes based on the coefficient matrix given
     Parameters
         df: Matrix of coefficient
@@ -94,6 +58,8 @@ def calculate_shapemode(df, n_coef, mode, shape_mode_path=""):
         print(df.iloc[100,500])
     use_complex = False
     if fun == "fft":
+        get_coef_fun = coefs.fourier_coeffs 
+        inverse_func = coefs.inverse_fft 
         if not use_complex:
             df_ = pd.concat(
                 [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)], axis=1
@@ -108,11 +74,15 @@ def calculate_shapemode(df, n_coef, mode, shape_mode_path=""):
             pca.fit(df_)
             plotting.display_scree_plot(pca, save_dir=shape_mode_path)
     elif fun == "wavelet":
+        get_coef_fun = coefs.wavelet_coefs
+        inverse_func = coefs.inverse_wavelet
         df_ = df
         pca = PCA(n_components=df_.shape[1])
         pca.fit(df_)
         plotting.display_scree_plot(pca, save_dir=shape_mode_path)
     elif fun == "efd":
+        get_coef_fun = coefs.elliptical_fourier_coeffs
+        inverse_func = coefs.backward_efd
         df_ = df
         print(f"Number of samples {df_.shape[0]}, number of coefs {df_.shape[1]}")
         pca = PCA(n_components=df_.shape[1])
@@ -164,21 +134,18 @@ def calculate_shapemode(df, n_coef, mode, shape_mode_path=""):
         json.dump(cells_assigned, fp)
 
 def main():
-    n_coef = 128
-    n_samples = -1#5000
-    n_cv = 1
-    mode = "cell_nuclei"#"nuclei" #"cell_nuclei" #
-    cell_line = "S-BIAD34"#"U-2 OS"
-    alignment = "fft_cell_major_axis_polarized"#"fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" # 
-    project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #f"/data/2Dshapespace/{cell_line.replace(' ','_')}" #"/scratch/users/tle1302/2Dshapespace"
-    fft_dir = f"{project_dir}/fftcoefs/{alignment}"
-    log_dir = f"{project_dir}/logs"
-    fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
+    import configs.config_callisto as cfg
+    n_samples = cfg.N_SAMPLES
+    fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
+    log_dir = f"{cfg.PROJECT_DIR}/logs"
+    fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
+
+    all_locations = dict((v, k) for k,v in cfg.LABEL_TO_ALIAS.items())
 
     with open(fft_path) as f:
         count = sum(1 for _ in f)
     
-    for i in range(n_cv):
+    for i in range(cfg.N_CV):
         with open(fft_path, "r") as file:
             lines = dict()
             if n_samples ==-1:
@@ -192,34 +159,33 @@ def main():
                 if pos in specified_lines:
                     # print the required line number
                     data_ = l_num.strip().split(',')
-                    if fun == "efd":
-                        if len(data_[1:]) != (n_coef*4+2)*2:
+                    if cfg.COEF_FUNC == "efd":
+                        if len(data_[1:]) != (cfg.N_COEFS*4+2)*2:
                             continue
-                    elif len(data_[1:]) != n_coef*4:
+                    elif len(data_[1:]) != cfg.N_COEFS*4:
                             continue
                     #data_dict = {data_dict[0]:data_dict[1:]}
                     lines[data_[0]]=data_[1:]
-
         
         df = pd.DataFrame(lines).transpose()
         print(df.shape)
-        if fun == "fft":
+        if cfg.COEF_FUNC == "fft":
             df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
         
-        if mode == "nuclei":
+        if cfg.MODE == "nuclei":
             df = df.iloc[:,(df.shape[1]//2):]
-        elif mode == "cell":
+        elif cfg.MODE == "cell":
             df = df.iloc[:,:(df.shape[1]//2)]
-        print(cell_line, alignment, mode, df.shape)
+        print(cfg.CELL_LINE, cfg.ALIGNMENT, cfg.MODE, df.shape)
         df["matchid"] = [k.replace("/data/2Dshapespace/S-BIAD34/cell_masks2/","").replace(".npy","") for k in df.index]
         
         df_ = df.drop(columns=['matchid'])
-        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}"
-        calculate_shapemode(df_, n_coef, mode, shape_mode_path=shape_mode_path)
+        shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
+        calculate_shapemode(df_, cfg.N_COEFS, cfg.MODE, fun=cfg.COEF_FUNC, shape_mode_path=shape_mode_path)
         #print(list(lines.keys())[:3])
         
         # Shape modes of G1, G2/S, G2 cells:
-        sc_stats = pd.read_csv(f"{project_dir}/single_cell_statistics.csv")
+        sc_stats = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv")
         sc_stats["matchid"] = sc_stats.ab_id + "/" + sc_stats.cell_id
         print(sc_stats.matchid[:3])
         cc_groups = sc_stats.GMM_cc_label.unique().tolist()
@@ -228,11 +194,11 @@ def main():
             df_ = df[df.matchid.isin(cells_in_phase.matchid)]
             df_ = df_.drop(columns=['matchid'])
             print(df_.shape)
-            #shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}_nux4"
-            #calculate_shapemode(df, n_coef, mode, shape_mode_path=shape_mode_path)
-            save_dir = f"{project_dir}/shapemode/{alignment}_{mode}_{g}"
+            #shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{alignment}_{mode}_nux4"
+            #calculate_shapemode(df, cfg.N_COEFS, mode, shape_mode_path=shape_mode_path)
+            save_dir = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}_{g}"
             print("Saving to: ", save_dir)
-            calculate_shapemode(df_, n_coef, mode, shape_mode_path=save_dir)
+            calculate_shapemode(df_, cfg.N_COEFS, cfg.MODE, shape_mode_path=save_dir)
 
 if __name__ == "__main__": 
     memory_limit() # Limitates maximun memory usage
