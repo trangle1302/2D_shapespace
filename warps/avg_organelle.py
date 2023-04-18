@@ -1,8 +1,6 @@
 import os
 import sys
 sys.path.append("..") 
-#from imageio import imread, imwrite # callisto
-#from imageio.v2 import imread, imwrite # sherlock
 import numpy as np
 from utils import helpers
 import matplotlib.pyplot as plt
@@ -94,9 +92,8 @@ def unmerge_label(mappings_df, merged_label = "VesiclesPCP", subcomponents = ["L
     return mappings_df
 
 def main():   
-    s = time.time()
-    cell_line = 'U-2 OS'
-    alignment = "fft_cell_major_axis_polarized"
+    s = time.time()    
+    import configs.config_sherlock as cfg
     parser = argparse.ArgumentParser()
     #parser.add_argument("--merged_bins", nargs='+',help="bin to investigate", type=int)
     parser.add_argument("--pc", help="principle component", type=str)
@@ -105,6 +102,7 @@ def main():
     org = args.org
     PC = args.pc
     print(f"Processing {org} in {PC}")
+    """
     if False: #try: #if True:
         from imageio import imread, imwrite # callisto
         project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
@@ -113,11 +111,12 @@ def main():
         from imageio.v2 import imread, imwrite # sherlock 
         project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
         meta_path = "/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
-    shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei"  
-    fft_dir = f"{project_dir}/fftcoefs/{alignment}"
-    data_dir = f"{project_dir}/cell_masks" 
-    save_dir = f"{project_dir}/morphed_protein_avg" 
-    plot_dir = f"{project_dir}/morphed_protein_avg_plots" 
+    """
+    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_cell_nuclei"  
+    fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
+    data_dir = f"{cfg.PROJECT_DIR}/cell_masks" 
+    save_dir = f"{cfg.PROJECT_DIR}/morphed_protein_avg" 
+    plot_dir = f"{cfg.PROJECT_DIR}/morphed_protein_avg_plots" 
     n_landmarks = 64 # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     print(save_dir, plot_dir)
     os.makedirs(save_dir,exist_ok=True)
@@ -126,14 +125,14 @@ def main():
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json","r")
     cells_assigned = json.load(f)
-    if os.path.exists(meta_path.replace(".csv","_splitVesiclesPCP.csv")):
-        mappings = pd.read_csv(meta_path.replace(".csv","_splitVesiclesPCP.csv"))
+    if os.path.exists(cfg.META_PATH.replace(".csv","_splitVesiclesPCP.csv")):
+        mappings = pd.read_csv(cfg.META_PATH.replace(".csv","_splitVesiclesPCP.csv"))
     else:
-        mappings = pd.read_csv(meta_path)
+        mappings = pd.read_csv(cfg.META_PATH)
         mappings = mappings[mappings.atlas_name=="U-2 OS"]
         mappings["cell_idx"] = [idx.split("_",1)[1] for idx in mappings.id]
         mappings = unmerge_label(mappings)
-        mappings.to_csv(meta_path.replace(".csv","_splitVesiclesPCP.csv"), index=False)
+        mappings.to_csv(cfg.META_PATH.replace(".csv","_splitVesiclesPCP.csv"), index=False)
     
     # created a folder where avg organelle for each bin is saved
     if not os.path.isdir(f"{save_dir}/{PC}"):
