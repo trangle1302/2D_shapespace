@@ -144,12 +144,12 @@ def main():
             df = df.iloc[:,:(df.shape[1]//2)]
         print(cell_line, alignment, mode, df.shape)
 
-        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}_nux4"
+        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
 
         n_col = df.shape[1]
-        df.iloc[:,n_col//2:] = df.iloc[:, n_col//2:].applymap(lambda s: s*4)        
+        #df.iloc[:,n_col//2:] = df.iloc[:, n_col//2:].applymap(lambda s: s*4)        
         use_complex = False
         if fun == "fft":
             if not use_complex:
@@ -209,8 +209,8 @@ def main():
         n_ = 10# number of random cells to plot
         cells_assigned = dict()
         for pc in pc_keep:
-            #pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
-            #pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
+            pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
+            pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
 
             pc_indexes_assigned, bin_links = pm.assign_cells(pc) 
             
@@ -218,7 +218,7 @@ def main():
             #print(bin_links, len(bin_links))
             #print([len(b) for b in bin_links])
             cells_assigned[pc] = [list(b) for b in bin_links]            
-            print(cells_assigned[pc][0][:3])
+            #print(cells_assigned[pc][0][:3])
             """
             fig, ax = plt.subplots(n_, len(bin_links)) # (number of random cells, number of  bin)
             for b_index, b_ in enumerate(bin_links):
