@@ -43,7 +43,6 @@ COLORS_MAP = {
 
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
 CELL_LINE = "U-2 OS"
-PROJECT_DIR = f"/data/2Dshapespace/{CELL_LINE.replace(' ','_')}" #f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #f"/data/2Dshapespace/{cell_line.replace(' ','_')}" #"/scratch/users/tle1302/2Dshapespace"
 N_COEFS = 128
 N_SAMPLES = -1#5000
 N_CV = 1
@@ -51,5 +50,7 @@ MODE = "cell_nuclei"#"nuclei" #"cell_nuclei"
 ALIGNMENT = "fft_cell_major_axis_polarized"#"fft_nuclei_major_axis" #"fft_cell_major_axis_polarized" 
 COEF_FUNC = "fft"
 
-
-# >>>>>>>>>>>>>>>>>>>>> PACKAGES CONFIGS
+# >>>>>>>>>>>>>>>>>>>>> COMPUTE RESOURCE + PACKAGE
+SERVER = "callisto"
+PROJECT_DIR = f"/data/2Dshapespace/{CELL_LINE.replace(' ','_')}"
+META_PATH = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
