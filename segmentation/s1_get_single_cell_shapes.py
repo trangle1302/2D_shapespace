@@ -330,10 +330,12 @@ def pilot_U2OS_kaggle2021test():
 def process_img(img_id, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cellmask.png", nuclei_mask_extension = "nucleimask.png"):
     df_img = im_df[im_df.ID == img_id]
     cell_idx = df_img.maskid.to_list()
+    #print(f"{img_id} has {len(cell_idx)} cells")
+    #print(f"{image_dir}/{img_id}_green.png")
     try:
         cell_mask = imageio.imread(f"{mask_dir}/{img_id}_{cell_mask_extension}")
         nuclei_mask = imageio.imread(f"{mask_dir}/{img_id}_{nuclei_mask_extension}")
-        protein = imageio.imread(f"{image_dir}/{img_id}_green.png")
+        protein = imageio.imread(f"{image_dir}/{img_id.split('_')[0]}/{img_id}_green.png")
         save_path = f"{save_dir}/{img_id}_"
         get_single_cell_mask(cell_mask, nuclei_mask, protein, cell_idx, save_path, rm_border=True, plot=False)
         with open(f'{log_dir}/images_done.pkl', 'wb') as success_list:
@@ -441,12 +443,11 @@ def process_img_ccd2(ab_id, mask_dir, save_dir, log_dir, cell_mask_extension = "
         with open(f'{log_dir}/images_failed.pkl', 'wb') as error_list:
             pickle.dump(img_id, error_list)
 
-def publicHPA():
+def publicHPA(cell_line = "U-2 OS"):
     base_url = "/data/HPA-IF-images" #"https://if.proteinatlas.org"
-    image_dir = "/data/kaggle-dataset/PUBLICHPA/images/test"
+    image_dir = "/data/HPA-IF-images"
     mask_dir = "/data/kaggle-dataset/PUBLICHPA/mask/test"
     
-    cell_line = "U-2 OS"
     save_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/cell_masks"
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
@@ -465,7 +466,7 @@ def publicHPA():
                 except EOFError:
                     break        
     print(f"{len(finished_imlist)} images done, processing the rest ...")
-    num_cores = multiprocessing.cpu_count() - 4 # save 1 core for some other processes
+    num_cores = multiprocessing.cpu_count() - 10 # save 1 core for some other processes
     ifimages = pd.read_csv(f"{base_url}/IF-image.csv")
     ifimages = ifimages[ifimages.atlas_name==cell_line]
     ifimages["ID"] = [f.split("/")[-1][:-1] for f in ifimages.filename]
@@ -477,7 +478,7 @@ def publicHPA():
     print(f"...Processing {len(imlist)} ab x 5 img each with masks in {num_cores}")
     inputs = tqdm(imlist)
     #processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cytooutline.png", nuclei_mask_extension = "cytooutline.png") for i in inputs)
-    processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cytomask.png", nuclei_mask_extension = "nucleimask.png") for i in inputs)
+    processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cellmask.png", nuclei_mask_extension = "nucleimask.png") for i in inputs)
     with open(f'{log_dir}/processedlist.pkl', 'wb') as f:
         pickle.dump(processed_list, f)
 
@@ -532,5 +533,5 @@ def cellcycle():
 if __name__ == "__main__":   
     np.random.seed(42)  # for reproducibility
     #pilot_U2OS_kaggle2021test()
-    #publicHPA()
-    cellcycle()
+    publicHPA(cell_line="HEK 293")
+    #cellcycle()
