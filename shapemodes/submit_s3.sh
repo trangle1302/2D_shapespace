@@ -10,7 +10,7 @@
 module load python/3.6.1
 module load py-pandas/1.0.3_py36
 module load py-scikit-learn/0.24.2_py36
-module load py-numpy
+#module load py-numpy
 module load viz 
 module load py-scikit-image/0.17.2_py36
 pip install tqdm
