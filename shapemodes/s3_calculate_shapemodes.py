@@ -70,12 +70,11 @@ def get_memory():
                 free_memory += int(sline[1])
     return free_memory
 
-def main():
+def main(cell_line = "U-2 OS"):
     n_coef = 128
     n_samples = -1 #5000
     n_cv = 1
     mode = "cell_nuclei"#"nuclei" #"cell_nuclei"
-    cell_line = "U-2 OS" #"S-BIAD34"#"U-2 OS"
     alignment = "fft_cell_major_axis_polarized" #"fft_nuclei_major_axis"#"fft_cell_major_axis_polarized"
     # project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
     project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}" #"/data/2Dshapespace"
@@ -240,7 +239,7 @@ def main():
 if __name__ == "__main__": 
     memory_limit() # Limitates maximun memory usage
     try:
-        main()
+        main(cell_line = "HEK 293")
     except MemoryError:
         sys.stderr.write('\n\nERROR: Memory Exception\n')
         sys.exit(1)
