@@ -24,8 +24,8 @@ elif fun == "efd":
     get_coef_fun = coefs.elliptical_fourier_coeffs
     inverse_func = coefs.backward_efd
 
-def calculate_fft_hpa():
-    dataset = "U-2_OS"
+def calculate_fft_hpa(cell_line="U-2_OS"):
+    dataset = cell_line.replace(' ','_')
     mask_dir = f"/data/2Dshapespace/{dataset}/cell_masks"
     save_path = Path(f"/data/2Dshapespace/{dataset}/fftcoefs/fft_cell_major_axis_polarized")
     if not os.path.exists(save_path):
@@ -109,8 +109,8 @@ def calculate_fft_ccd_nu():
 
 if __name__ == "__main__": 
     s_t = time.time()
-    #calculate_fft_hpa()
+    calculate_fft_hpa(cell_line="HEK 293")
     #calculate_fft_hpa_nu()
-    calculate_fft_ccd()
+    #calculate_fft_ccd()
     #calculate_fft_ccd_nu()
     print(f"Done in {np.round((time.time()-s_t)/3600,2)} h.")
