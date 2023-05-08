@@ -1,0 +1,17 @@
+python3 avg_organelle.py --org ActinF  --pc PC3
+python3 avg_organelle.py --org ActinF  --pc PC4
+python3 avg_organelle.py --org ActinF  --pc PC5
+python3 avg_organelle.py --org ActinF  --pc PC6
+python3 avg_organelle.py --org VesiclesPCP  --pc PC4
+python3 avg_organelle.py --org ActinF  --pc PC1
+python3 avg_organelle.py --org ActinF  --pc PC2
+python3 avg_organelle.py --org VesiclesPCP  --pc PC5
+python3 avg_organelle.py --org VesiclesPCP  --pc PC1
+python3 avg_organelle.py --org VesiclesPCP  --pc PC2
+python3 avg_organelle.py --org VesiclesPCP  --pc PC3
+python3 avg_organelle.py --org VesiclesPCP  --pc PC4
+python3 avg_organelle.py --org NuclearS  --pc PC1
+python3 avg_organelle.py --org NuclearS  --pc PC2
+python3 avg_organelle.py --org NuclearS  --pc PC3
+python3 avg_organelle.py --org NuclearS  --pc PC4
+python3 avg_organelle.py --org NuclearS  --pc PC5

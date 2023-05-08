@@ -1,6 +1,7 @@
 import sys
+
 sys.path.append("..")
-from coefficients import alignment,coefs
+from coefficients import alignment, coefs
 import cv2
 import numpy as np
 from utils import helpers
@@ -8,53 +9,80 @@ import matplotlib.pyplot as plt
 from skimage.measure import find_contours
 from skimage.morphology import convex_hull_image
 from scipy.ndimage import center_of_mass, rotate, map_coordinates
-#from warps import TPSpline
-#from warps import TPSpline_rewrite as TPSpline
+
+# from warps import TPSpline
+# from warps import TPSpline_rewrite as TPSpline
 from warps import tps
 
-def find_landmarks(nuclei, cell, n_points=32, border_points = False):
+
+def find_landmarks(nuclei, cell, n_points=32, border_points=False):
     assert nuclei.shape == cell.shape
 
     # adding 1 pixel in the border for more continuous contour finding
-    nu = np.zeros((nuclei.shape[0]+2, nuclei.shape[1]+2))
-    nu[1:1+nuclei.shape[0],1:1+nuclei.shape[1]] = nuclei
-    nu_centroid = center_of_mass(nu) 
+    nu = np.zeros((nuclei.shape[0] + 2, nuclei.shape[1] + 2))
+    nu[1 : 1 + nuclei.shape[0], 1 : 1 + nuclei.shape[1]] = nuclei
+    nu_centroid = center_of_mass(nu)
     nu_contour = find_contours(nu, 0, fully_connected="high")
-    x,y = helpers.equidistance(nu_contour[0][:,0], nu_contour[0][:,1], n_points=n_points)
+    x, y = helpers.equidistance(
+        nu_contour[0][:, 0], nu_contour[0][:, 1], n_points=n_points
+    )
     nu_contour = np.array([[x[i], y[i]] for i in range(n_points)])
 
-    cell_ = np.zeros((cell.shape[0]+2, cell.shape[1]+2))
-    cell_[1:1+cell.shape[0],1:1+cell.shape[1]] = cell
+    cell_ = np.zeros((cell.shape[0] + 2, cell.shape[1] + 2))
+    cell_[1 : 1 + cell.shape[0], 1 : 1 + cell.shape[1]] = cell
     cell_contour = find_contours(cell_, 0, fully_connected="high")
-    
-    if len(cell_contour)>1:
-        cell_contour = np.vstack(cell_contour)
-        x,y = helpers.equidistance(cell_contour[:,0], cell_contour[:,1], n_points=n_points*2)
-    else:
-        x,y = helpers.equidistance(cell_contour[0][:,0], cell_contour[0][:,1], n_points=n_points*2)
 
-    cell_contour = np.array([[x[i], y[i]] for i in range(n_points*2)])
+    if len(cell_contour) > 1:
+        cell_contour = np.vstack(cell_contour)
+        x, y = helpers.equidistance(
+            cell_contour[:, 0], cell_contour[:, 1], n_points=n_points * 2
+        )
+    else:
+        x, y = helpers.equidistance(
+            cell_contour[0][:, 0], cell_contour[0][:, 1], n_points=n_points * 2
+        )
+
+    cell_contour = np.array([[x[i], y[i]] for i in range(n_points * 2)])
 
     if border_points:
         (x_max, y_max) = cell.shape
-        border_anchors = [[0,0],[x_max//2,0],[x_max,0],[0,y_max//2],[0,y_max],[x_max//2,y_max],[x_max,y_max//2],[x_max,y_max]]
-        landmarks = np.vstack([np.array(nu_centroid),
-                        helpers.realign_contour_startpoint(nu_contour),
-                        helpers.realign_contour_startpoint(cell_contour), border_anchors])
+        border_anchors = [
+            [0, 0],
+            [x_max // 2, 0],
+            [x_max, 0],
+            [0, y_max // 2],
+            [0, y_max],
+            [x_max // 2, y_max],
+            [x_max, y_max // 2],
+            [x_max, y_max],
+        ]
+        landmarks = np.vstack(
+            [
+                np.array(nu_centroid),
+                helpers.realign_contour_startpoint(nu_contour),
+                helpers.realign_contour_startpoint(cell_contour),
+                border_anchors,
+            ]
+        )
     else:
-        landmarks = np.vstack([np.array(nu_centroid),
-                        helpers.realign_contour_startpoint(nu_contour),
-                        helpers.realign_contour_startpoint(cell_contour)])
+        landmarks = np.vstack(
+            [
+                np.array(nu_centroid),
+                helpers.realign_contour_startpoint(nu_contour),
+                helpers.realign_contour_startpoint(cell_contour),
+            ]
+        )
     return landmarks
+
 
 def warp_image(pts_from, pts_to, img):
     tps_f = tps.ThinPlateSpline(alpha=0.1)  # 0 Regularization
     tps_f.fit(pts_to, pts_from)
-    x,y = img.shape
-    #x, y = np.mgrid[x_min:x_max:x_steps*1j, y_min:y_max:y_steps*1j]
-    t_grid = np.indices((x,y), dtype=np.float64).transpose(1, 2, 0)
-    #print(img.shape, t_grid.shape, t_grid.reshape(-1, 2).shape)
+    x, y = img.shape
+    # x, y = np.mgrid[x_min:x_max:x_steps*1j, y_min:y_max:y_steps*1j]
+    t_grid = np.indices((x, y), dtype=np.float64).transpose(1, 2, 0)
+    # print(img.shape, t_grid.shape, t_grid.reshape(-1, 2).shape)
     from_grid = tps_f.transform(t_grid.reshape(-1, 2)).reshape(x, y, 2)
-    #print(from_grid.shape, from_grid.transpose(2, 0, 1).shape)
+    # print(from_grid.shape, from_grid.transpose(2, 0, 1).shape)
     warped = map_coordinates(img, from_grid.transpose(2, 0, 1))
     return warped

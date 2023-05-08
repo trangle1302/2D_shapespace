@@ -13,28 +13,28 @@ import argparse
 import imageio
 
 LABEL_NAMES = {
-  0: 'Nucleoplasm',
-  1: 'Nuclear membrane',
-  2: 'Nucleoli',
-  3: 'Nucleoli fibrillar center',
-  4: 'Nuclear speckles',
-  5: 'Nuclear bodies',
-  6: 'Endoplasmic reticulum',
-  7: 'Golgi apparatus',
-  8: 'Intermediate filaments',
-  9: 'Actin filaments',
-  10: 'Microtubules',
-  11: 'Mitotic spindle',
-  12: 'Centrosome',
-  13: 'Plasma membrane',
-  14: 'Mitochondria',
-  15: 'Aggresome',
-  16: 'Cytosol',
-  17: 'Vesicles and punctate cytosolic patterns',
-  18: 'Negative',
+    0: "Nucleoplasm",
+    1: "Nuclear membrane",
+    2: "Nucleoli",
+    3: "Nucleoli fibrillar center",
+    4: "Nuclear speckles",
+    5: "Nuclear bodies",
+    6: "Endoplasmic reticulum",
+    7: "Golgi apparatus",
+    8: "Intermediate filaments",
+    9: "Actin filaments",
+    10: "Microtubules",
+    11: "Mitotic spindle",
+    12: "Centrosome",
+    13: "Plasma membrane",
+    14: "Mitochondria",
+    15: "Aggresome",
+    16: "Cytosol",
+    17: "Vesicles and punctate cytosolic patterns",
+    18: "Negative",
 }
 
-all_locations = dict((v, k) for k,v in LABEL_NAMES.items())
+all_locations = dict((v, k) for k, v in LABEL_NAMES.items())
 #%% Coefficients
 fun = "fft"
 if fun == "fft":
@@ -45,7 +45,9 @@ elif fun == "wavelet":
     inverse_func = coefs.inverse_wavelet
 
 d = Path("C:/Users/trang.le/Desktop/2D_shape_space/U2OS")
-meta = pd.read_csv("C:/Users/trang.le/Desktop/annotation-tool//final_labels_allversions.csv")
+meta = pd.read_csv(
+    "C:/Users/trang.le/Desktop/annotation-tool//final_labels_allversions.csv"
+)
 
 imlist = [i for i in d.glob("*.npy")]
 fourier_df = dict()
@@ -54,11 +56,11 @@ for n_coef in [128]:
     fourier_df[f"fourier_ccentroid_fft_{n_coef}_fixed"] = df_
     df_.index = names_
 
-df_.columns = [f'coef{i}' for i in range(len(df_.columns))]
-save_path = os.path.join(d.cwd(),"fft",f"fourier_ccentroid_fft_{n_coef}.txt")
+df_.columns = [f"coef{i}" for i in range(len(df_.columns))]
+save_path = os.path.join(d.cwd(), "fft", f"fourier_ccentroid_fft_{n_coef}.txt")
 df_.to_csv(save_path)
 df = pd.read_csv(save_path, index_col=0)
-df = df.applymap(lambda s: complex(s.replace('i', 'j'))) 
+df = df.applymap(lambda s: complex(s.replace("i", "j")))
 """
 compare = (df_ == df)      # Dataframe of True/False
 compare.all()              # By column, True if all values are equal
@@ -69,8 +71,8 @@ df.where(~compare).dropna(how='all')
 """
 #%% PCA and shape modes
 n_coef = 128
-#df = fourier_df[f"fourier_ccentroid_fft_{n_coef}_fixed"].copy()
-#df = df[df.index.isin(mappings.Link)]
+# df = fourier_df[f"fourier_ccentroid_fft_{n_coef}_fixed"].copy()
+# df = df[df.index.isin(mappings.Link)]
 use_complex = False
 if fun == "fft":
     if not use_complex:
@@ -120,10 +122,12 @@ i = 0
 for link, row in df_inv.iterrows():
     i = i + 1
     shape_path = Path(link).with_suffix(".png")
-    protein_path = Path(str(link).replace(".npy","_protein.png"))
-    ori_fft = df.loc[df.index== link].values[0]
+    protein_path = Path(str(link).replace(".npy", "_protein.png"))
+    ori_fft = df.loc[df.index == link].values[0]
     pca_fft = row
-    save_path = Path("C:/Users/trang.le/Desktop/2D_shape_space/interpolations_plots").joinpath(shape_path.name)
+    save_path = Path(
+        "C:/Users/trang.le/Desktop/2D_shape_space/interpolations_plots"
+    ).joinpath(shape_path.name)
     """
     plotting.plot_interpolation2(shape_path = shape_path, 
                                  pro_path = protein_path,
@@ -134,16 +138,18 @@ for link, row in df_inv.iterrows():
                                  n_coef = n_coef, 
                                  inverse_func = inverse_func)
     """
-    plotting.plot_interpolation3(shape_path = shape_path, 
-                                 pro_path = protein_path,
-                                 shift_dict = shifts[Path(link)],
-                                 save_path = save_path,
-                                 ori_fft = ori_fft, 
-                                 reduced_fft = pca_fft, 
-                                 n_coef = n_coef, 
-                                 inverse_func = inverse_func)
-    
-    #if i > 508:
+    plotting.plot_interpolation3(
+        shape_path=shape_path,
+        pro_path=protein_path,
+        shift_dict=shifts[Path(link)],
+        save_path=save_path,
+        ori_fft=ori_fft,
+        reduced_fft=pca_fft,
+        n_coef=n_coef,
+        inverse_func=inverse_func,
+    )
+
+    # if i > 508:
     #    breakme
 
 #%%
@@ -180,14 +186,20 @@ ix_c, iy_c = inverse_func(fcoef_c[0:n_coef], fcoef_c[n_coef:])
 plt.plot(ix_n.real, iy_n.real)
 plt.plot(ix_c.real, iy_c.real)
 plt.axis("scaled")
-x_,y_ = get_coordinates(np.concatenate([ix_n.real, iy_n.real]), np.concatenate([ix_c.real, iy_c.real]), [0,0], n_isos = [10,10], plot=True)
+x_, y_ = get_coordinates(
+    np.concatenate([ix_n.real, iy_n.real]),
+    np.concatenate([ix_c.real, iy_c.real]),
+    [0, 0],
+    n_isos=[10, 10],
+    plot=True,
+)
 
 for i in range(10):
     fig, ax = plt.subplots()
-    for i,(xi,yi,intensities) in enumerate(zip(x_,y_,intensities__pc1[i])):
-        ax.scatter(xi, yi,c=intensities)
+    for i, (xi, yi, intensities) in enumerate(zip(x_, y_, intensities__pc1[i])):
+        ax.scatter(xi, yi, c=intensities)
     ax.axis("scaled")
-    ax.set_facecolor('#541352FF')
+    ax.set_facecolor("#541352FF")
 #%%
 pm = plotting.PlotShapeModes(
     pca,
@@ -297,57 +309,64 @@ plt.title('griddata test (%d points)' % npts)
 plt.show()
 
 """
+
+
 def rreplace(s, old, new, occurrence):
     li = s.rsplit(old, occurrence)
     return new.join(li)
+
 
 #%%
 base_dir = "C:/Users/trang.le/Desktop/annotation-tool"
 df_test = pd.read_csv(base_dir + "/final_labels_allversions_current_withv6.csv")
 labels = pd.read_csv(base_dir + "/HPA-Challenge-2020-all/data_for_Kaggle/labels.csv")
-labels["Image_ID"] = [l.split("_")[0] for l in labels.ID] 
-labels["cell_ID"] = [str(int(l.split("_")[1]) - 1) for l in labels.ID] 
+labels["Image_ID"] = [l.split("_")[0] for l in labels.ID]
+labels["cell_ID"] = [str(int(l.split("_")[1]) - 1) for l in labels.ID]
 mappings = pd.read_csv(base_dir + "/HPA-Challenge-2020-all/mappings.csv")
-labels = pd.merge(labels, mappings, on='Image_ID')
-labels["cell_id"] = labels["HPA_ID"] + '/' +  labels["cell_ID"]
-meta = pd.merge(labels, df_test, on = 'cell_id')
+labels = pd.merge(labels, mappings, on="Image_ID")
+labels["cell_id"] = labels["HPA_ID"] + "/" + labels["cell_ID"]
+meta = pd.merge(labels, df_test, on="cell_id")
 meta["HPA_ID"] = [os.path.basename(f) for f in meta.HPA_path]
-ifimages = pd.read_csv("C:/Users/trang.le/Desktop/annotation-tool/HPA-Challenge-2020-all/IF-image_v21.csv")
+ifimages = pd.read_csv(
+    "C:/Users/trang.le/Desktop/annotation-tool/HPA-Challenge-2020-all/IF-image_v21.csv"
+)
 ifimages["HPA_ID"] = [os.path.basename(f)[:-1] for f in ifimages.filename]
-meta = meta.merge(ifimages, how="left", on = "HPA_ID")
+meta = meta.merge(ifimages, how="left", on="HPA_ID")
 
-mappings = pd.DataFrame(df.index, columns=['Link'])
+mappings = pd.DataFrame(df.index, columns=["Link"])
 mappings["basename"] = [l.stem for l in mappings.Link]
-mappings["image_id"] = [n.rsplit("_",1)[0] for n in mappings.basename]
-mappings["cell_id"] = [n.rsplit("_",1)[1] for n in mappings.basename]
+mappings["image_id"] = [n.rsplit("_", 1)[0] for n in mappings.basename]
+mappings["cell_id"] = [n.rsplit("_", 1)[1] for n in mappings.basename]
 mappings["cell_id"] = mappings.image_id + "/" + mappings.cell_id
-mappings = mappings.merge(meta, how='inner', on=["image_id","cell_id"])
-location_counts = get_location_counts(list(mappings.sc_locations_reindex), all_locations)
+mappings = mappings.merge(meta, how="inner", on=["image_id", "cell_id"])
+location_counts = get_location_counts(
+    list(mappings.sc_locations_reindex), all_locations
+)
 
 Gene = "P2RX1"
 df_sl_Label = mappings[mappings.gene_names == Gene]
 df_sl_Label.WindowLink = [Path(l) for l in df_sl_Label.Link]
 
-LABELNAME = 'Nucleoplasm'
+LABELNAME = "Nucleoplasm"
 LABELINDEX = str(all_locations[LABELNAME])
 
 for PC in pc_keep:
-#df_sl_Label = mappings[mappings.sc_locations_reindex == LABELINDEX]
+    # df_sl_Label = mappings[mappings.sc_locations_reindex == LABELINDEX]
     pc1, pc1l = pm.assign_cells(PC)
-    
-    #pc1l_Nucleoplasm = [l for l in ls for ls in pc1l if l in df_sl_Nucleoplasm.Link]
-    
-    shape = (21,256)
+
+    # pc1l_Nucleoplasm = [l for l in ls for ls in pc1l if l in df_sl_Nucleoplasm.Link]
+
+    shape = (21, 256)
     intensities__pc1 = []
     counts = []
     for ls in pc1l:
         intensities = []
-        i= 0
+        i = 0
         for l in ls:
             if l in list(df_sl_Label.Link):
-                #print(l)
-                protein_path = Path(str(l).replace(".npy","_protein.png"))
-                ori_fft = df.loc[df.index== l].values[0]
+                # print(l)
+                protein_path = Path(str(l).replace(".npy", "_protein.png"))
+                ori_fft = df.loc[df.index == l].values[0]
                 """
                 fig, ax = plt.subplots()
                 p = rotate(imread(protein_path), shifts[l]["theta"])
@@ -357,62 +376,69 @@ for PC in pc_keep:
                 plt.imshow(p)    
                 """
                 intensity = plotting.get_protein_intensity(
-                    pro_path = protein_path, 
-                    shift_dict = shifts[l],
-                    ori_fft = ori_fft, 
-                    n_coef = n_coef, 
-                    inverse_func = inverse_func
-                    )
-                
-                #fig, ax = plt.subplots()
-                #plt.imshow(intensity)
+                    pro_path=protein_path,
+                    shift_dict=shifts[l],
+                    ori_fft=ori_fft,
+                    n_coef=n_coef,
+                    inverse_func=inverse_func,
+                )
+
+                # fig, ax = plt.subplots()
+                # plt.imshow(intensity)
                 intensities += [intensity.flatten()]
-                i +=1
+                i += 1
         counts += [i]
         if len(intensities) == 0:
-            print('No cell sample at this bin for Nucleoplasm')
+            print("No cell sample at this bin for Nucleoplasm")
             intensities__pc1 += [np.zeros(shape)]
         else:
             print(len(intensities))
-            intensities__pc1 += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
-    
-    pm.protein_intensities = intensities__pc1/np.array(intensities__pc1).max()
+            intensities__pc1 += [
+                np.nanmean(intensities, axis=0).reshape(intensity.shape)
+            ]
+
+    pm.protein_intensities = intensities__pc1 / np.array(intensities__pc1).max()
     pm.plot_protein_through_shape_variation_gif(PC)
 
 
 from scipy.ndimage import rotate
 from skimage import exposure
 from imageio import imread
-encoded_image_dir = 'C:/Users/trang.le/Desktop/annotation-tool/HPA-Challenge-2020-all/HPA_Kaggle_Challenge_2020/data_for_Kaggle/data'
+
+encoded_image_dir = "C:/Users/trang.le/Desktop/annotation-tool/HPA-Challenge-2020-all/HPA_Kaggle_Challenge_2020/data_for_Kaggle/data"
 
 for ls in pc1l:
     ls = pc1l[8]
     for l in ls:
         if l in list(df_sl_Label.Link):
-            #print(l.name)
-            encoded_image_id= mappings[mappings.image_id==l.name.rsplit('_',1)[0]].Image_ID.values[0]
-            nu = imread(encoded_image_dir +'/' + encoded_image_id + '_blue.png')
-            mt = imread(encoded_image_dir +'/' + encoded_image_id + '_red.png')
-            protein = imread(encoded_image_dir +'/' + encoded_image_id + '_green.png')
-            if mt.dtype == 'uint8':
+            # print(l.name)
+            encoded_image_id = mappings[
+                mappings.image_id == l.name.rsplit("_", 1)[0]
+            ].Image_ID.values[0]
+            nu = imread(encoded_image_dir + "/" + encoded_image_id + "_blue.png")
+            mt = imread(encoded_image_dir + "/" + encoded_image_id + "_red.png")
+            protein = imread(encoded_image_dir + "/" + encoded_image_id + "_green.png")
+            if mt.dtype == "uint8":
                 cell = np.dstack([mt, protein, nu])
             else:
-                cell = (np.dstack([mt, protein, nu])/255).astype('uint8')
-            protein_path = Path(str(l).replace(".npy","_protein.png"))
-            fig, ax = plt.subplots(1,3)
+                cell = (np.dstack([mt, protein, nu]) / 255).astype("uint8")
+            protein_path = Path(str(l).replace(".npy", "_protein.png"))
+            fig, ax = plt.subplots(1, 3)
             p = rotate(imread(protein_path), shifts[l]["theta"])
-            
-            mask = rotate(imread(Path(str(l).replace(".npy",".png"))), shifts[l]["theta"])
-            #thresh = threshold_mean(p)
-            #p = exposure.equalize_hist(p)
-            #p[p<thresh] = 0
-            ax[0].imshow(cell) 
+
+            mask = rotate(
+                imread(Path(str(l).replace(".npy", ".png"))), shifts[l]["theta"]
+            )
+            # thresh = threshold_mean(p)
+            # p = exposure.equalize_hist(p)
+            # p[p<thresh] = 0
+            ax[0].imshow(cell)
             ax[0].set_axis_off()
-            ax[1].imshow(p) 
+            ax[1].imshow(p)
             ax[1].set_axis_off()
-            ax[2].imshow(mask) 
+            ax[2].imshow(mask)
             ax[2].set_axis_off()
-    
+
 """
 for i, row in df_sl_Label.iterrows():
     l = row.Link
@@ -420,7 +446,7 @@ for i, row in df_sl_Label.iterrows():
     fig, ax = plt.subplots()
     plt.imshow()    
 """
-# std normalization 
+# std normalization
 # keep 1st - 99th percentile, rm outliers
 # check the histogram distribution of cells in each PC
 # For each bin (0.5 std step), average the protein representations of all cells in the same bin
@@ -431,21 +457,21 @@ for i, row in df_sl_Label.iterrows():
 for org in all_locations.keys():
     LABELINDEX = str(all_locations[org])
     df_sl_Label = mappings[mappings.sc_locations_reindex == LABELINDEX]
-    
+
     for PC in pc_keep:
         pc1, pc1l = pm.assign_cells(PC)
-                
-        shape = (21,256)
+
+        shape = (21, 256)
         intensities__pc1 = []
         counts = []
         for ls in pc1l:
             intensities = []
-            i= 0
+            i = 0
             for l in ls:
                 if l in list(df_sl_Label.Link):
-                    #print(l)
-                    protein_path = Path(str(l).replace(".npy","_protein.png"))
-                    ori_fft = df.loc[df.index== l].values[0]
+                    # print(l)
+                    protein_path = Path(str(l).replace(".npy", "_protein.png"))
+                    ori_fft = df.loc[df.index == l].values[0]
                     """
                     fig, ax = plt.subplots()
                     p = rotate(imread(protein_path), shifts[l]["theta"])
@@ -455,73 +481,104 @@ for org in all_locations.keys():
                     plt.imshow(p)    
                     """
                     intensity = plotting.get_protein_intensity(
-                        pro_path = protein_path, 
-                        shift_dict = shifts[l],
-                        ori_fft = ori_fft, 
-                        n_coef = n_coef, 
-                        inverse_func = inverse_func
-                        )
-                    
-                    #fig, ax = plt.subplots()
-                    #plt.imshow(intensity)
+                        pro_path=protein_path,
+                        shift_dict=shifts[l],
+                        ori_fft=ori_fft,
+                        n_coef=n_coef,
+                        inverse_func=inverse_func,
+                    )
+
+                    # fig, ax = plt.subplots()
+                    # plt.imshow(intensity)
                     intensities += [intensity.flatten()]
-                    i +=1
+                    i += 1
             counts += [i]
             if len(intensities) == 0:
-                print('No cell sample at this bin for Nucleoplasm')
+                print("No cell sample at this bin for Nucleoplasm")
                 intensities__pc1 += [np.zeros(shape)]
             else:
                 print(len(intensities))
-                intensities__pc1 += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
-        
-        pm.protein_intensities = intensities__pc1/np.array(intensities__pc1).max()
+                intensities__pc1 += [
+                    np.nanmean(intensities, axis=0).reshape(intensity.shape)
+                ]
+
+        pm.protein_intensities = intensities__pc1 / np.array(intensities__pc1).max()
         pm.plot_protein_through_shape_variation_gif(PC, title=org)
 
-#%% Average intensity on average cells 
+#%% Average intensity on average cells
 # plot on avg cells
 
-x_,y_ = get_coordinates(np.concatenate([ix_n.real, iy_n.real]), np.concatenate([ix_c.real, iy_c.real]), [0,0], n_isos = [10,10], plot=True)
+x_, y_ = get_coordinates(
+    np.concatenate([ix_n.real, iy_n.real]),
+    np.concatenate([ix_c.real, iy_c.real]),
+    [0, 0],
+    n_isos=[10, 10],
+    plot=True,
+)
 norm = plt.Normalize(vmin=0, vmax=1)
 
 for org in list(all_locations.keys())[:-1]:
     LABELINDEX = str(all_locations[org])
     df_sl_Label = mappings[mappings.sc_locations_reindex == LABELINDEX]
-    print(f'{org}, # of cells: {df_sl_Label.shape[0]}')
+    print(f"{org}, # of cells: {df_sl_Label.shape[0]}")
     intensities = []
     for l in df_sl_Label.Link:
-        protein_path = Path(str(l).replace(".npy","_protein.png"))
-        ori_fft = df.loc[df.index== l].values[0]
+        protein_path = Path(str(l).replace(".npy", "_protein.png"))
+        ori_fft = df.loc[df.index == l].values[0]
         intensity = plotting.get_protein_intensity(
-            pro_path = protein_path, 
-            shift_dict = shifts[l],
-            ori_fft = ori_fft, 
-            n_coef = n_coef, 
-            inverse_func = inverse_func
-            )
-        
+            pro_path=protein_path,
+            shift_dict=shifts[l],
+            ori_fft=ori_fft,
+            n_coef=n_coef,
+            inverse_func=inverse_func,
+        )
+
         intensities += [intensity.flatten()]
     tmp = np.nanmean(intensities, axis=0).reshape(intensity.shape)
-    
-    
-    org_intensities = tmp/tmp.max()
+
+    org_intensities = tmp / tmp.max()
     fig, ax = plt.subplots()
-    for (xi,yi,intensities_layer) in zip(x_,y_,org_intensities):
+    for (xi, yi, intensities_layer) in zip(x_, y_, org_intensities):
         ax.scatter(xi, yi, c=intensities_layer, norm=norm)
     ax.axis("scaled")
-    ax.set_facecolor('#541352FF')
+    ax.set_facecolor("#541352FF")
     ax.axis("off")
-    plt.savefig(os.path.join(d.cwd(), f"shapespace_plots/U2OS_{org}.png"), bbox_inches='tight')
-    
-    
+    plt.savefig(
+        os.path.join(d.cwd(), f"shapespace_plots/U2OS_{org}.png"), bbox_inches="tight"
+    )
+
+
 #%%
 
 COLORS = [
-    '#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5',
-    '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50',
-    '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800',
-    '#ff5722', '#795548', '#9e9e9e', '#607d8b', '#dddddd',
-    '#212121', '#ff9e80', '#ff6d00', '#ffff00', '#76ff03',
-    '#00e676', '#64ffda', '#18ffff',
+    "#f44336",
+    "#e91e63",
+    "#9c27b0",
+    "#673ab7",
+    "#3f51b5",
+    "#2196f3",
+    "#03a9f4",
+    "#00bcd4",
+    "#009688",
+    "#4caf50",
+    "#8bc34a",
+    "#cddc39",
+    "#ffeb3b",
+    "#ffc107",
+    "#ff9800",
+    "#ff5722",
+    "#795548",
+    "#9e9e9e",
+    "#607d8b",
+    "#dddddd",
+    "#212121",
+    "#ff9e80",
+    "#ff6d00",
+    "#ffff00",
+    "#76ff03",
+    "#00e676",
+    "#64ffda",
+    "#18ffff",
 ]
 
 for org in list(all_locations.keys())[:-1]:
