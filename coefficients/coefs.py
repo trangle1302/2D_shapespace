@@ -1,10 +1,13 @@
 import numpy as np
 import pywt
 import sys
-sys.path.append("..") 
+
+sys.path.append("..")
 from utils.helpers import equidistance, find_nearest, find_centroid
 import matplotlib.pyplot as plt
-#import pyefd
+
+# import pyefd
+
 
 def dft_to_mag_phase(dft):
     """ Convert FFT/DFT coefficients to magnitude and phase representation.
@@ -18,6 +21,7 @@ def dft_to_mag_phase(dft):
     phase = np.angle(dft)
     return mag, phase
 
+
 def mag_phase_to_dft(mag, phase):
     """ Convert magnitude and phase representations to FFT/DFT coefficients.
     Parameters:
@@ -28,6 +32,7 @@ def mag_phase_to_dft(mag, phase):
     """
     dft = mag * np.exp(1j * phase)
     return dft
+
 
 def forward_fft(x, y, n=64, hamming=False, repeat=False):
     """Fuction to convert coordinates to fft coefs
@@ -115,7 +120,9 @@ def fourier_coeffs(shape_coords, n=64, align=False, plot=False):
     x = np.array([p[0] for p in coords])
     y = np.array([p[1] for p in coords])
 
-    if align: #align=True only if helpers.realign_contour_startpoint not used in step before
+    if (
+        align
+    ):  # align=True only if helpers.realign_contour_startpoint not used in step before
         # aligning start point of contour
         centroid = find_centroid(coords)
         _, val = find_nearest(y[np.where(x > centroid[0])], centroid[1])
@@ -152,7 +159,7 @@ def fourier_coeffs(shape_coords, n=64, align=False, plot=False):
         ax[2].scatter(ix[0], iy[0], c="r")
         ax[2].axis("scaled")
         plt.tight_layout()
-    
+
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
 
     return coeffs, error
@@ -201,21 +208,22 @@ def wavelet_coefs(shape, n=64, plot=False):
     ix, iy = equidistance(ix_, iy_, len(coords))
 
     if plot:
-        fig, ax = plt.subplots(1,3, figsize=(12,4))
-        #ax[0].imshow(shape)
-        ax[0].plot(x,y)
-        ax[0].scatter(x[0], y[0], color='r')
-        ax[0].axis('scaled')
-        ax[1].plot(x, label = "x coord")
-        ax[1].plot(y, label = "y coord")
+        fig, ax = plt.subplots(1, 3, figsize=(12, 4))
+        # ax[0].imshow(shape)
+        ax[0].plot(x, y)
+        ax[0].scatter(x[0], y[0], color="r")
+        ax[0].axis("scaled")
+        ax[1].plot(x, label="x coord")
+        ax[1].plot(y, label="y coord")
         ax[1].legend()
-        ax[2].plot(ix,iy)
-        ax[2].scatter(ix[0], iy[0], color='r')
-        ax[2].axis('scaled')
+        ax[2].plot(ix, iy)
+        ax[2].scatter(ix[0], iy[0], color="r")
+        ax[2].axis("scaled")
         plt.tight_layout()
-    
+
     error = (np.average(abs(x - ix)) + np.average(abs(y - iy))) / 2
     return coeffs, error
+
 
 def forward_efd(xy, n=64):
     """
@@ -257,6 +265,7 @@ def forward_efd(xy, n=64):
     a0, c0 = pyefd.calculate_dc_coefficients(xy)
     return coeffs, a0, c0
 
+
 def backward_efd(a0_c0_coeffs, n_points=64):
     """
     Reconstruct shape based on elliptic fourier descriptors
@@ -276,13 +285,14 @@ def backward_efd(a0_c0_coeffs, n_points=64):
         A list of x,y coordinates for the reconstructed contour.
 
     """
-    n_terms = len(a0_c0_coeffs[2:])//4
-    #print(len(a0_c0_coeffs), n_terms)
-    coeffs = np.array(a0_c0_coeffs[2:]).reshape((n_terms,4))
+    n_terms = len(a0_c0_coeffs[2:]) // 4
+    # print(len(a0_c0_coeffs), n_terms)
+    coeffs = np.array(a0_c0_coeffs[2:]).reshape((n_terms, 4))
     a0 = a0_c0_coeffs[0]
     c0 = a0_c0_coeffs[1]
-    xy_t = pyefd.reconstruct_contour(coeffs, locus=(a0,c0), num_points = n_points)
-    return xy_t[:,0], xy_t[:,1]
+    xy_t = pyefd.reconstruct_contour(coeffs, locus=(a0, c0), num_points=n_points)
+    return xy_t[:, 0], xy_t[:, 1]
+
 
 def elliptical_fourier_coeffs(shape_coords, n=64, plot=False):
     coords = shape_coords
@@ -290,16 +300,16 @@ def elliptical_fourier_coeffs(shape_coords, n=64, plot=False):
 
     e_coefs, a0, c0 = forward_efd(coords, n=n)  # returns [n x 4], a0, c0
     coeffs = [a0] + [c0] + e_coefs.ravel().tolist()
-    #print(coeffs[:4])
+    # print(coeffs[:4])
     i_coords = backward_efd(coeffs, n_points=len(shape_coords))
     if plot:
         fig, ax = plt.subplots(1, 3, figsize=(6, 3))
-        ax[0].plot(coords[:,0], coords[:,1], c= "b", label="original")
+        ax[0].plot(coords[:, 0], coords[:, 1], c="b", label="original")
         ax[0].axis("scaled")
-        ax[2].scatter(coords[0,0], coords[0,1], c="r")
+        ax[2].scatter(coords[0, 0], coords[0, 1], c="r")
         ax[1].legend()
-        ax[2].plot(i_coords[:,0], i_coords[:,1], c= "orange", label="reconstructed")
-        ax[2].scatter(i_coords[0,0], i_coords[0,1], c="r")
+        ax[2].plot(i_coords[:, 0], i_coords[:, 1], c="orange", label="reconstructed")
+        ax[2].scatter(i_coords[0, 0], i_coords[0, 1], c="r")
         ax[2].axis("scaled")
         plt.tight_layout()
 
