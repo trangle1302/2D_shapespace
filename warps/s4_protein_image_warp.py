@@ -114,11 +114,11 @@ def main():
             pts_convex = image_warp.find_landmarks(convex_hull_nu, convex_hull_cell, n_points=32, border_points = False)
             """
             pts_convex = (pts_avg + pts_ori) / 2
-            # TODO: how to preserve spotty pattern?
             warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
             warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
             imwrite(f"{save_dir}/{img_id}.png", (warped*255).astype(np.uint8))
             #print(warped.max(), warped.dtype)
+            # check 5985_F12_s2_6 (S-BIAD34)
             fig, ax = plt.subplots(1,5, figsize=(15,30), sharex=True, sharey=True)
             ax[0].imshow(nu_, alpha = 0.3)
             ax[0].imshow(cell_, alpha = 0.3)
