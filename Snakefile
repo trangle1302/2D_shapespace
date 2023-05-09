@@ -1,9 +1,11 @@
 import configs.config_callisto as cfg
+import glob
 
 # Define the target rule that executes the entire pipeline
 rule all:
     input:
-        f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}/cells_assigned_to_pc_bins.json"
+        f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}/cells_assigned_to_pc_bins.json",
+        f"{cfg.PROJECT_DIR}/morphed_protein_avg/PC1/Microtubules_bin6.png"
 
 rule coefficient:
     input:
@@ -43,5 +45,18 @@ rule cell_nu_ratio:
         """
         cd analysis
         python cell_nucleus_ratio.py
+        cd ..
+        """
+
+rule organelle:
+    input:
+        f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}/cells_assigned_to_pc_bins.json"
+    output:
+        [f"{cfg.PROJECT_DIR}/morphed_protein_avg/PC{pc_}/{org}_bin{b}.png" for b in range(6) for org in cfg.ORGANELLES for pc in range(1,7)]
+    shell:
+        """
+        cd warps
+        python generate_runs.py
+        bash run.sh
         cd ..
         """
