@@ -25,8 +25,9 @@ def check_nucleus_cell_size(image_path, save_dir):
 
 def main():
     s = time.time()
-    mask_dir = "/data/2Dshapespace/S-BIAD34/cell_masks2"  # "/data/2Dshapespace/U-2_OS/cell_masks"
-    save_dir = "/data/2Dshapespace/S-BIAD34"  # "/data/2Dshapespace/U-2_OS/"
+    import configs.config_callisto as cfg
+    mask_dir = f"{cfg.PROJECT_DIR}/cell_masks"
+    save_dir = cfg.PROJECT_DIR
     imlist = glob.glob(f"{mask_dir}/*.npy")
     if len(imlist) == 0:
         imlist = glob.glob(f"{mask_dir}/*/*.npy")
