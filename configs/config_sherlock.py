@@ -62,6 +62,9 @@ COLORS_MAP = {
     "Cytosol": "Greys",
 }
 
+ORGANELLES = ["Nucleoplasm","Nucleoli","NucleoliFC","NuclearS","NuclearB","NuclearM",
+              "GolgiA", "IntermediateF","ActinF","Mitochondria",""
+              "Cytosol","PlasmaM","Microtubules"]
 
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
 CELL_LINE = "U-2 OS"

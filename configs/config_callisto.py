@@ -21,7 +21,6 @@ LABEL_TO_ALIAS = {
     19: "Multi-Location",
 }
 
-ALL_LABELS = []
 COLORS = [
     "#f44336",
     "#e91e63",
@@ -62,6 +61,9 @@ COLORS_MAP = {
     "Cytosol": "Greys",
 }
 
+ORGANELLES = ["Nucleoplasm","Nucleoli","NucleoliFC","NuclearS","NuclearB","NuclearM",
+              "GolgiA", "IntermediateF","ActinF","Mitochondria",""
+              "Cytosol","PlasmaM","Microtubules"]
 
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
 CELL_LINE = "RT4"  # "U-2 OS"
