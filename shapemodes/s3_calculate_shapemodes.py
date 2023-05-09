@@ -1,6 +1,5 @@
 import os
 import sys
-
 sys.path.append("..")
 from shapemodes import dimreduction
 from coefficients import coefs
@@ -74,41 +73,34 @@ def get_memory():
     return free_memory
 
 
-def main(cell_line="U-2 OS"):
-    n_coef = 128
-    n_samples = -1  # 5000
-    n_cv = 1
-    mode = "cell_nuclei"  # "nuclei" #"cell_nuclei"
-    alignment = "fft_cell_major_axis_polarized"  # "fft_nuclei_major_axis"#"fft_cell_major_axis_polarized"
-    # project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
-    project_dir = f"/scratch/groups/emmalu/2Dshapespace/{cell_line.replace(' ','_')}"  # "/data/2Dshapespace"
-    # log_dir = f"{project_dir}/{cell_line.replace(' ','_')}/logs"
-    fft_dir = f"{project_dir}/fftcoefs/{alignment}"
-    log_dir = f"{project_dir}/logs"
-    # fft_dir = f"{project_dir}/fftcoefs/{fun}"
-    fft_path = os.path.join(fft_dir, f"fftcoefs_{n_coef}.txt")
+def main():
+    import configs.config_callisto as cfg
+    
+    n_samples = cfg.N_SAMPLES
+    fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
+    log_dir = f"{cfg.PROJECT_DIR}/logs"
+    fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
+    n_coef = cfg.N_COEFS
+    n_samples = cfg.N_SAMPLES
+    alignment = "fft_cell_major_axis_polarized"
 
-    protein_dir = Path(
-        f"{project_dir}/cell_masks"
-    )  # Path(f"/data/2Dshapespace/{cell_line.replace(' ','_')}/sampled_intensity")
-    mappings = pd.read_csv(
-        "/scratch/groups/emmalu//sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
-    )
-    mappings = mappings[mappings["atlas_name"] == cell_line]
+    protein_dir = f"{cfg.PROJECT_DIR}/cell_masks"
+    mappings = pd.read_csv(cfg.META_PATH)
+    mappings = mappings[mappings["atlas_name"] == cfg.CELL_LINE]
     # print(mappings.target.value_counts())
-    print(mappings.shape, mappings.columns)
+    print("Mapping file all: ", mappings.shape, mappings.columns)
     id_with_intensity = glob.glob(f"{protein_dir}/*.png")
     mappings["Link"] = [
         f"{protein_dir}/{id.split('_',1)[1]}_protein.png" for id in mappings.id
     ]
     mappings = mappings[mappings.Link.isin(id_with_intensity)]
-    print(mappings.shape, mappings.target.value_counts())
-    print(mappings.Link[:3].values)
+    print("Mapping file filtered: ", mappings.shape, mappings.target.value_counts())
+    print("Example pattern match: ", mappings.Link[:3].values)
 
     with open(fft_path) as f:
         count = sum(1 for _ in f)
     print(f"Number of cells with fftcoefs = {count}")
-    for i in range(n_cv):
+    for i in range(cfg.N_CV):
         with open(fft_path, "r") as file:
             lines = dict()
             if n_samples == -1:
@@ -133,7 +125,7 @@ def main(cell_line="U-2 OS"):
                     # data_dict = {data_dict[0]:data_dict[1:]}
                     lines[data_[0]] = data_[1:]
 
-        cell_nu_ratio = pd.read_csv(f"{project_dir}/cell_nu_ratio.txt")
+        cell_nu_ratio = pd.read_csv(f"{cfg.PROJECT_DIR}/cell_nu_ratio.txt")
         cell_nu_ratio.columns = ["path", "name", "nu_area", "cell_area", "ratio"]
         rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].name.to_list()
         print(
@@ -158,13 +150,12 @@ def main(cell_line="U-2 OS"):
         if fun == "fft":
             df = df.applymap(lambda s: complex(s.replace("i", "j")))
 
-        if mode == "nuclei":
+        if cfg.MODE == "nuclei":
             df = df.iloc[:, (df.shape[1] // 2) :]
-        elif mode == "cell":
+        elif cfg.MODE == "cell":
             df = df.iloc[:, : (df.shape[1] // 2)]
-        print(cell_line, alignment, mode, df.shape)
 
-        shape_mode_path = f"{project_dir}/shapemode/{alignment}_{mode}"
+        shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
         if not os.path.isdir(shape_mode_path):
             os.makedirs(shape_mode_path)
 
@@ -225,9 +216,9 @@ def main(cell_line="U-2 OS"):
             fourier_algo=fun,
             inverse_func=inverse_func,
         )
-        if mode == "cell_nuclei":
+        if cfg.MODE == "cell_nuclei":
             pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
-        elif mode == "nuclei":
+        elif cfg.MODE == "nuclei":
             pm.plot_avg_nucleus(dark=False, save_dir=shape_mode_path)
 
         n_ = 10  # number of random cells to plot
@@ -265,7 +256,7 @@ def main(cell_line="U-2 OS"):
 if __name__ == "__main__":
     memory_limit()  # Limitates maximun memory usage
     try:
-        main(cell_line="HEK 293")
+        main()
     except MemoryError:
         sys.stderr.write("\n\nERROR: Memory Exception\n")
         sys.exit(1)
