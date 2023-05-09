@@ -1089,6 +1089,12 @@ def plot_example_cells(
         fig.savefig(save_path, bbox_inches=None)
         plt.close()
 
+def plot_pc_density(first_pc, second_pc,save_path=None):    
+    #from scipy.stats import gaussian_kde
+    fig = plt.hist2d(first_pc, second_pc, bins=200)
+    if save_path != None:
+        fig.savefig(save_path, bbox_inches=None)
+        plt.close()
 
 def create_gif(image_paths, save_gif_path, duration=0.5):
     """
