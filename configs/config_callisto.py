@@ -68,8 +68,8 @@ CELL_LINE = "RT4"  # "U-2 OS"
 N_COEFS = 128
 N_SAMPLES = -1  # 5000
 N_CV = 1
-MODE = "cell_nuclei"  # "nuclei" #"cell_nuclei"
-ALIGNMENT = "fft_cell_major_axis_polarized"  # "fft_nuclei_major_axis" #"fft_cell_major_axis_polarized"
+MODE = "cell_nuclei"  # ["nuclei" #"cell_nuclei"]
+ALIGNMENT = "fft_cell_major_axis_polarized"  # ["fft_nuclei_major_axis","fft_cell_major_axis_polarized"]
 COEF_FUNC = "fft"
 
 # >>>>>>>>>>>>>>>>>>>>> COMPUTE RESOURCE + PACKAGE
