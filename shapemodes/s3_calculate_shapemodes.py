@@ -3,8 +3,7 @@ import sys
 sys.path.append("..")
 from shapemodes import dimreduction
 from coefficients import coefs
-from warps.parameterize import get_coordinates
-from utils import plotting, helpers
+from utils import plotting
 from sklearn.decomposition import PCA, IncrementalPCA
 from pathlib import Path
 import pandas as pd
@@ -12,50 +11,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils.helpers import get_location_counts
 import glob
-import multiprocessing
-from joblib import Parallel, delayed
 from tqdm import tqdm
 import random
-from ast import literal_eval
 import json
 import resource
-
-LABEL_TO_ALIAS = {
-    0: "Nucleoplasm",
-    1: "NuclearM",
-    2: "Nucleoli",
-    3: "NucleoliFC",
-    4: "NuclearS",
-    5: "NuclearB",
-    6: "EndoplasmicR",
-    7: "GolgiA",
-    8: "IntermediateF",
-    9: "ActinF",
-    10: "Microtubules",
-    11: "MitoticS",
-    12: "Centrosome",
-    13: "PlasmaM",
-    14: "Mitochondria",
-    15: "Aggresome",
-    16: "Cytosol",
-    17: "VesiclesPCP",
-    19: "Negative",
-    19: "Multi-Location",
-}
-
-all_locations = dict((v, k) for k, v in LABEL_TO_ALIAS.items())
-#%% Coefficients
-fun = "fft"
-if fun == "fft":
-    get_coef_fun = coefs.fourier_coeffs
-    inverse_func = coefs.inverse_fft
-elif fun == "wavelet":
-    get_coef_fun = coefs.wavelet_coefs
-    inverse_func = coefs.inverse_wavelet
-elif fun == "efd":
-    get_coef_fun = coefs.elliptical_fourier_coeffs
-    inverse_func = coefs.backward_efd
-
 
 def memory_limit():
     soft, hard = resource.getrlimit(resource.RLIMIT_AS)
@@ -117,7 +76,7 @@ def main():
                 if pos in specified_lines:
                     # print the required line number
                     data_ = l_num.strip().split(",")
-                    if fun == "efd":
+                    if cfg.COEF_FUNC == "efd":
                         if len(data_[1:]) != (n_coef * 4 + 2) * 2:
                             continue
                     elif len(data_[1:]) != n_coef * 4:
@@ -147,7 +106,7 @@ def main():
 
         df = pd.DataFrame(lines).transpose()
         print(df.index[0])
-        if fun == "fft":
+        if cfg.COEF_FUNC == "fft":
             df = df.applymap(lambda s: complex(s.replace("i", "j")))
 
         if cfg.MODE == "nuclei":
@@ -162,7 +121,9 @@ def main():
         n_col = df.shape[1]
         # df.iloc[:,n_col//2:] = df.iloc[:, n_col//2:].applymap(lambda s: s*4)
         use_complex = False
-        if fun == "fft":
+        if cfg.COEF_FUNC == "fft":
+            get_coef_fun = coefs.fourier_coeffs
+            inverse_func = coefs.inverse_fft
             if not use_complex:
                 df_ = pd.concat(
                     [
@@ -179,12 +140,16 @@ def main():
                 pca = dimreduction.ComplexPCA(n_components=df_.shape[1])
                 pca.fit(df_)
                 plotting.display_scree_plot(pca, save_dir=shape_mode_path)
-        elif fun == "wavelet":
+        elif cfg.COEF_FUNC == "wavelet":
+            get_coef_fun = coefs.wavelet_coefs
+            inverse_func = coefs.inverse_wavelet
             df_ = df
             pca = PCA(n_components=df_.shape[1])
             pca.fit(df_)
             plotting.display_scree_plot(pca, save_dir=shape_mode_path)
-        elif fun == "efd":
+        elif cfg.COEF_FUNC == "efd":
+            get_coef_fun = coefs.elliptical_fourier_coeffs
+            inverse_func = coefs.backward_efd
             df_ = df
             print(f"Number of samples {df_.shape[0]}, number of coefs {df_.shape[1]}")
             pca = PCA(n_components=df_.shape[1])
@@ -213,7 +178,7 @@ def main():
             pc_keep,
             scaler=None,
             complex_type=use_complex,
-            fourier_algo=fun,
+            fourier_algo=cfg.COEF_FUNC,
             inverse_func=inverse_func,
         )
         if cfg.MODE == "cell_nuclei":
@@ -242,13 +207,13 @@ def main():
                     ax[i, b_index].imshow(plt.imread(c.replace("/data/2Dshapespace","/scratch/users/tle1302/2Dshapespace").replace(".npy","_protein.png")))
             fig.savefig(f"{shape_mode_path}/{pc}_example_cells.png", bbox_inches=None)
             plt.close()
-            
+            """
             plotting.plot_example_cells(bin_links, 
                                         n_coef=n_coef, 
                                         cells_per_bin=5, 
                                         shape_coef_path=fft_path, 
                                         save_path=f"{shape_mode_path}/{pc}_example_cells.png")
-            """
+            
         with open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "w") as fp:
             json.dump(cells_assigned, fp)
 
