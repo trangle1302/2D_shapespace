@@ -1,6 +1,5 @@
 import os
 import sys
-
 sys.path.append("..")
 from warps.parameterize import get_coordinates
 from coefficients import alignment, coefs
@@ -13,28 +12,12 @@ from tqdm import tqdm
 import pickle
 import time
 
-
-fun = "fft"
-if fun == "fft":
-    get_coef_fun = coefs.fourier_coeffs
-    inverse_func = coefs.inverse_fft
-elif fun == "wavelet":
-    get_coef_fun = coefs.wavelet_coefs
-    inverse_func = coefs.inverse_wavelet
-elif fun == "efd":
-    get_coef_fun = coefs.elliptical_fourier_coeffs
-    inverse_func = coefs.backward_efd
-
-
-def calculate_fft_hpa(cell_line="U-2_OS"):
-    dataset = cell_line.replace(" ", "_")
-    mask_dir = f"/data/2Dshapespace/{dataset}/cell_masks"
-    save_path = Path(
-        f"/data/2Dshapespace/{dataset}/fftcoefs/fft_cell_major_axis_polarized"
-    )
+def calculate_fft_hpa(cfg, get_coef_fun):
+    mask_dir = f"{cfg.PROJECT_DIR}/cell_masks"
+    save_path = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
-    log_dir = f"/data/2Dshapespace/{dataset}/logs"
+    log_dir = f"{cfg.PROJECT_DIR}/logs"
 
     imlist = glob.glob(f"{mask_dir}/*.npy")
     imlist = [im for im in imlist if os.path.getsize(im) > 0]
@@ -49,7 +32,7 @@ def calculate_fft_hpa(cell_line="U-2_OS"):
             i,
             save_path,
             log_dir,
-            n_coef=128,
+            n_coef=cfg.N_COEFS,
             func=get_coef_fun,
             plot=np.random.choice([True, False], p=[0.001, 0.999]),
         )
@@ -59,13 +42,13 @@ def calculate_fft_hpa(cell_line="U-2_OS"):
         pickle.dump(processed_list, success_list)
 
 
-def calculate_fft_hpa_nu():
-    dataset = "U-2_OS"
-    mask_dir = f"/data/2Dshapespace/{dataset}/cell_masks"
-    save_path = Path(f"/data/2Dshapespace/{dataset}/fftcoefs/fft_nuclei_major_axis")
+def calculate_fft_hpa_nu(cfg, get_coef_fun):
+    dataset = cfg.CELL_LINE.replace(" ", "_")
+    mask_dir = f"{cfg.PROJECT_DIR}/cell_masks"
+    save_path = Path(f"/data/2Dshapespace/{dataset}/fftcoefs/{cfg.ALIGNMENT}")
     if not os.path.exists(save_path):
         os.makedirs(save_path)
-    log_dir = f"/data/2Dshapespace/{dataset}/logs"
+    log_dir = f"{cfg.PROJECT_DIR}/logs"
 
     imlist = glob.glob(f"{mask_dir}/*.npy")
     imlist = [im for im in imlist if os.path.getsize(im) > 0]
@@ -80,7 +63,7 @@ def calculate_fft_hpa_nu():
             i,
             save_path,
             log_dir,
-            n_coef=128,
+            n_coef=cfg.N_COEFS,
             func=get_coef_fun,
             plot=np.random.choice([True, False], p=[0.001, 0.999]),
         )
@@ -90,14 +73,12 @@ def calculate_fft_hpa_nu():
         pickle.dump(processed_list, success_list)
 
 
-def calculate_fft_ccd():
-    dataset = "S-BIAD34"
-    d = f"/data/2Dshapespace/{dataset}"
-    sc_mask_dir = f"{d}/cell_masks2"
-    save_path = f"{d}/fftcoefs/fft_cell_major_axis_polarized_tmp"
+def calculate_fft_ccd(cfg, get_coef_fun):
+    sc_mask_dir = f"{cfg.PROJECT_DIR}/cell_masks2"
+    save_path = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
-    log_dir = f"{d}/logs"
+    log_dir = f"{cfg.PROJECT_DIR}/logs"
     if True:
         abids = os.listdir(sc_mask_dir)
         imlist = [glob.glob(f"{sc_mask_dir}/{ab}/*.npy") for ab in abids]
@@ -105,7 +86,6 @@ def calculate_fft_ccd():
         imlist = [im for im in imlist if os.path.getsize(im) > 0]
     if False:
         import pandas as pd
-
         imlist = pd.read_csv(f"{d}/failed_img.csv").iloc[:, 0].values.tolist()
     num_cores = (
         4  # multiprocessing.cpu_count() - 10 # save 10 core for some other processes
@@ -117,7 +97,7 @@ def calculate_fft_ccd():
             i,
             save_path,
             log_dir,
-            n_coef=128,
+            n_coef=cfg.N_COEFS,
             func=get_coef_fun,
             plot=np.random.choice([True, False], p=[0.001, 0.999]),
         )
@@ -127,15 +107,13 @@ def calculate_fft_ccd():
         pickle.dump(processed_list, success_list)
 
 
-def calculate_fft_ccd_nu():
-    dataset = "S-BIAD34"
-    d = f"/data/2Dshapespace/{dataset}"
-    sc_mask_dir = f"{d}/cell_masks2"
+def calculate_fft_ccd_nu(cfg, get_coef_fun):
+    sc_mask_dir = f"{cfg.PROJECT_DIR}/cell_masks2"
 
-    save_path = f"{d}/fftcoefs/fft_nuclei_major_axis"
+    save_path = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
-    log_dir = f"{d}/logs"
+    log_dir = f"{cfg.PROJECT_DIR}/logs"
     if True:
         abids = os.listdir(sc_mask_dir)
         imlist = [glob.glob(f"{sc_mask_dir}/{ab}/*.npy") for ab in abids]
@@ -143,7 +121,6 @@ def calculate_fft_ccd_nu():
         imlist = [im for im in imlist if os.path.getsize(im) > 0]
     if False:
         import pandas as pd
-
         imlist = pd.read_csv(f"{d}/failed_img.csv").iloc[:, 0].values.tolist()
     num_cores = (
         4  # multiprocessing.cpu_count() - 10 # save 10 core for some other processes
@@ -169,8 +146,20 @@ if __name__ == "__main__":
     s_t = time.time()
     import configs.config_callisto as cfg
 
-    calculate_fft_hpa(cell_line=cfg.CELL_LINE)
-    # calculate_fft_hpa_nu()
-    # calculate_fft_ccd()
-    # calculate_fft_ccd_nu()
+    if cfg.COEF_FUNC == "fft":
+        get_coef_fun = coefs.fourier_coeffs
+        inverse_func = coefs.inverse_fft
+    elif cfg.COEF_FUNC == "wavelet":
+        get_coef_fun = coefs.wavelet_coefs
+        inverse_func = coefs.inverse_wavelet
+    elif cfg.COEF_FUNC == "efd":
+        get_coef_fun = coefs.elliptical_fourier_coeffs
+        inverse_func = coefs.backward_efd
+
+    if cfg.MODE == "cell_nuclei":
+        calculate_fft_hpa(cfg, get_coef_fun)
+        #calculate_fft_ccd(cfg, get_coef_fun)
+    elif cfg.MODE == "nuclei":
+        calculate_fft_hpa_nu(cfg, get_coef_fun)
+        #calculate_fft_ccd_nu(cfg, get_coef_fun)
     print(f"Done in {np.round((time.time()-s_t)/3600,2)} h.")
