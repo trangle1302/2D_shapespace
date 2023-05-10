@@ -169,12 +169,12 @@ def main():
         df_sl = mappings[mappings.cell_idx.isin(ls)]
         df_sl = df_sl[df_sl.location.isin(LABEL_TO_ALIAS.values())] # rm Negative, Multi-loc
         
-        if not os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"): #for org in ["Nucleoplasm","Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS","ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
+        if True:#not os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"): #for org in ["Nucleoplasm","Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS","ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]: 
             # 1 empty avg_img for each organelle_pc_bin combination 
             avg_img = np.zeros((shape_x+2, shape_y+2), dtype='float64')
             if not os.path.isdir(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
-            ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
+            ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
             #if os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"):
             #    continue
             ls_ = [img_id for img_id in ls_ if os.path.exists(f"{data_dir}/{img_id}_protein.png")]
@@ -218,7 +218,10 @@ def main():
                 #print(warped1.max(), img_resized.max())
                 warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
                 #imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
-                bin_thres = threshold_minimum(warped)
+                try:
+                    bin_thres = threshold_minimum(warped)
+                except:
+                    bin_thres = 1 # print(warped.max())
                 binary_warped = warped > bin_thres
                 binary_warped = binary_warped.astype('float64')
                 # adding weighed contribution of this image
