@@ -6,6 +6,7 @@ import scipy
 from typing import Optional, List, Dict, Tuple
 from pathlib import Path
 
+
 def parameterize_image_coordinates(
     seg_mem: np.array, seg_nuc: np.array, lmax: int, nisos: List
 ):
@@ -161,29 +162,29 @@ def make_kernel(center, k=3):
     kernel : np.array of size (k,k)
     
     """
-    assert k % 2 !=0 #assert k is odd
-    step = k//2
+    assert k % 2 != 0  # assert k is odd
+    step = k // 2
     kernel = []
-    c = [i for i in range(center-step, center+step+1,1)]
-    for s in range(-step, step+1,1):
+    c = [i for i in range(center - step, center + step + 1, 1)]
+    for s in range(-step, step + 1, 1):
         kernel += [np.array(c) + s]
-    kernel = np.array(kernel).reshape((k,k))
+    kernel = np.array(kernel).reshape((k, k))
     return kernel
 
+
 def kernel_coordinates(center_coord, k=3):
-    assert k % 2 !=0 #assert k is odd
-    step = k//2
-    x,y = center_coord[0],center_coord[1]
-    kernel_coords = []    
-    for x_ in range(x-step, x+step+1,1):
-        for y_ in range(y-step, y+step+1,1):      
-            kernel_coords += [(x_,y_)]
-    #kernel_coords = np.array(kernel_coords).reshape((k,k))
+    assert k % 2 != 0  # assert k is odd
+    step = k // 2
+    x, y = center_coord[0], center_coord[1]
+    kernel_coords = []
+    for x_ in range(x - step, x + step + 1, 1):
+        for y_ in range(y - step, y + step + 1, 1):
+            kernel_coords += [(x_, y_)]
+    # kernel_coords = np.array(kernel_coords).reshape((k,k))
     return kernel_coords
 
-    
 
-def get_coordinates(nuc, mem, centroid, n_isos = [3,7], plot=True):
+def get_coordinates(nuc, mem, centroid, n_isos=[3, 7], plot=True):
     """
     Creates 1D interpolators for x, y with fixed points
     at: 1) nuclear centroid, 2) nuclear shell and 3) cell membrane.
@@ -204,15 +205,15 @@ def get_coordinates(nuc, mem, centroid, n_isos = [3,7], plot=True):
         ix: interpolated x values
         iy: interpolated y values
     """
-    x_n, y_n = nuc[:len(nuc)//2], nuc[len(nuc)//2:]
-    x_c, y_c = mem[:len(mem)//2], mem[len(mem)//2:]
+    x_n, y_n = nuc[: len(nuc) // 2], nuc[len(nuc) // 2 :]
+    x_c, y_c = mem[: len(mem) // 2], mem[len(mem) // 2 :]
     iso_values = [0.0] + n_isos
     iso_values = np.cumsum(iso_values)
     iso_values = iso_values / iso_values[-1]
-    
+
     x = np.c_[np.full_like(x_n, centroid[0]), x_n, x_c]
     y = np.c_[np.full_like(y_n, centroid[1]), y_n, y_c]
-    
+
     # Create x and y interpolator
     x_interpolator = scipy.interpolate.interp1d(iso_values, x)
     y_interpolator = scipy.interpolate.interp1d(iso_values, y)
@@ -225,7 +226,7 @@ def get_coordinates(nuc, mem, centroid, n_isos = [3,7], plot=True):
             # Get coeffs at given fixed point
             ix = x_interpolator(iso_value)
             iy = y_interpolator(iso_value)
-            plt.plot(ix,iy, "--")
+            plt.plot(ix, iy, "--")
             plt.text(ix[i], iy[i], str(i))
             ix_list += [ix]
             iy_list += [iy]
@@ -234,7 +235,7 @@ def get_coordinates(nuc, mem, centroid, n_isos = [3,7], plot=True):
         for i, iso_value in enumerate(np.linspace(0.0, 1.0, 1 + np.sum(n_isos))):
             # Get coeffs at given fixed point
             ix = x_interpolator(iso_value)
-            iy = y_interpolator(iso_value)    
+            iy = y_interpolator(iso_value)
             ix_list += [ix]
             iy_list += [iy]
     return ix_list, iy_list
@@ -259,23 +260,25 @@ def get_intensity(pro, x, y, k=3):
     -------
     matrix: np.array
         matrix of size [x,y] representing protein intensity representation at all input points
-    """ 
+    """
     assert x.shape == y.shape
     shape = x.shape
-    x = x.round().astype('uint16').flatten()
-    y = y.round().astype('uint16').flatten()
+    x = x.round().astype("uint16").flatten()
+    y = y.round().astype("uint16").flatten()
     matrix = []
-    for p in zip(x,y):
+    for p in zip(x, y):
         k_c = kernel_coordinates(p, k=k)
         kernel_intensity = []
         for pi in k_c:
-            if pi[0]<pro.shape[0] and pi[1]<pro.shape[1]:
+            if pi[0] < pro.shape[0] and pi[1] < pro.shape[1]:
                 kernel_intensity += [pro[pi]]
         if len(kernel_intensity) == 0:
-            kernel_intensity=[0]
+            kernel_intensity = [0]
         matrix += [np.mean(kernel_intensity)]
     matrix = np.array(matrix).reshape(shape)
     return matrix
+
+
 '''
 def get_intensity_interpolations(pc_bins, df, keep_list):
     """

@@ -66,3 +66,6 @@ interpolations_plots
 
 # slurm output
 slurm-*
+
+# snakemake log
+.snakemake/*

@@ -2,6 +2,7 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 
+
 class ThinPlateSpline:
     """Solve the Thin Plate Spline interpolation
     Given a set of control points X_c \\ in R^{n_c \\times d_s} and target points X_t \\in R^{n_c \\times d_t}
@@ -43,7 +44,10 @@ class ThinPlateSpline:
         X_p = np.hstack([np.ones((n_c, 1)), X])
 
         A = np.vstack(
-            [np.hstack([phi + self.alpha * np.identity(n_c), X_p]), np.hstack([X_p.T, np.zeros((d_s + 1, d_s + 1))])]
+            [
+                np.hstack([phi + self.alpha * np.identity(n_c), X_p]),
+                np.hstack([X_p.T, np.zeros((d_s + 1, d_s + 1))]),
+            ]
         )
 
         Y = np.vstack([Y, np.zeros((d_s + 1, Y.shape[1]))])
@@ -84,7 +88,7 @@ class ThinPlateSpline:
         """
         dist = cdist(X, self.control_points)
         dist[dist == 0] = 1  # phi(r) = r^2 log(r) ->  (phi(0) = 0)
-        return dist**2 * np.log(dist)
+        return dist ** 2 * np.log(dist)
 
 
 def _ensure_2d(array: np.ndarray) -> np.ndarray:

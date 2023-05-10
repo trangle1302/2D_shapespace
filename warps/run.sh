@@ -1,0 +1,15 @@
+python3 avg_organelle.py --org PlasmaM  --pc PC1
+python3 avg_organelle.py --org PlasmaM  --pc PC2
+python3 avg_organelle.py --org PlasmaM  --pc PC3
+python3 avg_organelle.py --org PlasmaM  --pc PC4
+python3 avg_organelle.py --org PlasmaM  --pc PC5
+python3 avg_organelle.py --org PlasmaM  --pc PC6
+python3 avg_organelle.py --org Centrosome  --pc PC1
+python3 avg_organelle.py --org Centrosome  --pc PC2
+python3 avg_organelle.py --org Centrosome  --pc PC3
+python3 avg_organelle.py --org Centrosome  --pc PC4
+python3 avg_organelle.py --org Centrosome  --pc PC5
+python3 avg_organelle.py --org Centrosome  --pc PC6
+python3 avg_organelle.py --org MitoticS  --pc PC3
+python3 avg_organelle.py --org GolgiA  --pc PC4
+python3 avg_organelle.py --org GolgiA  --pc PC5
