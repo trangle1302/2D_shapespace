@@ -13,8 +13,10 @@ from skimage.morphology import closing, square
 from skimage.segmentation import clear_border, watershed
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-#from aicsshparam import shtools
+
+# from aicsshparam import shtools
 from skimage.morphology import ball, cube, octahedron
+
 
 def find(dirpath, prefix=None, suffix=None, recursive=True, full_path=True):
     """Function to find recursively all files with specific prefix and suffix in a directory
@@ -412,15 +414,17 @@ def plot_3d(array_3d):
 
 
 def get_location_counts(locations_list, all_locations):
-    
+
     label_counts = dict.fromkeys(all_locations, 0)
     for locations in locations_list:
-        if locations != 'Discard':
+        if locations != "Discard":
             sc_locations = []
-            idx_list = locations.split('|')
+            idx_list = locations.split("|")
             for idx in idx_list:
-                sc_locations += [k for k, v in all_locations.items() if v == int(float(idx))]
-    
+                sc_locations += [
+                    k for k, v in all_locations.items() if v == int(float(idx))
+                ]
+
             for l in sc_locations:
                 label_counts[l] += 1
     return label_counts
@@ -437,17 +441,20 @@ def rgb_2_gray_unique(image, channel_last=True):
     if not channel_last:
         image = np.moveaxis(image, 0, -1)
 
-    flat_img = image.reshape(-1,3)
-    unique_px = np.unique(flat_img, axis=0) # [0,0,0] always the first unique px value
-    gray = np.zeros((image.shape[0]* image.shape[1]), dtype=np.uint8) # (width*height,)
+    flat_img = image.reshape(-1, 3)
+    unique_px = np.unique(flat_img, axis=0)  # [0,0,0] always the first unique px value
+    gray = np.zeros(
+        (image.shape[0] * image.shape[1]), dtype=np.uint8
+    )  # (width*height,)
     for i, px_val in enumerate(unique_px):
         indexes = np.where((flat_img == px_val).sum(axis=-1) == 3)[0]
         gray[indexes] = i
     gray = gray.reshape((image.shape[0], image.shape[1]))
     assert len(unique_px) == len(np.unique(gray))
-    #print(f"before: {len(unique_px)} unique px, after: {len(np.unique(gray))} unique values")
-    #print(gray.shape, gray.dtype)
+    # print(f"before: {len(unique_px)} unique px, after: {len(np.unique(gray))} unique values")
+    # print(gray.shape, gray.dtype)
     return gray
+
 
 def flatten_list(list_of_lists):
     """ 
@@ -459,6 +466,7 @@ def flatten_list(list_of_lists):
     """
     l = [item for sublist in list_of_lists for item in sublist]
     return l
+
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -490,6 +498,7 @@ def bbox_iou(boxA, boxB):
     # return the intersection over union value
     return iou
 
+
 def realign_contour_startpoint(xy):
     centroid = find_centroid(xy)
     x = np.array([p[0] for p in xy])
@@ -509,17 +518,18 @@ def realign_contour_startpoint(xy):
     xy = np.concatenate((xy, xy))[idx : idx + len(xy)]
     return xy
 
+
 def get_line(file_path, search_text="", mode="first"):
     # Function to read line(s) containing search_text in a very large txt file (x GB)
     with open(file_path, "r") as F:
         lines = F.readlines()
     if mode == "first":
         for line in lines:
-            if line.find(search_text) != -1 :
+            if line.find(search_text) != -1:
                 return line
     elif mode == "all":
         l_results = []
         for line in lines:
-            if line.find(search_text) != -1 :
+            if line.find(search_text) != -1:
                 l_results += [line]
         return l_results

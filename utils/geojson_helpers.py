@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 import utils.annotationUtils as annotationUtils
@@ -6,6 +5,7 @@ from utils.helpers import read_from_json
 import matplotlib.pyplot as plt
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
+
 
 def plot_complete_mask(json_path):
     mask = read_from_json(json_path)
@@ -22,16 +22,14 @@ def plot_complete_mask(json_path):
         ax.add_patch(PolygonPatch(coords))
     ax.axis("off")
     plt.tight_layout()
-    #fig.savefig("C:/Users/trang.le/Desktop/tmp.png", bbox_inches="tight")
+    # fig.savefig("C:/Users/trang.le/Desktop/tmp.png", bbox_inches="tight")
 
     # img = imageio.imread('C:/Users/trang.le/Desktop/tmp.png')
     # plt.imshow(img)
 
 
 def geojson_to_masks(
-    file_proc,
-    mask_types=["filled", "edge", "labels"],
-    img_size=None,
+    file_proc, mask_types=["filled", "edge", "labels"], img_size=None,
 ):
 
     # annot_types = list(masks_to_create.keys())
@@ -93,20 +91,23 @@ def geojson_to_masks(
 
     return mask_dict
 
-# 
+
+#
 def PolygonPatch(polygon, **kwargs):
     def coding(ob):
         # The codes will be all "LINETO" commands, except for "MOVETO"s at the
         # beginning of each subpath
-        n = len(getattr(ob, 'coords', None) or ob)
+        n = len(getattr(ob, "coords", None) or ob)
         vals = np.ones(n, dtype=Path.code_type) * Path.LINETO
         vals[0] = Path.MOVETO
         return vals
 
     vertices = np.concatenate(
-        [np.asarray(polygon.exterior)[:, :2]] +
-        [np.asarray(r)[:, :2] for r in polygon.interiors])
+        [np.asarray(polygon.exterior)[:, :2]]
+        + [np.asarray(r)[:, :2] for r in polygon.interiors]
+    )
     codes = np.concatenate(
-        [coding(polygon.exterior)] + [coding(r) for r in polygon.interiors])
+        [coding(polygon.exterior)] + [coding(r) for r in polygon.interiors]
+    )
 
     return PathPatch(Path(vertices, codes), **kwargs)
