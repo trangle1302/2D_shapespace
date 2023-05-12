@@ -45,7 +45,7 @@ def calculate_fft_hpa(cfg, get_coef_fun):
 def calculate_fft_hpa_nu(cfg, get_coef_fun):
     dataset = cfg.CELL_LINE.replace(" ", "_")
     mask_dir = f"{cfg.PROJECT_DIR}/cell_masks"
-    save_path = Path(f"/data/2Dshapespace/{dataset}/fftcoefs/{cfg.ALIGNMENT}")
+    save_path = Path(f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}")
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     log_dir = f"{cfg.PROJECT_DIR}/logs"
@@ -144,7 +144,7 @@ def calculate_fft_ccd_nu(cfg, get_coef_fun):
 
 if __name__ == "__main__":
     s_t = time.time()
-    import configs.config_callisto as cfg
+    import configs.config_sherlock as cfg
 
     if cfg.COEF_FUNC == "fft":
         get_coef_fun = coefs.fourier_coeffs

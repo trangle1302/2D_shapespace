@@ -67,7 +67,7 @@ ORGANELLES = ["Nucleoplasm","Nucleoli","NucleoliFC","NuclearS","NuclearB","Nucle
               "Cytosol","PlasmaM","Microtubules"]
 
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
-CELL_LINE = "U-2 OS"
+CELL_LINE = "RT4"
 N_COEFS = 128
 N_SAMPLES = -1  # 5000
 N_CV = 1
