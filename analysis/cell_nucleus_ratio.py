@@ -27,7 +27,7 @@ def check_nucleus_cell_size(image_path, save_dir):
 
 def main():
     s = time.time()
-    import configs.config_callisto as cfg
+    import configs.config_sherlock as cfg
     mask_dir = f"{cfg.PROJECT_DIR}/cell_masks"
     save_dir = cfg.PROJECT_DIR
     imlist = glob.glob(f"{mask_dir}/*.npy")
