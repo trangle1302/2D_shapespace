@@ -1,11 +1,11 @@
-import configs.config_sherlock as cfg
+import configs.config_callisto as cfg
 import glob
 
 # Define the target rule that executes the entire pipeline
 rule all:
     input:
         f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}/cells_assigned_to_pc_bins.json",
-        #f"{cfg.PROJECT_DIR}/morphed_protein_avg/PC1/Microtubules_bin6.png"
+        f"{cfg.PROJECT_DIR}/morphed_protein_avg/PC1/Microtubules_bin6.png"
 
 rule coefficient:
     input:
@@ -16,7 +16,7 @@ rule coefficient:
     shell:
         """
         cd coefficients
-        sbatch submit_s2.sh
+        python s2_calculate_fft.py
         cd ..
         """
 
@@ -31,7 +31,7 @@ rule shapemode:
     shell:
         """
         cd shapemodes
-        sbatch submit_s3.sh
+        python s3_calculate_shapemodes.py
         cd ..
         """
 
@@ -44,8 +44,7 @@ rule cell_nu_ratio:
     shell:
         """
         cd analysis
-        module load python/3.9.0       
-        srun --nodes=1 --ntasks=1 --mem=5G --time=01:00:00 python3 cell_nucleus_ratio.py
+        python cell_nucleus_ratio.py
         cd ..
         """
 
@@ -57,8 +56,7 @@ rule organelle:
     shell:
         """
         cd warps
-        module load python/3.9.0
-        srun --nodes=1 --ntasks=1 --mem=5G --time=01:00:00 python3 generate_runs.py
+        python generate_runs.py
         bash run.sh
         cd ..
         """
