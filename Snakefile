@@ -44,8 +44,10 @@ rule cell_nu_ratio:
     shell:
         """
         cd analysis
-        module load python/3.9.0       
-        srun --nodes=1 --ntasks=1 --mem=5G --time=01:00:00 python3 cell_nucleus_ratio.py
+        module load python/3.9.0 
+        module load py-pandas/2.0.1_py39
+        pip install joblib
+        srun --nodes=1 --ntasks=1 --mem=1G --time=01:00:00 python3 cell_nucleus_ratio.py
         cd ..
         """
 
