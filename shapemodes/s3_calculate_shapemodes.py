@@ -33,7 +33,7 @@ def get_memory():
 
 
 def main():
-    import configs.config_sherlock as cfg
+    import configs.config as cfg
     
     n_samples = cfg.N_SAMPLES
     fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
