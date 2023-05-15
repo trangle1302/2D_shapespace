@@ -163,7 +163,7 @@ def align_cell_major_axis_polarized(data, protein_ch, plot=True):
     return nuclei_, cell_, theta
 
 
-def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
+def get_coefs_df(imlist, align_method="", n_coef=32, func=None, plot=False):
     coef_df = pd.DataFrame()
     shifts = dict()
     names = []
@@ -173,8 +173,16 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
         data = np.load(im)
         pro = imread(Path(str(im).replace(".npy", "_protein.png")))
         try:
-            # nuclei_, cell_, theta = align_cell_nuclei_centroids(data, pro, plot=False)
-            nuclei_, cell_, theta = align_cell_major_axis(data, pro, plot=plot)
+            if align_method == "fft_nuclei_major_axis":
+                nuclei_, cell_, theta = align_nuclei_major_axis(data, pro, plot=False)
+            elif align_method == "fft_cell_nuclei_centroid":
+                nuclei_, cell_, theta = align_cell_nuclei_centroids(data, pro, plot=False)
+            elif align_method == "fft_cell_major_axis":
+                nuclei_, cell_, theta = align_cell_major_axis(data, pro, plot=False)
+            elif align_method == "fft_cell_major_axis_polarized":
+                nuclei_, cell_, theta = align_cell_major_axis_polarized(data, pro, plot=False)
+            else:
+                NotImplementedError
             centroid = center_of_mass(nuclei_)
             # centroid = center_of_mass(cell)
 
@@ -233,17 +241,23 @@ def get_coefs_df(imlist, n_coef=32, func=None, plot=False):
     return coef_df, names, shifts
 
 
-def get_coefs_im(im, save_dir, log_dir, n_coef=32, func=None, plot=False):
+def get_coefs_im(im, save_dir, log_dir, align_method="", n_coef=32, func=None, plot=False):
     try:
         data = np.load(im)
     except:
         print(f"Check file size or format: {im}")
     pro = imread(Path(str(im).replace(".npy", "_protein.png")))
     try:
-        # nuclei_, cell_, theta = align_cell_nuclei_centroids(data, pro, plot=False)
-        # nuclei_, cell_, theta = align_cell_major_axis(data, pro, plot=False)
-        nuclei_, cell_, theta = align_cell_major_axis_polarized(data, pro, plot=False)
-        # centroid = center_of_mass(nuclei_)
+        if align_method == "fft_nuclei_major_axis":
+            nuclei_, cell_, theta = align_nuclei_major_axis(data, pro, plot=False)
+        elif align_method == "fft_cell_nuclei_centroid":
+            nuclei_, cell_, theta = align_cell_nuclei_centroids(data, pro, plot=False)
+        elif align_method == "fft_cell_major_axis":
+            nuclei_, cell_, theta = align_cell_major_axis(data, pro, plot=False)
+        elif align_method == "fft_cell_major_axis_polarized":
+            nuclei_, cell_, theta = align_cell_major_axis_polarized(data, pro, plot=False)
+        else:
+            NotImplementedError
         centroid = center_of_mass(nuclei_)
 
         # Padd surrounding with 0 so no contour touch the border. This help matching squares algo not failing (as much)
