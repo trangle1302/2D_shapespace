@@ -142,7 +142,7 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path=""):
 
 
 def main():
-    import configs.config_callisto as cfg
+    import configs.config as cfg
 
     n_samples = cfg.N_SAMPLES
     fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
