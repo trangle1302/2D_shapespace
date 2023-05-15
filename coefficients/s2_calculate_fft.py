@@ -32,6 +32,7 @@ def calculate_fft_hpa(cfg, get_coef_fun):
             i,
             save_path,
             log_dir,
+            align_method = cfg.ALIGNMENT,
             n_coef=cfg.N_COEFS,
             func=get_coef_fun,
             plot=np.random.choice([True, False], p=[0.001, 0.999]),
@@ -63,6 +64,7 @@ def calculate_fft_hpa_nu(cfg, get_coef_fun):
             i,
             save_path,
             log_dir,
+            align_method = cfg.ALIGNMENT,
             n_coef=cfg.N_COEFS,
             func=get_coef_fun,
             plot=np.random.choice([True, False], p=[0.001, 0.999]),
@@ -97,6 +99,7 @@ def calculate_fft_ccd(cfg, get_coef_fun):
             i,
             save_path,
             log_dir,
+            align_method = cfg.ALIGNMENT,
             n_coef=cfg.N_COEFS,
             func=get_coef_fun,
             plot=np.random.choice([True, False], p=[0.001, 0.999]),
@@ -132,6 +135,7 @@ def calculate_fft_ccd_nu(cfg, get_coef_fun):
             i,
             save_path,
             log_dir,
+            align_method = cfg.ALIGNMENT,
             n_coef=128,
             func=get_coef_fun,
             plot=np.random.choice([True, False], p=[0.001, 0.999]),
@@ -144,7 +148,7 @@ def calculate_fft_ccd_nu(cfg, get_coef_fun):
 
 if __name__ == "__main__":
     s_t = time.time()
-    import configs.config_sherlock as cfg
+    import configs.config as cfg
 
     if cfg.COEF_FUNC == "fft":
         get_coef_fun = coefs.fourier_coeffs
