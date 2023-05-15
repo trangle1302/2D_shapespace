@@ -71,10 +71,14 @@ N_COEFS = 128
 N_SAMPLES = -1  # 5000
 N_CV = 1
 MODE = "cell_nuclei"  # ["nuclei" #"cell_nuclei"]
-ALIGNMENT = "fft_cell_major_axis_polarized"  # ["fft_nuclei_major_axis","fft_cell_major_axis_polarized"]
-COEF_FUNC = "fft"
+ALIGNMENT = "fft_cell_major_axis_polarized"  # ["fft_nuclei_major_axis","fft_nuclei_major_axis","fft_cell_nuclei_centroid"]
+COEF_FUNC = "fft" # ["efd", "wavelet"]
 
 # >>>>>>>>>>>>>>>>>>>>> COMPUTE RESOURCE + PACKAGE
 SERVER = "callisto"
-PROJECT_DIR = f"/data/2Dshapespace/{CELL_LINE.replace(' ','_')}"
-META_PATH = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
+if SERVER == "callisto":
+    PROJECT_DIR = f"/data/2Dshapespace/{CELL_LINE.replace(' ','_')}"
+    META_PATH = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
+elif SERVER == "sherlock":
+    PROJECT_DIR = f"/scratch/groups/emmalu/2Dshapespace/{CELL_LINE.replace(' ','_')}"
+    META_PATH = "/scratch/groups/emmalu/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
