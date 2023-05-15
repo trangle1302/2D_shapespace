@@ -692,7 +692,7 @@ def cellcycle():
 
 if __name__ == "__main__":
     np.random.seed(42)  # for reproducibility
-    import configs.config_callisto as cfg
+    import configs.config as cfg
 
     # pilot_U2OS_kaggle2021test()
     publicHPA(cell_line=cfg.CELL_LINE)
