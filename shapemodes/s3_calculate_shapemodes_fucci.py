@@ -131,8 +131,8 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path=""):
     cells_assigned = dict()
     for pc in pc_keep:
         pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
-        pm.plot_pc_dist(pc)
-        pm.plot_pc_hist(pc)
+        pm.plot_pc_dist(pc, save_dir=shape_mode_path)
+        pm.plot_pc_hist(pc, save_dir=shape_mode_path)
         pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
         pc_indexes_assigned, bin_links = pm.assign_cells(pc)
         cells_assigned[pc] = [list(b) for b in bin_links]
@@ -142,7 +142,7 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path=""):
 
 
 def main():
-    import configs.config_callisto as cfg
+    import configs.config as cfg
 
     n_samples = cfg.N_SAMPLES
     fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
