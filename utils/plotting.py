@@ -57,7 +57,7 @@ class PlotShapeModes:
         self.lmpoints = None
         # self.get_lm()
 
-    def plot_pc_dist(self, pc_name):
+    def plot_pc_dist(self, pc_name, save_dir=None):
         cnums = self.matrix[pc_name]
         X = [x.real for x in cnums]
         Y = [x.imag for x in cnums]
@@ -73,9 +73,11 @@ class PlotShapeModes:
         plt.xlabel("real axis")
         plt.ylabel("imaginary axis")
         plt.title(pc_name)
-        plt.show()
+        if save_dir != None:
+            plt.savefig(f"{save_dir}/shapevar_{pc_name}_dist.jpg", bbox_inches="tight")
+            plt.close()
 
-    def plot_pc_hist(self, pc_name):
+    def plot_pc_hist(self, pc_name, save_dir=None):
         cnums = self.matrix[pc_name]
         X = [x.real for x in cnums]
 
@@ -86,7 +88,9 @@ class PlotShapeModes:
         plt.ylabel("density")
         plt.xlabel("real axis")
         plt.title(pc_name)
-        plt.show()
+        if save_dir != None:
+            plt.savefig(f"{save_dir}/shapevar_{pc_name}_hist.jpg", bbox_inches="tight")
+            plt.close()
 
     def plot_avg_cell(
         self,
