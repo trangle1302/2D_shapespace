@@ -1,13 +1,11 @@
 import os
 import sys
-
 sys.path.append("..")
 import numpy as np
 from utils import helpers
 import matplotlib.pyplot as plt
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
-
 # from warps import image_warp
 from warps import image_warp_new as image_warp
 import json
@@ -59,29 +57,22 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
 
 def main():
     s = time.time()
+    import configs.config as cfg
     parser = argparse.ArgumentParser()
     parser.add_argument("--merged_bins", nargs="+", help="bin to investigate", type=int)
     parser.add_argument("--pc", help="", type=str)
     args = parser.parse_args()
     bin_ = args.merged_bins
     PC = args.pc
-    cell_line = "S-BIAD34"
-    alignment = "fft_cell_major_axis_polarized"  # "fft_nuclei_major_axis"
-    if False:
-        from imageio import imread, imwrite  # callisto
-
-        project_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}"
-    else:
-        from imageio.v2 import imread, imwrite  # sherlock
-
-        project_dir = (
-            f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-        )
-    shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei"
-    fft_dir = f"{project_dir}/fftcoefs/{alignment}"
-    data_dir = f"{project_dir}/cell_masks2"
-    save_dir = f"{project_dir}/morphed_protein_avg"
-    plot_dir = f"{project_dir}/morphed_protein_avg_plots"
+    if cfg.SERVER == "callisto":
+        from imageio import imread, imwrite
+    elif cfg.SERVER == "sherlock":
+        from imageio.v2 import imread, imwrite 
+    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
+    fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
+    data_dir = f"{cfg.PROJECT_DIR}/cell_masks2"
+    save_dir = f"{cfg.PROJECT_DIR}/morphed_protein_avg"
+    plot_dir = f"{cfg.PROJECT_DIR}/morphed_protein_avg_plots"
     n_landmarks = 32  # number of landmark points frgs='+',or each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     # print(save_dir, plot_dir)
 
