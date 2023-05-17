@@ -196,6 +196,7 @@ def main():
         for pc in pc_keep:
             pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
             pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
+            pm.plot_pc_hist(pc, save_dir=shape_mode_path)
 
             pc_indexes_assigned, bin_links = pm.assign_cells(pc)
 
