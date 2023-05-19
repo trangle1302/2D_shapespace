@@ -1,10 +1,11 @@
-import configs.config_sherlock as cfg
+import configs.config as cfg
 import glob
 
 # Define the target rule that executes the entire pipeline
 rule all:
     input:
         f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}/cells_assigned_to_pc_bins.json",
+        f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}/fftcoefs_{cfg.N_COEFS}.txt"
         #f"{cfg.PROJECT_DIR}/morphed_protein_avg/PC1/Microtubules_bin6.png"
 
 rule coefficient:
@@ -17,7 +18,6 @@ rule coefficient:
         """
         cd coefficients
         sbatch submit_s2.sh
-        cd ..
         """
 
 rule shapemode:
@@ -32,7 +32,6 @@ rule shapemode:
         """
         cd shapemodes
         sbatch submit_s3.sh
-        cd ..
         """
 
 rule cell_nu_ratio:
@@ -48,7 +47,6 @@ rule cell_nu_ratio:
         module load py-pandas/2.0.1_py39
         pip install joblib
         srun --nodes=1 --ntasks=1 --mem=1G --time=01:00:00 python3 cell_nucleus_ratio.py
-        cd ..
         """
 
 rule organelle:
