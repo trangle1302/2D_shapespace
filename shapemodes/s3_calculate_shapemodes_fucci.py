@@ -111,6 +111,10 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path=""):
     df_trans[list(set(pc_names) - set(pc_keep))] = 0
     print(matrix_of_features_transform.shape, df_trans.shape)
 
+    # Cell density on major PC
+    plotting.plot_pc_density(df_trans["PC1"], df_trans["PC2"], save_path=f"{shape_mode_path}/PC1vsPC2_cell_density.png")
+    plotting.plot_pc_density(df_trans["PC2"], df_trans["PC3"], save_path=f"{shape_mode_path}/PC2vsPC3_cell_density.png")
+
     pm = plotting.PlotShapeModes(
         pca,
         df_trans,
@@ -139,7 +143,7 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path=""):
         print(cells_assigned[pc][:3])
     with open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "w") as fp:
         json.dump(cells_assigned, fp)
-
+    return df_trans
 
 def main():
     import configs.config as cfg
@@ -197,19 +201,31 @@ def main():
 
         df_ = df.drop(columns=["matchid"])
         shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
-        calculate_shapemode(
+        df_trans = calculate_shapemode(
             df_,
             cfg.N_COEFS,
             cfg.MODE,
             fun=cfg.COEF_FUNC,
             shape_mode_path=shape_mode_path,
         )
-        # print(list(lines.keys())[:3])
 
         # Shape modes of G1, G2/S, G2 cells:
         sc_stats = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv")
         sc_stats["matchid"] = sc_stats.ab_id + "/" + sc_stats.cell_id
         print(sc_stats.matchid[:3])
+        
+        df_trans = df_trans.merge(sc_stats, on="matchid")
+        plt.scatter(df_trans["PC1"], df_trans["PC2"], c=df_trans["pseudotime"], cmap='RdYlGn', alpha=0.1)    
+        # Add colorbar
+        cbar = plt.colorbar()
+        cbar.set_label('Pseudotime')
+
+        # Add labels and title
+        plt.xlabel('PC1')
+        plt.ylabel('PC2')
+        plt.title('Scatter Plot with Colormap')
+        plt.savefig(f"{shape_mode_path}/PC1vsPC2_pseudotime.png") 
+
         cc_groups = sc_stats.GMM_cc_label.unique().tolist()
         for g in cc_groups:
             cells_in_phase = sc_stats[sc_stats.GMM_cc_label == g]
@@ -220,7 +236,7 @@ def main():
             # calculate_shapemode(df, cfg.N_COEFS, mode, shape_mode_path=shape_mode_path)
             save_dir = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}_{g}"
             print("Saving to: ", save_dir)
-            calculate_shapemode(df_, cfg.N_COEFS, cfg.MODE, shape_mode_path=save_dir)
+            _ = calculate_shapemode(df_, cfg.N_COEFS, cfg.MODE, shape_mode_path=save_dir)
 
 
 if __name__ == "__main__":
