@@ -283,16 +283,6 @@ def main():
                 )
 
                 pts_convex = (pts_avg + pts_ori) / 2
-<<<<<<< HEAD
-                warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized, plot=False, save_dir="")
-                #print(warped1.max(), img_resized.max())
-                warped = image_warp.warp_image(pts_convex, pts_avg, warped1, plot=False, save_dir="")
-                #imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
-                try:
-                    bin_thres = threshold_minimum(warped)
-                except:
-                    bin_thres = 1 # print(warped.max())
-=======
                 warped1 = image_warp.warp_image(
                     pts_ori, pts_convex, img_resized, plot=False, save_dir=""
                 )
@@ -302,7 +292,7 @@ def main():
                 )
                 # imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
                 bin_thres = threshold_minimum(warped)
->>>>>>> 2cf71933affc90aac3f42a2649ccd67e5af6032d
+                
                 binary_warped = warped > bin_thres
                 binary_warped = binary_warped.astype("float64")
                 # adding weighed contribution of this image
