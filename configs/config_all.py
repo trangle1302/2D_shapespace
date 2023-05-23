@@ -77,8 +77,8 @@ COEF_FUNC = "fft"
 # >>>>>>>>>>>>>>>>>>>>> COMPUTE RESOURCE + PACKAGE
 SERVER = "sherlock"
 if SERVER == "callisto":
-    PROJECT_DIR = f"/data/2Dshapespace/{CELL_LINE.replace(' ','_')}"
+    PROJECT_DIR = f"/data/2Dshapespace/"
     META_PATH = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
 elif SERVER == "sherlock":
-    PROJECT_DIR = f"/scratch/groups/emmalu/2Dshapespace/{CELL_LINE.replace(' ','_')}"
+    PROJECT_DIR = f"/scratch/groups/emmalu/2Dshapespace/"
     META_PATH = "/scratch/groups/emmalu/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"

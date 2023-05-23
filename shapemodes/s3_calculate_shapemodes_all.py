@@ -107,120 +107,105 @@ def main():
         df_all = pd.concat([df_all, df], ignore_index=True)
         print(f"After adding {cell_line}, current df shape: {df_all.shape}")
 
-        if cfg.COEF_FUNC == "fft":
-            df = df.applymap(lambda s: complex(s.replace("i", "j")))
+    if cfg.COEF_FUNC == "fft":
+        df = df.applymap(lambda s: complex(s.replace("i", "j")))
 
-        if cfg.MODE == "nuclei":
-            df = df.iloc[:, (df.shape[1] // 2) :]
-        elif cfg.MODE == "cell":
-            df = df.iloc[:, : (df.shape[1] // 2)]
+    if cfg.MODE == "nuclei":
+        df = df.iloc[:, (df.shape[1] // 2) :]
+    elif cfg.MODE == "cell":
+        df = df.iloc[:, : (df.shape[1] // 2)]
 
-        shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
-        if not os.path.isdir(shape_mode_path):
-            os.makedirs(shape_mode_path)
+    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
+    if not os.path.isdir(shape_mode_path):
+        os.makedirs(shape_mode_path)
 
-        use_complex = False
-        if cfg.COEF_FUNC == "fft":
-            get_coef_fun = coefs.fourier_coeffs
-            inverse_func = coefs.inverse_fft
-            if not use_complex:
-                df_ = pd.concat(
-                    [
-                        pd.DataFrame(np.matrix(df).real),
-                        pd.DataFrame(np.matrix(df).imag),
-                    ],
-                    axis=1,
-                )
-                pca = PCA()  # IncrementalPCA(whiten=True) #PCA()
-                pca.fit(df_)
-                plotting.display_scree_plot(pca, save_dir=shape_mode_path)
-            else:
-                df_ = df
-                pca = dimreduction.ComplexPCA(n_components=df_.shape[1])
-                pca.fit(df_)
-                plotting.display_scree_plot(pca, save_dir=shape_mode_path)
-        elif cfg.COEF_FUNC == "wavelet":
-            get_coef_fun = coefs.wavelet_coefs
-            inverse_func = coefs.inverse_wavelet
-            df_ = df
-            pca = PCA(n_components=df_.shape[1])
+    use_complex = False
+    if cfg.COEF_FUNC == "fft":
+        get_coef_fun = coefs.fourier_coeffs
+        inverse_func = coefs.inverse_fft
+        if not use_complex:
+            df_ = pd.concat(
+                [
+                    pd.DataFrame(np.matrix(df).real),
+                    pd.DataFrame(np.matrix(df).imag),
+                ],
+                axis=1,
+            )
+            pca = PCA()  # IncrementalPCA(whiten=True) #PCA()
             pca.fit(df_)
             plotting.display_scree_plot(pca, save_dir=shape_mode_path)
-        elif cfg.COEF_FUNC == "efd":
-            get_coef_fun = coefs.elliptical_fourier_coeffs
-            inverse_func = coefs.backward_efd
+        else:
             df_ = df
-            print(f"Number of samples {df_.shape[0]}, number of coefs {df_.shape[1]}")
-            pca = PCA(n_components=df_.shape[1])
+            pca = dimreduction.ComplexPCA(n_components=df_.shape[1])
             pca.fit(df_)
             plotting.display_scree_plot(pca, save_dir=shape_mode_path)
+    elif cfg.COEF_FUNC == "wavelet":
+        get_coef_fun = coefs.wavelet_coefs
+        inverse_func = coefs.inverse_wavelet
+        df_ = df
+        pca = PCA(n_components=df_.shape[1])
+        pca.fit(df_)
+        plotting.display_scree_plot(pca, save_dir=shape_mode_path)
+    elif cfg.COEF_FUNC == "efd":
+        get_coef_fun = coefs.elliptical_fourier_coeffs
+        inverse_func = coefs.backward_efd
+        df_ = df
+        print(f"Number of samples {df_.shape[0]}, number of coefs {df_.shape[1]}")
+        pca = PCA(n_components=df_.shape[1])
+        pca.fit(df_)
+        plotting.display_scree_plot(pca, save_dir=shape_mode_path)
 
-        scree = pca.explained_variance_ratio_ * 100
-        for percent in np.arange(70, 100, 5):
-            n_pc = np.sum(scree.cumsum() < percent) + 1
-            print(f"{n_pc} to explain {percent} % variance")
-        n_pc = np.sum(scree.cumsum() < 95) + 1
-        n_pc = 8 if n_pc < 8 else n_pc
-        pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
-        pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
-        matrix_of_features_transform = pca.transform(df_)
-        df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
-        df_trans.columns = pc_names
-        df_trans.index = df.index
-        df_trans[list(set(pc_names) - set(pc_keep))] = 0
-        print(matrix_of_features_transform.shape, df_trans.shape)
-        
-        # Cell density on major PC
-        plotting.plot_pc_density(df_trans["PC1"], df_trans["PC2"], save_path=f"{shape_mode_path}/PC1vsPC2_cell_density.png")
-        plotting.plot_pc_density(df_trans["PC2"], df_trans["PC3"], save_path=f"{shape_mode_path}/PC2vsPC3_cell_density.png")
+    scree = pca.explained_variance_ratio_ * 100
+    for percent in np.arange(70, 100, 5):
+        n_pc = np.sum(scree.cumsum() < percent) + 1
+        print(f"{n_pc} to explain {percent} % variance")
+    n_pc = np.sum(scree.cumsum() < 95) + 1
+    n_pc = 8 if n_pc < 8 else n_pc
+    pc_names = [f"PC{c}" for c in range(1, 1 + len(pca.components_))]
+    pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
+    matrix_of_features_transform = pca.transform(df_)
+    df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
+    df_trans.columns = pc_names
+    df_trans.index = df.index
+    df_trans[list(set(pc_names) - set(pc_keep))] = 0
+    print(matrix_of_features_transform.shape, df_trans.shape)
+    
+    # Cell density on major PC
+    plotting.plot_pc_density(df_trans["PC1"], df_trans["PC2"], save_path=f"{shape_mode_path}/PC1vsPC2_cell_density.png")
+    plotting.plot_pc_density(df_trans["PC2"], df_trans["PC3"], save_path=f"{shape_mode_path}/PC2vsPC3_cell_density.png")
 
-        pm = plotting.PlotShapeModes(
-            pca,
-            df_trans,
-            cfg.N_COEFS,
-            pc_keep,
-            scaler=None,
-            complex_type=use_complex,
-            fourier_algo=cfg.COEF_FUNC,
-            inverse_func=inverse_func,
-        )
-        if cfg.MODE == "cell_nuclei":
-            pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
-        elif cfg.MODE == "nuclei":
-            pm.plot_avg_nucleus(dark=False, save_dir=shape_mode_path)
+    pm = plotting.PlotShapeModes(
+        pca,
+        df_trans,
+        cfg.N_COEFS,
+        pc_keep,
+        scaler=None,
+        complex_type=use_complex,
+        fourier_algo=cfg.COEF_FUNC,
+        inverse_func=inverse_func,
+    )
+    if cfg.MODE == "cell_nuclei":
+        pm.plot_avg_cell(dark=False, save_dir=shape_mode_path)
+    elif cfg.MODE == "nuclei":
+        pm.plot_avg_nucleus(dark=False, save_dir=shape_mode_path)
 
-        n_ = 10  # number of random cells to plot
-        cells_assigned = dict()
-        for pc in pc_keep:
-            pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
-            pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
-            pm.plot_pc_hist(pc, save_dir=shape_mode_path)
-            pm.plot_pc_dist(pc, save_dir=shape_mode_path)
+    n_ = 10  # number of random cells to plot
+    cells_assigned = dict()
+    for pc in pc_keep:
+        pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
+        pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
+        pm.plot_pc_hist(pc, save_dir=shape_mode_path)
+        pm.plot_pc_dist(pc, save_dir=shape_mode_path)
 
-            pc_indexes_assigned, bin_links = pm.assign_cells(pc)
+        pc_indexes_assigned, bin_links = pm.assign_cells(pc)
 
-            # print(pc_indexes_assigned, len(pc_indexes_assigned))
-            # print(bin_links, len(bin_links))
-            # print([len(b) for b in bin_links])
-            cells_assigned[pc] = [list(b) for b in bin_links]
-            # print(cells_assigned[pc][0][:3])
-            """
-            fig, ax = plt.subplots(n_, len(bin_links)) # (number of random cells, number of  bin)
-            for b_index, b_ in enumerate(bin_links):
-                cells_ = np.random.choice(b_, n_)
-                for i, c in enumerate(cells_):
-                    ax[i, b_index].imshow(plt.imread(c.replace("/data/2Dshapespace","/scratch/users/tle1302/2Dshapespace").replace(".npy","_protein.png")))
-            fig.savefig(f"{shape_mode_path}/{pc}_example_cells.png", bbox_inches=None)
-            plt.close()
-            """
-            plotting.plot_example_cells(bin_links, 
-                                        n_coef=n_coef, 
-                                        cells_per_bin=5, 
-                                        shape_coef_path=fft_path, 
-                                        save_path=f"{shape_mode_path}/{pc}_example_cells.png")
+        # print(pc_indexes_assigned, len(pc_indexes_assigned))
+        # print(bin_links, len(bin_links))
+        # print([len(b) for b in bin_links])
+        cells_assigned[pc] = [list(b) for b in bin_links]
             
-        with open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "w") as fp:
-            json.dump(cells_assigned, fp)
+    with open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "w") as fp:
+        json.dump(cells_assigned, fp)
 
 
 if __name__ == "__main__":
