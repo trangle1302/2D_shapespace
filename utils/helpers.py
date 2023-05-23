@@ -325,6 +325,10 @@ def find_centroid(vertexes):
     _y = sum(_y_list) / _len
     return (_x, _y)
 
+def euclidean_distance(point1, point2):
+    """ point1, point2: (x, y)
+    """
+    return math.sqrt((point2[1] - point1[1]) ** 2 + (point2[0] - point1[0]) ** 2)
 
 def equidistance(x, y, n_points=256):
     distance = np.cumsum(
