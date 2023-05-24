@@ -44,12 +44,9 @@ def load_fft(cfg, project_dir, cell_line, mappings):
         f"{protein_dir}/{id.split('_',1)[1]}_protein.png" for id in mappings_.id
     ]
     mappings_ = mappings_[mappings_.Link.isin(id_with_intensity)]
-    print("Mapping file filtered: ", mappings_.shape, mappings_.target.value_counts())
-    print("Example pattern match: ", mappings_.Link[:3].values)
 
     with open(fft_path) as f:
         count = sum(1 for _ in f)
-    print(f"Number of cells with fftcoefs = {count}")
     for i in range(cfg.N_CV):
         with open(fft_path, "r") as file:
             lines = {}
@@ -63,7 +60,6 @@ def load_fft(cfg, project_dir, cell_line, mappings):
             # loop over lines in a file
             for pos, l_num in enumerate(file):
                 # check if the line number is specified in the lines to read array
-                # print(pos)
                 if pos in specified_lines:
                     # print the required line number
                     data_ = l_num.strip().split(",")
@@ -88,15 +84,13 @@ def main():
         cell_nu_ratio = pd.read_csv(f"{project_dir}/cell_nu_ratio.txt")
         cell_nu_ratio.columns = ["path", "name", "nu_area", "cell_area", "ratio"]
         rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].name.to_list()
-        print(f"Large cell-nu ratio cells to remove: {len(rm_cells)}")
         lines = {
             k: lines[k]
             for k in lines.keys()
             if os.path.basename(k).split(".")[0] not in rm_cells
         }
-        print(len(lines))
         keep_cells = [cell_id.split("_", 1)[1] for cell_id in mappings.id]
-        print(f"Removing border cells leftover: {len(keep_cells)}")
+        #print(f"Removing border cells leftover: {len(keep_cells)}")
         lines = {
             k: lines[k]
             for k in lines.keys()
