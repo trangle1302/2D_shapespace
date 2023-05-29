@@ -33,8 +33,10 @@ def find_landmarks(nuclei, cell, n_points=32, border_points=False):
     cell_contour = find_contours(cell_)#, 0, fully_connected="high")
 
     if len(cell_contour) > 1:
-        print(f'broken contours to {len(cell_contour)}fragments')
-        cell_contour = np.vstack(cell_contour)
+        print(f'broken contours to {len(cell_contour)} fragments, {[len(x) for x in cell_contour]}')
+        #cell_contour = np.vstack(cell_contour)
+        cell_contour = cell_contour[np.argmax([len(x) for x in cell_contour])]
+        print(f'Picked the largest contour line {len(cell_contour)}')
         x, y = helpers.equidistance(
             cell_contour[:, 0], cell_contour[:, 1], n_points=n_points * 2
         )
