@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
 from skimage.filters import threshold_minimum
-from warps import image_warp
+from warps import image_warp_new as image_warp
 import json
 import pandas as pd
 from tqdm import tqdm
@@ -87,7 +87,7 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
 
     if len(ix_n) != n_landmarks:
         ix_n, iy_n = helpers.equidistance(ix_n, iy_n, n_points=n_landmarks)
-        ix_c, iy_c = helpers.equidistance(ix_c, iy_c, n_points=n_landmarks)
+        ix_c, iy_c = helpers.equidistance(ix_c, iy_c, n_points=n_landmarks * 2)
     nu_contour = np.stack([ix_n, iy_n]).T
     cell_contour = np.stack([ix_c, iy_c]).T
     # print(nu_contour.shape, cell_contour.shape)
@@ -138,7 +138,7 @@ def unmerge_label(
 
 def main():
     s = time.time()
-    import configs.config_sherlock as cfg
+    import configs.config as cfg
 
     parser = argparse.ArgumentParser()
     # parser.add_argument("--merged_bins", nargs='+',help="bin to investigate", type=int)
@@ -221,15 +221,16 @@ def main():
         df_sl = df_sl[
             df_sl.location.isin(LABEL_TO_ALIAS.values())
         ]  # rm Negative, Multi-loc
-
+        
         if not os.path.exists(
             f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"
         ):  # for org in ["Nucleoplasm","Nucleoli","NucleoliFC","EndoplasmicR","NuclearS","GolgiA","Microtubules","Mitochondria","VesiclesPCP","PlasmaM","Cytosol","NuclearS","ActinF","Centrosome","IntermediateF","NuclearM","NuclearB"]:
             # 1 empty avg_img for each organelle_pc_bin combination
-            avg_img = np.zeros((shape_x + 2, shape_y + 2), dtype="float64")
+            avg_img = np.zeros((shape_x, shape_y), dtype="float64")
             if not os.path.isdir(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
             ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
+            print(f"Found {len(ls_)}")
             # if os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"):
             #    continue
             ls_ = [
@@ -240,6 +241,7 @@ def main():
             ls_ = [
                 img_id for img_id in ls_ if os.path.exists(f"{data_dir}/{img_id}.npy")
             ]
+            print(f"Found {len(ls_)}")
             if len(ls_) > 500:
                 import random
 
@@ -284,11 +286,11 @@ def main():
 
                 pts_convex = (pts_avg + pts_ori) / 2
                 warped1 = image_warp.warp_image(
-                    pts_ori, pts_convex, img_resized, plot=False, save_dir=""
+                    pts_ori, pts_convex, img_resized#, plot=False, save_dir=""
                 )
                 # print(warped1.max(), img_resized.max())
                 warped = image_warp.warp_image(
-                    pts_convex, pts_avg, warped1, plot=False, save_dir=""
+                    pts_convex, pts_avg, warped1#, plot=False, save_dir=""
                 )
                 # imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
                 bin_thres = threshold_minimum(warped)
@@ -299,7 +301,7 @@ def main():
                 # print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype,  (warped / len(ls_)).max())
                 avg_img += warped / len(ls_)
 
-                if np.random.choice([True, False], p=[0.001, 0.999]):
+                if np.random.choice([True, False], p=[0.01, 0.99]):
                     # Plot landmark points at morphing
                     fig, ax = plt.subplots(1, 5, figsize=(15, 30))
                     ax[0].imshow(nu_, alpha=0.3)
