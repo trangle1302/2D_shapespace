@@ -229,7 +229,7 @@ def main():
             avg_img = np.zeros((shape_x, shape_y), dtype="float64")
             if not os.path.isdir(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
-            ls_ = df_sl[df_sl.target == org].cell_idx.to_list()
+            ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
             print(f"Found {len(ls_)}")
             # if os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"):
             #    continue
@@ -293,7 +293,10 @@ def main():
                     pts_convex, pts_avg, warped1#, plot=False, save_dir=""
                 )
                 # imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
-                bin_thres = threshold_minimum(warped)
+                try:
+                    bin_thres = threshold_minimum(warped)
+                except:
+                    bin_thres = 0
                 
                 binary_warped = warped > bin_thres
                 binary_warped = binary_warped.astype("float64")
