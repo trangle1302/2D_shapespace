@@ -2,7 +2,7 @@ import sys
 
 sys.path.append("..")
 from coefficients import alignment, coefs
-import cv2
+#import cv2
 import numpy as np
 from utils import helpers
 import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ def find_landmarks(nuclei, cell, n_points=32, border_points=False):
     nu = np.zeros((nuclei.shape[0] + 2, nuclei.shape[1] + 2))
     nu[1 : 1 + nuclei.shape[0], 1 : 1 + nuclei.shape[1]] = nuclei
     nu_centroid = center_of_mass(nu)
-    nu_contour = find_contours(nu, 0, fully_connected="high")
+    nu_contour = find_contours(nu)#, 0, fully_connected="high")
     x, y = helpers.equidistance(
         nu_contour[0][:, 0], nu_contour[0][:, 1], n_points=n_points
     )
@@ -30,9 +30,10 @@ def find_landmarks(nuclei, cell, n_points=32, border_points=False):
 
     cell_ = np.zeros((cell.shape[0] + 2, cell.shape[1] + 2))
     cell_[1 : 1 + cell.shape[0], 1 : 1 + cell.shape[1]] = cell
-    cell_contour = find_contours(cell_, 0, fully_connected="high")
+    cell_contour = find_contours(cell_)#, 0, fully_connected="high")
 
     if len(cell_contour) > 1:
+        print(f'broken contours to {len(cell_contour)}fragments')
         cell_contour = np.vstack(cell_contour)
         x, y = helpers.equidistance(
             cell_contour[:, 0], cell_contour[:, 1], n_points=n_points * 2
