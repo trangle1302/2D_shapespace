@@ -77,7 +77,8 @@ def main():
 
     df_all = pd.DataFrame()
     mappings = pd.read_csv(cfg.META_PATH)
-    for cell_line in cfg.CELL_LINE:
+    labels = []
+    for idx, cell_line in enumerate(cfg.CELL_LINE):
         project_dir = f"{cfg.PROJECT_DIR}/{cell_line.replace(' ','_')}"
         lines = load_fft(cfg, project_dir, cell_line, mappings)
 
@@ -99,6 +100,7 @@ def main():
 
         df = pd.DataFrame(lines).transpose()
         df_all = pd.concat([df_all, df], ignore_index=True)
+        labels += np.repeat(idx, len(df)).tolist()
         print(f"After adding {cell_line}, current df shape: {df_all.shape}")
 
     if cfg.COEF_FUNC == "fft":
@@ -167,7 +169,9 @@ def main():
     # Cell density on major PC
     plotting.plot_pc_density(df_trans["PC1"], df_trans["PC2"], save_path=f"{shape_mode_path}/PC1vsPC2_cell_density.png")
     plotting.plot_pc_density(df_trans["PC2"], df_trans["PC3"], save_path=f"{shape_mode_path}/PC2vsPC3_cell_density.png")
-
+    
+    # Cell line distributions on PC1 vs PC2
+    plotting.scatter_hist(df_trans["PC1"], df_trans["PC2"], labels, save_path=f"{shape_mode_path}/PC1vsPC2_scatter_hist.png")
     pm = plotting.PlotShapeModes(
         pca,
         df_trans,
