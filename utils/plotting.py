@@ -1142,15 +1142,15 @@ def scatter_hist(x, y, label, save_path):
         
         # Plot data histogram and Fitting a normal distribution to the data
         class_data_x = x[label == i_]
-        ax_yDist.hist(class_data_x, bins='auto', color=colors[i_], alpha=0.7, label=cell_lines[i_], orientation='horizontal')    
+        ax_yDist.hist(class_data_x, bins='auto', color=colors[i_], alpha=0.7, label=cell_lines[i_])#, orientation='horizontal')    
         mu, std = norm.fit(class_data_x)
         xmin, xmax = ax_xDist.get_xlim()
         x_range = np.linspace(xmin, xmax, 100)
         fitted_line = norm.pdf(x_range, mu, std) * len(class_data_x)
-        ax_yDist.plot(x_range, fitted_line, color=colors[i_], linestyle='--', linewidth=2, orientation='horizontal') 
+        ax_yDist.plot(x_range, fitted_line, color=colors[i_], linestyle='--', linewidth=2)#, orientation='horizontal') 
 
         # Main scatter plot
         ax_main.scatter(class_data_x, class_data_y,marker='.', color=colors[i_], alpha=0.1)
     ax_main.set(xlabel="PC1", ylabel="PC2")
     plt.savefig(save_path)
-
+    plt.close()
