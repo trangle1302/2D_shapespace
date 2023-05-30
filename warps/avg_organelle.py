@@ -166,16 +166,15 @@ def main():
     # Loading cell assignation into PC bins
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "r")
     cells_assigned = json.load(f)
-    if os.path.exists(cfg.META_PATH.replace(".csv", "_splitVesiclesPCP.csv")):
-        mappings = pd.read_csv(cfg.META_PATH.replace(".csv", "_splitVesiclesPCP.csv"))
+    cellline_meta = os.path.join(cfg.PROJECT_DIR, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
+    if os.path.exists(cellline_meta):
+        mappings = pd.read_csv(cellline_meta)
     else:
         mappings = pd.read_csv(cfg.META_PATH)
-        mappings = mappings[mappings.atlas_name == "U-2 OS"]
+        mappings = mappings[mappings.atlas_name == cfg.CELL_LINE]
         mappings["cell_idx"] = [idx.split("_", 1)[1] for idx in mappings.id]
         mappings = unmerge_label(mappings)
-        mappings.to_csv(
-            cfg.META_PATH.replace(".csv", "_splitVesiclesPCP.csv"), index=False
-        )
+        mappings.to_csv(cellline_meta, index=False)
 
     # created a folder where avg organelle for each bin is saved
     if not os.path.isdir(f"{save_dir}/{PC}"):
