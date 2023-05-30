@@ -102,6 +102,7 @@ def main():
         df_all = pd.concat([df_all, df], ignore_index=True)
         labels += np.repeat(idx, len(df)).tolist()
         print(f"After adding {cell_line}, current df shape: {df_all.shape}")
+    df = df_all
 
     if cfg.COEF_FUNC == "fft":
         df = df.applymap(lambda s: complex(s.replace("i", "j")))
