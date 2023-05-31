@@ -7,8 +7,12 @@ from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 # import h5py
+import argparse
 
 def main():    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cell_line", type=str)
+    args = parser.parse_args()
     import configs.config as cfg
     """
     num_cores = multiprocessing.cpu_count() -1 # save 1 core for some other processes
@@ -26,12 +30,14 @@ def main():
         get_coef_fun = coefs.wavelet_coefs
         inverse_func = coefs.inverse_wavelet
 
-    protein_dir = f"{cfg.PROJECT_DIR}/sampled_intensity"
+    cell_line = args.cell_line
+    project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
+    protein_dir = f"{project_dir}/sampled_intensity"
     if not os.path.exists(protein_dir):
         os.makedirs(protein_dir)
 
-    log_dir = f"{cfg.PROJECT_DIR}/logs"
-    fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
+    log_dir = f"{project_dir}/logs"
+    fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
     shift_path = os.path.join(fft_dir, f"shift_error_meta_fft{cfg.N_COEFS}.txt")
     with open(fft_path) as f:
