@@ -32,6 +32,7 @@ def main():
 
     cell_line = args.cell_line
     project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
+    data_dir = f"{project_dir}/cell_masks"
     protein_dir = f"{project_dir}/sampled_intensity"
     if not os.path.exists(protein_dir):
         os.makedirs(protein_dir)
@@ -53,11 +54,11 @@ def main():
             if len(data_[1:]) != cfg.N_COEFS * 4:
                 continue
             sc_path = data_[0]
-            protein_path = Path(str(sc_path).replace(".npy", "_protein.png"))
-            if os.path.exists(f"{protein_dir}/{Path(protein_path).stem}.npy"):
+            img_id = os.path.basename(sc_path)
+            protein_path = f"{data_dir}/{img_id.replace('.npy', '_protein.png')}"
+            if os.path.exists(f"{data_dir}/{img_id}"):
                 continue
             
-            img_id = os.path.basename(sc_path)
             
             for line in f_shift:
                 if line.find(img_id) != -1:
