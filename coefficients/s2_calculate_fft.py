@@ -167,3 +167,4 @@ if __name__ == "__main__":
         calculate_fft_hpa_nu(cfg, get_coef_fun)
         #calculate_fft_ccd_nu(cfg, get_coef_fun)
     print(f"Done in {np.round((time.time()-s_t)/3600,2)} h.")
+    sys.exit(0)

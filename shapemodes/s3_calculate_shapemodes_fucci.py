@@ -243,6 +243,7 @@ if __name__ == "__main__":
     memory_limit()  # Limitates maximun memory usage
     try:
         main()
+        sys.exit(0)
     except MemoryError:
         sys.stderr.write("\n\nERROR: Memory Exception\n")
         sys.exit(1)
