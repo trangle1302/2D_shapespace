@@ -252,4 +252,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+        sys.exit(0)
+    except:
+        sys.exit(1)
