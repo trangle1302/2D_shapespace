@@ -890,7 +890,7 @@ def get_protein_intensity(
 
     cell__ = []
     if fourier_algo == "fft":
-        n_coef_ = n_coef * 2
+        n_coef_ = n_coef
     elif fourier_algo == "efd":
         n_coef_ = n_coef * 4 + 2
     for fcoef in [ori_fft[: n_coef_ * 2], ori_fft[n_coef_ * 2 :]]:
@@ -899,7 +899,6 @@ def get_protein_intensity(
     x_, y_ = parameterize.get_coordinates(
         cell__[1].real, cell__[0].real, [0, 0], n_isos=[10, 20], plot=False
     )
-
     # Get intensity
     x = np.array(x_) + shift_dict["shift_c"][0]
     y = np.array(y_) + shift_dict["shift_c"][1]
