@@ -56,7 +56,7 @@ def main():
             sc_path = data_[0]
             img_id = os.path.basename(sc_path)
             protein_path = f"{data_dir}/{img_id.replace('.npy', '_protein.png')}"
-            if os.path.exists(f"{data_dir}/{img_id}"):
+            if os.path.exists(f"{protein_dir}/{img_id}"):
                 continue
             
             
