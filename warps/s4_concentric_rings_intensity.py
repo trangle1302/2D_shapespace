@@ -49,16 +49,15 @@ def main():
     with open(fft_path, "r") as f, open(shift_path, "r") as f_shift:
         # for pos, (l_num, l_shift) in enumerate(tqdm(zip(f,f_shift), total=count)):
         # for l_shift in f_shift:
-        for l_num in tqdm(f, total=count):
+        for l_num in f: #tqdm(f, total=count):
             data_ = l_num.strip().split(",")
             if len(data_[1:]) != cfg.N_COEFS * 4:
                 continue
             sc_path = data_[0]
             img_id = os.path.basename(sc_path)
             protein_path = f"{data_dir}/{img_id.replace('.npy', '_protein.png')}"
-            if os.path.exists(f"{protein_dir}/{img_id}"):
+            if os.path.exists(f"{protein_dir}/{img_id.replace('.npy', '_protein.png')}"):
                 continue
-            
             
             for line in f_shift:
                 if line.find(img_id) != -1:
