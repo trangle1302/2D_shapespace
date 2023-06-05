@@ -8,6 +8,7 @@ import numpy as np
 from tqdm import tqdm
 # import h5py
 import argparse
+import glob
 
 def main():    
     parser = argparse.ArgumentParser()
@@ -46,17 +47,21 @@ def main():
     with open(fft_path) as f_shift:
         count2 = sum(1 for _ in f_shift)
     print(count, count2)
+    completed = [os.path.basename(img_id).replace("_protein.npy","") for img_id in glob.glob(f"{protein_dir}/*.npy")]
+    print(len(completed),completed[:4])
     with open(fft_path, "r") as f, open(shift_path, "r") as f_shift:
         # for pos, (l_num, l_shift) in enumerate(tqdm(zip(f,f_shift), total=count)):
         # for l_shift in f_shift:
-        for l_num in f: #tqdm(f, total=count):
+        for l_num in tqdm(f, total=count):
             data_ = l_num.strip().split(",")
             if len(data_[1:]) != cfg.N_COEFS * 4:
                 continue
             sc_path = data_[0]
-            img_id = os.path.basename(sc_path)
-            protein_path = f"{data_dir}/{img_id.replace('.npy', '_protein.png')}"
-            if os.path.exists(f"{protein_dir}/{img_id.replace('.npy', '_protein.png')}"):
+            img_id = os.path.basename(sc_path).replace(".npy","")
+            raw_protein_path = f"{data_dir}/{img_id}_protein.png"
+            save_protein_path = f"{protein_dir}/{img_id}_protein.npy"
+            #print(raw_protein_path, save_protein_path, img_id)
+            if os.path.exists(save_protein_path):
                 continue
             
             for line in f_shift:
@@ -77,14 +82,14 @@ def main():
                 )
 
             intensity = plotting.get_protein_intensity(
-                pro_path=protein_path,
+                pro_path=raw_protein_path,
                 shift_dict=shifts,
                 ori_fft=ori_fft,
                 n_coef=cfg.N_COEFS,
                 inverse_func=inverse_func,
                 fourier_algo=cfg.COEF_FUNC
             )
-            np.save(f"{protein_dir}/{Path(protein_path).stem}", intensity)
+            np.save(save_protein_path, intensity)
             # np.load('/data/2Dshapespace/U-2_OS/sampled_intensity/1118_F1_2_2_protein.npy')
     # h5f = h5py.File(f"{protein_dir}/{cfg.CELL_LINE.replace(' ','_')}.h5","w")
     # ds_ = f.create_dataset("data", (img_src.count, img_src.shape[0], img_src.shape[1]), dtype='uint8', chunks=(1,512,512), compression='gzip', compression_opts=9)
