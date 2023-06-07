@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from skimage.metrics import structural_similarity
+import json
+from utils import helpers
 
 def correlation(value_dict, method_func):
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
@@ -47,8 +49,9 @@ if __name__ == "__main__":
     log_dir = f"{cfg.PROJECT_DIR}/logs"
     fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
-    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}"
+    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
     avg_organelle_dir = f"{cfg.PROJECT_DIR}/matrix_protein_avg"
+    sampled_intensity_dir = f"{cfg.PROJECT_DIR}/sampled_intensity"
 
     cellline_meta = os.path.join(cfg.PROJECT_DIR, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
     print(cellline_meta)
@@ -62,20 +65,30 @@ if __name__ == "__main__":
         mappings.to_csv(cellline_meta, index=False)
         print(mappings.sc_target.value_counts())
 
+    f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "r")
+    cells_assigned = json.load(f)
     merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
     # Panel 1: Organelle through shapespace
-    for PC in np.arange(6):
-        for org in cfg.LABEL_TO_ALIAS.values():
+    for PC in np.arange(1,7):
+        pc_cells = cells_assigned[PC]
+        for org in cfg.ORGANELLES:
             for i, bin_ in enumerate(merged_bins):
+                ls = [pc_cells[b] for b in bin_]
+                ls = helpers.flatten_list(ls)
+                ls = [os.path.basename(l).replace(".npy", "") for l in ls]
+                df_sl = mappings[mappings.cell_idx.isin(ls)]
+                ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
+                print(f"Found {len(ls_)}, eg: {ls[:3]}")
                 intensities = []
-                if len(bin_) == 1:
-                    bin_ = bin_[0]
-                    org_bin = imread(f"{avg_organelle_dir}/PC{PC}/bin{bin_}_{org}.png")
                     
-            intensities = []
+                for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
+                    pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
+                    pilr = (pilr > 10).astype("float64")
+                    intensities += pilr / len(ls_)
+                    print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
 
     # Panel 2: Organelle heatmap through shapespace
-    for PC in np.arange(8):
+    for PC in np.arange(1,7):
         for b in np.arange(11):
             images = {}
             for i, bin_ in enumerate(merged_bins):
