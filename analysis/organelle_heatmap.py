@@ -1,11 +1,10 @@
 import os
+import sys
+sys.path.append("..")
 import numpy as np
 import pandas as pd
-from pathlib import Path
 import matplotlib.pyplot as plt
-from imageio import imread, imwrite
 from skimage.metrics import structural_similarity
-from warps import parameterize
 
 def correlation(value_dict, method_func):
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
@@ -52,6 +51,7 @@ if __name__ == "__main__":
     avg_organelle_dir = f"{cfg.PROJECT_DIR}/matrix_protein_avg"
 
     cellline_meta = os.path.join(cfg.PROJECT_DIR, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
+    print(cellline_meta)
     if os.path.exists(cellline_meta):
         mappings = pd.read_csv(cellline_meta)
     else:
@@ -60,7 +60,8 @@ if __name__ == "__main__":
         mappings["cell_idx"] = [idx.split("_", 1)[1] for idx in mappings.id]
         mappings = unmerge_label(mappings)
         mappings.to_csv(cellline_meta, index=False)
-        
+        print(mappings.sc_target.value_counts())
+
     merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
     # Panel 1: Organelle through shapespace
     for PC in np.arange(6):
