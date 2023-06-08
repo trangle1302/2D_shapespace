@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from skimage.metrics import structural_similarity
 import json
 from utils import helpers
+import argparse
 
 def correlation(value_dict, method_func):
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
@@ -45,21 +46,29 @@ def unmerge_label(
 
 
 if __name__ == "__main__":
-    import configs.config as cfg
-    log_dir = f"{cfg.PROJECT_DIR}/logs"
-    fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
-    fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
-    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
-    avg_organelle_dir = f"{cfg.PROJECT_DIR}/matrix_protein_avg"
-    sampled_intensity_dir = f"{cfg.PROJECT_DIR}/sampled_intensity"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cell_line", help="principle component", type=str)
+    args = parser.parse_args()
 
-    cellline_meta = os.path.join(cfg.PROJECT_DIR, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
+    import configs.config as cfg
+    
+    cell_line = args.cell_line
+    project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
+
+    log_dir = f"{project_dir}/logs"
+    fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
+    fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
+    shape_mode_path = f"{project_dir}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
+    avg_organelle_dir = f"{project_dir}/matrix_protein_avg"
+    sampled_intensity_dir = f"{project_dir}/sampled_intensity"
+
+    cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
     print(cellline_meta)
     if os.path.exists(cellline_meta):
         mappings = pd.read_csv(cellline_meta)
     else:
         mappings = pd.read_csv(cfg.META_PATH)
-        mappings = mappings[mappings.atlas_name == cfg.CELL_LINE]
+        mappings = mappings[mappings.atlas_name == cell_line]
         mappings["cell_idx"] = [idx.split("_", 1)[1] for idx in mappings.id]
         mappings = unmerge_label(mappings)
         mappings.to_csv(cellline_meta, index=False)
@@ -69,7 +78,10 @@ if __name__ == "__main__":
     cells_assigned = json.load(f)
     merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
     # Panel 1: Organelle through shapespace
+    
+
     for PC in np.arange(1,7):
+        org_percent = {}
         pc_cells = cells_assigned[PC]
         for org in cfg.ORGANELLES:
             for i, bin_ in enumerate(merged_bins):
@@ -80,13 +92,16 @@ if __name__ == "__main__":
                 ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
                 print(f"Found {len(ls_)}, eg: {ls[:3]}")
                 intensities = []
-                    
+                
                 for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
                     pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
                     pilr = (pilr > 10).astype("float64")
                     intensities += pilr / len(ls_)
                     print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
-
+        org_percent[f"bin{i}"] = df_sl.sc_target.value_counts().to_dict()
+        df = pd.DataFrame(org_percent)
+        print(df)
+        df.to_csv()
     # Panel 2: Organelle heatmap through shapespace
     for PC in np.arange(1,7):
         for b in np.arange(11):
