@@ -51,8 +51,9 @@ if __name__ == "__main__":
     fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
     shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
     avg_organelle_dir = f"{cfg.PROJECT_DIR}/matrix_protein_avg"
+    os.makedirs(avg_organelle_dir, exist_ok=True)
     sampled_intensity_dir = f"{cfg.PROJECT_DIR}/sampled_intensity"
-
+    
     cellline_meta = os.path.join(cfg.PROJECT_DIR, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
     print(cellline_meta)
     if os.path.exists(cellline_meta):
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
     # Panel 1: Organelle through shapespace
     for PC in np.arange(1,7):
-        pc_cells = cells_assigned[PC]
+        pc_cells = cells_assigned[f"PC{PC}"]
         for org in cfg.ORGANELLES:
             for i, bin_ in enumerate(merged_bins):
                 ls = [pc_cells[b] for b in bin_]
@@ -79,13 +80,14 @@ if __name__ == "__main__":
                 df_sl = mappings[mappings.cell_idx.isin(ls)]
                 ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
                 print(f"Found {len(ls_)}, eg: {ls[:3]}")
-                intensities = []
+                intensities = np.zeros((31,256))
                     
                 for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
                     pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
                     pilr = (pilr > 10).astype("float64")
                     intensities += pilr / len(ls_)
-                    print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
+                print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
+                np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
 
     # Panel 2: Organelle heatmap through shapespace
     for PC in np.arange(1,7):
@@ -96,8 +98,9 @@ if __name__ == "__main__":
                     b = bin_[0]
                     images = {}
                     for org in cfg.ORGANELLES:
-                        images[org] = imread(f"{avg_organelle_dir}/{PC}/bin{b}_{org}.png")
+                        images[org] = np.load(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.npy")
 
             ssim_scores = correlation(images, structural_similarity)
             ssim_df = pd.DataFrame(ssim_scores, columns=list(images.keys()))
             ssim_df.index = list(images.keys())
+            ssim_df.to_csv(f"{avg_organelle_dir}/ssim_df.csv")
