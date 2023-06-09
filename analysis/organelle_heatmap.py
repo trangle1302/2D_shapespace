@@ -4,7 +4,9 @@ sys.path.append("..")
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from skimage.filters import threshold_minimum
 from skimage.metrics import structural_similarity
+from scipy.stats import pearsonr
 import json
 from utils import helpers
 import argparse
@@ -13,7 +15,11 @@ def correlation(value_dict, method_func):
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
     for i, (k1, v1) in enumerate(value_dict.items()):
         for j, (k2, v2) in enumerate(value_dict.items()):
-            cor_mat[i, j] = method_func(v1, v2)
+            print(k1, k2, method_func(v1.flatten(),v2.flatten()))
+            try:
+                cor_mat[i, j] = method_func(v1, v2)
+            except:
+                (cor_mat[i, j],_) = method_func(v1.flatten(), v2.flatten())
     return cor_mat
 
 
@@ -52,8 +58,8 @@ if __name__ == "__main__":
 
     import configs.config as cfg
     
-    cell_line = args.cell_line
-    project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
+    cell_line = cfg.CELL_LINE #args.cell_line
+    project_dir = cfg.PROJECT_DIR#os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
 
     log_dir = f"{project_dir}/logs"
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
@@ -86,8 +92,8 @@ if __name__ == "__main__":
         pc_cells = cells_assigned[f"PC{PC}"]
         for org in cfg.ORGANELLES:
             for i, bin_ in enumerate(merged_bins):
-                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
-                    continue
+                #if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
+                #    continue
                 ls = [pc_cells[b] for b in bin_]
                 ls = helpers.flatten_list(ls)
                 ls = [os.path.basename(l).replace(".npy", "") for l in ls]
@@ -96,9 +102,14 @@ if __name__ == "__main__":
                 print(f"Found {len(ls_)}, eg: {ls[:3]}")
                 intensities = np.zeros((31,256))
                 n = len(ls_)
-                for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
+                for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):    
                     pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
-                    pilr = (pilr > 10).astype("float64")
+                    try:
+                        thres = threshold_minimum(pilr)
+                    except:
+                        thres = 0
+                    print(thres)
+                    pilr = (pilr > thres).astype("float64")
                     intensities += pilr / n
                 print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
                 np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
@@ -118,7 +129,7 @@ if __name__ == "__main__":
                     for org in cfg.ORGANELLES:
                         images[org] = np.load(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.npy")
 
-            ssim_scores = correlation(images, structural_similarity)
+            ssim_scores = correlation(images, pearsonr)#structural_similarity)
             ssim_df = pd.DataFrame(ssim_scores, columns=list(images.keys()))
             ssim_df.index = list(images.keys())
-            ssim_df.to_csv(f"{avg_organelle_dir}/ssim_df.csv")
+            ssim_df.to_csv(f"{avg_organelle_dir}/PC{PC}_bin{b}_pearsonr_df.csv")
