@@ -13,7 +13,7 @@ from more_itertools import windowed
 from skimage import exposure
 from skimage.filters import threshold_mean
 from warps import parameterize
-
+from scipy.ndimage import center_of_mass
 
 class PlotShapeModes:
     def __init__(
@@ -799,7 +799,12 @@ def plot_interpolation3(
 
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
     shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
-
+    center_cell = center_of_mass(shapes[1, :, :])
+    center_nuclei = center_of_mass(shapes[0, :, :])
+    if (
+        center_cell[1] > center_nuclei[1]
+    ):  # Move 1 quadrant counter-clockwise
+        protein_ch = rotate(protein_ch, 180)
     fig, ax = plt.subplots(1, 4, figsize=(25, 30))
     fig.patch.set_facecolor("#191919")
     # fig.patch.set_alpha(1)
@@ -860,7 +865,7 @@ def plot_interpolation3(
             ix_, iy_ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
             cell_ += [np.concatenate([ix_, iy_])]
         x_, y_ = parameterize.get_coordinates(
-            cell_[1].real, cell_[0].real, [0, 0], n_isos=[10, 10], plot=False
+            cell_[1].real, cell_[0].real, [0, 0], n_isos=[10, 20], plot=False
         )
         for i, (xi, yi) in enumerate(zip(x_, y_)):
             ax[3].plot(xi, yi, "--", alpha=0.3)
@@ -881,8 +886,15 @@ def get_protein_intensity(
     fourier_algo="fft",
     binarize=False,
 ):
-
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
+    shapes = rotate(plt.imread(pro_path.replace("_protein.png",".png")), shift_dict["theta"])
+    center_cell = center_of_mass(shapes[1, :, :])
+    center_nuclei = center_of_mass(shapes[0, :, :])
+    if (
+        center_cell[1] > center_nuclei[1]
+    ):  # Move 1 quadrant counter-clockwise
+        protein_ch = rotate(protein_ch, 180)
+
     if binarize:
         # protein_ch = exposure.equalize_hist(protein_ch)
         thresh = threshold_mean(protein_ch)
