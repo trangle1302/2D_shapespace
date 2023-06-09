@@ -852,20 +852,21 @@ def plot_interpolation3(
     # ax[2].set_facecolor("#541352FF")
     ax[2].set_facecolor("#191919")
 
-    fcoef_c = reduced_fft[0 : n_coef * 2]
-    fcoef_n = reduced_fft[n_coef * 2 :]
-    cell_ = []
-    for fcoef in [fcoef_c, fcoef_n]:
-        ix_, iy_ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
-        cell_ += [np.concatenate([ix_, iy_])]
-    x_, y_ = parameterize.get_coordinates(
-        cell_[1].real, cell_[0].real, [0, 0], n_isos=[10, 10], plot=False
-    )
-    for i, (xi, yi) in enumerate(zip(x_, y_)):
-        ax[3].plot(xi, yi, "--", alpha=0.3)
-        ax[3].scatter(xi, yi, c=m_normed[i, :], norm=norm)
-    ax[3].axis("scaled")
-    ax[3].set_facecolor("#191919")
+    if reduced_fft !=None: 
+        fcoef_c = reduced_fft[0 : n_coef * 2]
+        fcoef_n = reduced_fft[n_coef * 2 :]
+        cell_ = []
+        for fcoef in [fcoef_c, fcoef_n]:
+            ix_, iy_ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
+            cell_ += [np.concatenate([ix_, iy_])]
+        x_, y_ = parameterize.get_coordinates(
+            cell_[1].real, cell_[0].real, [0, 0], n_isos=[10, 10], plot=False
+        )
+        for i, (xi, yi) in enumerate(zip(x_, y_)):
+            ax[3].plot(xi, yi, "--", alpha=0.3)
+            ax[3].scatter(xi, yi, c=m_normed[i, :], norm=norm)
+        ax[3].axis("scaled")
+        ax[3].set_facecolor("#191919")
     plt.tight_layout()
     plt.savefig(save_path, bbox_inches="tight")
     plt.close()
