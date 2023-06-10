@@ -799,12 +799,13 @@ def plot_interpolation3(
 
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
     shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
-    center_cell = center_of_mass(shapes[1, :, :])
-    center_nuclei = center_of_mass(shapes[0, :, :])
+    center_cell = center_of_mass(shapes[:, :, 0])
+    center_nuclei = center_of_mass(shapes[:, :, 1])
     if (
         center_cell[1] > center_nuclei[1]
     ):  # Move 1 quadrant counter-clockwise
         protein_ch = rotate(protein_ch, 180)
+        shapes = rotate(shapes, 180)
     fig, ax = plt.subplots(1, 4, figsize=(25, 30))
     fig.patch.set_facecolor("#191919")
     # fig.patch.set_alpha(1)
@@ -888,8 +889,8 @@ def get_protein_intensity(
 ):
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
     shapes = rotate(plt.imread(pro_path.replace("_protein.png",".png")), shift_dict["theta"])
-    center_cell = center_of_mass(shapes[1, :, :])
-    center_nuclei = center_of_mass(shapes[0, :, :])
+    center_cell = center_of_mass(shapes[:, :, 0])
+    center_nuclei = center_of_mass(shapes[:, :, 2])
     if (
         center_cell[1] > center_nuclei[1]
     ):  # Move 1 quadrant counter-clockwise
