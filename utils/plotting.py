@@ -798,18 +798,24 @@ def plot_interpolation3(
 ):
 
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
-    shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
-    center_cell = center_of_mass(shapes[:, :, 0])
-    center_nuclei = center_of_mass(shapes[:, :, 1])
+    #shapes = rotate(plt.imread(shape_path), shift_dict["theta"])
+    data = np.load(shape_path)
+    nuclei = rotate(data[1, :, :], shift_dict["theta"])
+    cell = rotate(data[0, :, :], shift_dict["theta"])
+    center_cell = center_of_mass(cell)
+    center_nuclei = center_of_mass(nuclei)
     if (
         center_cell[1] > center_nuclei[1]
     ):  # Move 1 quadrant counter-clockwise
         protein_ch = rotate(protein_ch, 180)
-        shapes = rotate(shapes, 180)
+        cell = rotate(cell, 180)
+        nuclei = rotate(nuclei, 180)
     fig, ax = plt.subplots(1, (4 if reduced_fft != None else 3), figsize=(25, 30))
     fig.patch.set_facecolor("#191919")
     # fig.patch.set_alpha(1)
-    ax[0].imshow(shapes, origin="lower")
+    # ax[0].imshow(shapes, origin="lower")
+    ax[0].imshow(cell, alpha=0.5)
+    ax[0].imshow(nuclei, alpha=0.5)
     # ax[0].set_facecolor('#191919')
     # ax[0].tight_axis()
     ax[1].imshow(protein_ch, origin="lower")
