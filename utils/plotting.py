@@ -894,9 +894,11 @@ def get_protein_intensity(
     binarize=False,
 ):
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
-    shapes = rotate(plt.imread(pro_path.replace("_protein.png",".png")), shift_dict["theta"])
-    center_cell = center_of_mass(shapes[:, :, 0])
-    center_nuclei = center_of_mass(shapes[:, :, 2])
+    data = np.load(pro_path.replace("_protein.png",".npy"))
+    nuclei = rotate(data[1, :, :], shift_dict["theta"])
+    cell = rotate(data[0, :, :], shift_dict["theta"])
+    center_cell = center_of_mass(cell)
+    center_nuclei = center_of_mass(nuclei)
     if (
         center_cell[1] > center_nuclei[1]
     ):  # Move 1 quadrant counter-clockwise
