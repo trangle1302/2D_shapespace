@@ -806,7 +806,7 @@ def plot_interpolation3(
     ):  # Move 1 quadrant counter-clockwise
         protein_ch = rotate(protein_ch, 180)
         shapes = rotate(shapes, 180)
-    fig, ax = plt.subplots(1, 4, figsize=(25, 30))
+    fig, ax = plt.subplots(1, (4 if reduced_fft != None else 3), figsize=(25, 30))
     fig.patch.set_facecolor("#191919")
     # fig.patch.set_alpha(1)
     ax[0].imshow(shapes, origin="lower")
@@ -819,7 +819,7 @@ def plot_interpolation3(
         ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
         cell__ += [np.concatenate([ix__, iy__])]
     x_, y_ = parameterize.get_coordinates(
-        cell__[1].real, cell__[0].real, [0, 0], n_isos=[10, 10], plot=False
+        cell__[1].real, cell__[0].real, [0, 0], n_isos=[10, 20], plot=False
     )
     for i, (xi, yi) in enumerate(zip(x_, y_)):
         ax[0].scatter(
