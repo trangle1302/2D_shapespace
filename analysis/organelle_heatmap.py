@@ -58,8 +58,8 @@ if __name__ == "__main__":
 
     import configs.config as cfg
     
-    cell_line = cfg.CELL_LINE #args.cell_line
-    project_dir = cfg.PROJECT_DIR#os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
+    cell_line = args.cell_line #cfg.CELL_LINE #args.cell_line
+    project_dir =  os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line) # cfg.PROJECT_DIR#os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
 
     log_dir = f"{project_dir}/logs"
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
@@ -92,8 +92,8 @@ if __name__ == "__main__":
         pc_cells = cells_assigned[f"PC{PC}"]
         for org in cfg.ORGANELLES:
             for i, bin_ in enumerate(merged_bins):
-                #if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
-                #    continue
+                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
+                   continue
                 ls = [pc_cells[b] for b in bin_]
                 ls = helpers.flatten_list(ls)
                 ls = [os.path.basename(l).replace(".npy", "") for l in ls]
@@ -114,13 +114,13 @@ if __name__ == "__main__":
                 print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
                 np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
                 lines += [f"PC{PC}", org, bin_[0], n]
-    #df = pd.DataFrame(lines)
-    #print(df)
-    #df.to_csv(f"{avg_organelle_dir}/organelle_distr.csv", index=False)
+    df = pd.DataFrame(lines)
+    print(df)
+    df.to_csv(f"{avg_organelle_dir}/organelle_distr.csv", index=False)
     
     # Panel 2: Organelle heatmap through shapespace
     for PC in np.arange(1,7):
-        for b in np.arange(11):
+        for b in np.arange(7):
             images = {}
             for i, bin_ in enumerate(merged_bins):
                 if len(bin_) == 1:
