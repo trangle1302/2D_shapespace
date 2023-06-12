@@ -13,10 +13,10 @@ module load py-scikit-image/0.19.3_py39
 module load py-scikit-learn/1.0.2_py39
 pip install imageio
 pip install tqdm
-srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line A-431 &
-srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line RT4 &
-srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line K-562 &
-srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line BJ &
-srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line MCF7 &
-srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line HEK_293 &
-srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line HEL 
+srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line A-431 --n_isos 10 20 &
+srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line RT4 --n_isos 10 20 &
+srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line K-562  --n_isos 10 20 &
+srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line BJ  --n_isos 10 10 &
+srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line MCF7  --n_isos 10 20 &
+srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line HEK_293  --n_isos 10 20 &
+srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line HEL  --n_isos 10 10
