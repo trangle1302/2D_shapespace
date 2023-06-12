@@ -49,7 +49,7 @@ def main():
     print(count, count2)
     completed = [os.path.basename(img_id).replace("_protein.npy","") for img_id in glob.glob(f"{protein_dir}/*.npy")]
     print(len(completed),completed[:4])
-    with open(fft_path, "r") as f, open(shift_path, "r") as f_shift:
+    with open(fft_path, "r") as f: #, open(shift_path, "r") as f_shift:
         # for pos, (l_num, l_shift) in enumerate(tqdm(zip(f,f_shift), total=count)):
         # for l_shift in f_shift:
         for l_num in tqdm(f, total=count):
@@ -63,12 +63,18 @@ def main():
             #print(raw_protein_path, save_protein_path, img_id)
             if os.path.exists(save_protein_path):
                 continue
-            
-            for line in f_shift:
-                if line.find(img_id) != -1:
-                    data_shifts = line.strip().split(";")
-                    break
-
+         
+            data_shifts = None
+            with open(shift_path, "r") as f_shift: 
+                for line in f_shift:
+                    #print(line.find(img_id))
+                    if img_id in line: #line.find(img_id) != -1:
+                        #print(line, img_id)
+                        data_shifts = line.strip().split(";")
+                        break
+            if data_shifts == None:
+                print(f"{img_id} not found")
+                continue
             ori_fft = [
                 complex(s.replace("i", "j")) for s in data_[1:]
             ]  # applymap(lambda s: complex(s.replace('i', 'j')))
@@ -80,7 +86,7 @@ def main():
                     float(data_shifts[2].split(",")[0].strip("(")),
                     (float(data_shifts[2].split(",")[1].strip(")"))),
                 )
-            if False:
+            if True:
                 intensity = plotting.get_protein_intensity(
                     pro_path=raw_protein_path,
                     shift_dict=shifts,
@@ -91,7 +97,7 @@ def main():
                     binarize=True
                 )
                 np.save(save_protein_path, intensity)
-            if np.random.random() > 0:
+            if np.random.random() > 0.9:
                 plotting.plot_interpolation3(
                     shape_path=raw_protein_path.replace("_protein.png",".npy"),
                     pro_path=raw_protein_path,
@@ -101,6 +107,7 @@ def main():
                     reduced_fft=None,
                     n_coef=cfg.N_COEFS,
                     inverse_func=inverse_func,
+                    n_isos=[10,10]
                 )
             # np.load('/data/2Dshapespace/U-2_OS/sampled_intensity/1118_F1_2_2_protein.npy')
     # h5f = h5py.File(f"{protein_dir}/{cfg.CELL_LINE.replace(' ','_')}.h5","w")
