@@ -73,6 +73,7 @@ N_CV = 1
 MODE = "cell_nuclei" 
 ALIGNMENT = "fft_cell_major_axis_polarized" 
 COEF_FUNC = "fft"
+N_ISOS = [10,20]
 
 # >>>>>>>>>>>>>>>>>>>>> COMPUTE RESOURCE + PACKAGE
 SERVER = "sherlock"
