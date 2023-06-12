@@ -795,6 +795,7 @@ def plot_interpolation3(
     reduced_fft,
     n_coef,
     inverse_func,
+    n_isos,
 ):
 
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
@@ -825,7 +826,7 @@ def plot_interpolation3(
         ix__, iy__ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
         cell__ += [np.concatenate([ix__, iy__])]
     x_, y_ = parameterize.get_coordinates(
-        cell__[1].real, cell__[0].real, [0, 0], n_isos=[10, 20], plot=False
+        cell__[1].real, cell__[0].real, [0, 0], n_isos=n_isos, plot=False
     )
     for i, (xi, yi) in enumerate(zip(x_, y_)):
         ax[0].scatter(
@@ -872,7 +873,7 @@ def plot_interpolation3(
             ix_, iy_ = inverse_func(fcoef[:n_coef], fcoef[n_coef:])
             cell_ += [np.concatenate([ix_, iy_])]
         x_, y_ = parameterize.get_coordinates(
-            cell_[1].real, cell_[0].real, [0, 0], n_isos=[10, 20], plot=False
+            cell_[1].real, cell_[0].real, [0, 0], n_isos=n_isos, plot=False
         )
         for i, (xi, yi) in enumerate(zip(x_, y_)):
             ax[3].plot(xi, yi, "--", alpha=0.3)
@@ -892,6 +893,7 @@ def get_protein_intensity(
     inverse_func,
     fourier_algo="fft",
     binarize=False,
+    n_isos=[10,10]
 ):
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
     data = np.load(pro_path.replace("_protein.png",".npy"))
@@ -919,7 +921,7 @@ def get_protein_intensity(
         ix__, iy__ = inverse_func(fcoef[:n_coef_], fcoef[n_coef_:])
         cell__ += [np.concatenate([ix__, iy__])]
     x_, y_ = parameterize.get_coordinates(
-        cell__[1].real, cell__[0].real, [0, 0], n_isos=[10, 20], plot=False
+        cell__[1].real, cell__[0].real, [0, 0], n_isos=n_isos, plot=False
     )
     # Get intensity
     x = np.array(x_) + shift_dict["shift_c"][0]
