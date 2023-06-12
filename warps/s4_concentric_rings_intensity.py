@@ -34,7 +34,7 @@ def main():
     cell_line = args.cell_line
     project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
     data_dir = f"{project_dir}/cell_masks"
-    protein_dir = f"{project_dir}/sampled_intensity"
+    protein_dir = f"{project_dir}/sampled_intensity_bin"
     if not os.path.exists(protein_dir):
         os.makedirs(protein_dir)
 
@@ -89,16 +89,16 @@ def main():
                 inverse_func=inverse_func,
                 fourier_algo=cfg.COEF_FUNC
             )
-            plotting.plot_interpolation3(
-                shape_path=raw_protein_path.replace("_protein.png",".npy"),
-                pro_path=raw_protein_path,
-                shift_dict=shifts,
-                save_path=save_protein_path.replace(".npy",".png"),
-                ori_fft=ori_fft,
-                reduced_fft=None,
-                n_coef=cfg.N_COEFS,
-                inverse_func=inverse_func,
-            )
+            #plotting.plot_interpolation3(
+            #    shape_path=raw_protein_path.replace("_protein.png",".npy"),
+            #    pro_path=raw_protein_path,
+            #    shift_dict=shifts,
+            #    save_path=save_protein_path.replace(".npy",".png"),
+            #    ori_fft=ori_fft,
+            #    reduced_fft=None,
+            #    n_coef=cfg.N_COEFS,
+            #    inverse_func=inverse_func,
+            #)
             np.save(save_protein_path, intensity)
             # np.load('/data/2Dshapespace/U-2_OS/sampled_intensity/1118_F1_2_2_protein.npy')
     # h5f = h5py.File(f"{protein_dir}/{cfg.CELL_LINE.replace(' ','_')}.h5","w")
