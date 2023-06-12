@@ -80,17 +80,18 @@ def main():
                     float(data_shifts[2].split(",")[0].strip("(")),
                     (float(data_shifts[2].split(",")[1].strip(")"))),
                 )
-
-            intensity = plotting.get_protein_intensity(
-                pro_path=raw_protein_path,
-                shift_dict=shifts,
-                ori_fft=ori_fft,
-                n_coef=cfg.N_COEFS,
-                inverse_func=inverse_func,
-                fourier_algo=cfg.COEF_FUNC,
-                binarize=True
-            )
-            if np.random.random() > 0.1:
+            if False:
+                intensity = plotting.get_protein_intensity(
+                    pro_path=raw_protein_path,
+                    shift_dict=shifts,
+                    ori_fft=ori_fft,
+                    n_coef=cfg.N_COEFS,
+                    inverse_func=inverse_func,
+                    fourier_algo=cfg.COEF_FUNC,
+                    binarize=True
+                )
+                np.save(save_protein_path, intensity)
+            if np.random.random() > 0:
                 plotting.plot_interpolation3(
                     shape_path=raw_protein_path.replace("_protein.png",".npy"),
                     pro_path=raw_protein_path,
@@ -101,7 +102,6 @@ def main():
                     n_coef=cfg.N_COEFS,
                     inverse_func=inverse_func,
                 )
-            np.save(save_protein_path, intensity)
             # np.load('/data/2Dshapespace/U-2_OS/sampled_intensity/1118_F1_2_2_protein.npy')
     # h5f = h5py.File(f"{protein_dir}/{cfg.CELL_LINE.replace(' ','_')}.h5","w")
     # ds_ = f.create_dataset("data", (img_src.count, img_src.shape[0], img_src.shape[1]), dtype='uint8', chunks=(1,512,512), compression='gzip', compression_opts=9)
