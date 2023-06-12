@@ -76,7 +76,7 @@ COEF_FUNC = "fft" # ["efd", "wavelet"]
 N_ISOS = [10,20]
 
 # >>>>>>>>>>>>>>>>>>>>> COMPUTE RESOURCE + PACKAGE
-SERVER = "callisto"
+SERVER = "sherlock"
 if SERVER == "callisto":
     PROJECT_DIR = f"/data/2Dshapespace/{CELL_LINE.replace(' ','_')}"
     META_PATH = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
