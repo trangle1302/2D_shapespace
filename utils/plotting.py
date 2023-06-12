@@ -809,8 +809,8 @@ def plot_interpolation3(
         center_cell[1] > center_nuclei[1]
     ):  # Move 1 quadrant counter-clockwise
         protein_ch = rotate(protein_ch.copy(), 180)
-        cell = rotate(cell, 180)
-        nuclei = rotate(nuclei, 180)
+        cell = rotate(cell.copy(), 180)
+        nuclei = rotate(nuclei.copy(), 180)
     fig, ax = plt.subplots(1, (4 if reduced_fft != None else 3), figsize=(25, 30))
     fig.patch.set_facecolor("#191919")
     # fig.patch.set_alpha(1)
@@ -820,7 +820,7 @@ def plot_interpolation3(
     # ax[0].set_facecolor('#191919')
     # ax[0].tight_axis()
     ax[1].imshow(protein_ch, origin="lower")
-    ax[1].set_title(f"theta = {np.round(shift_dict['theta'],1)}°")
+    ax[1].set_title(f"theta = {np.round(shift_dict['theta'],1)}°", frontdict={'frontsize':4,'color':'white'})
     ax[1].set_facecolor("#191919")
     cell__ = []
     for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]:
