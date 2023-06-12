@@ -13,6 +13,7 @@ import glob
 def main():    
     parser = argparse.ArgumentParser()
     parser.add_argument("--cell_line", type=str)
+    parser.add_argument("--n_isos", nargs='+', type=int)
     args = parser.parse_args()
     import configs.config as cfg
     """
@@ -23,7 +24,6 @@ def main():
     n_cv = 10
     fourier_df = read_complex_df(fft_dir=fft_path, cfg.N_COEFS=128, n_cv=10, n_samples = 1000)
     """
-    
     if cfg.COEF_FUNC == "fft":
         get_coef_fun = coefs.fourier_coeffs  # coefs.wavelet_coefs  #
         inverse_func = coefs.inverse_fft  # coefs.inverse_wavelet
@@ -94,7 +94,8 @@ def main():
                     n_coef=cfg.N_COEFS,
                     inverse_func=inverse_func,
                     fourier_algo=cfg.COEF_FUNC,
-                    binarize=True
+                    binarize=True,
+                    n_isos=args.n_isos
                 )
                 np.save(save_protein_path, intensity)
             if np.random.random() > 0.9:
@@ -107,7 +108,7 @@ def main():
                     reduced_fft=None,
                     n_coef=cfg.N_COEFS,
                     inverse_func=inverse_func,
-                    n_isos=[10,10]
+                    n_isos=args.n_isos
                 )
             # np.load('/data/2Dshapespace/U-2_OS/sampled_intensity/1118_F1_2_2_protein.npy')
     # h5f = h5py.File(f"{protein_dir}/{cfg.CELL_LINE.replace(' ','_')}.h5","w")
