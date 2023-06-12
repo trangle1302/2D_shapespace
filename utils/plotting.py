@@ -820,7 +820,7 @@ def plot_interpolation3(
     # ax[0].set_facecolor('#191919')
     # ax[0].tight_axis()
     ax[1].imshow(protein_ch, origin="lower")
-    ax[1].set_title(f"theta = {np.round(shift_dict['theta'],1)}°", frontdict={'frontsize':4,'color':'white'})
+    ax[1].set_title(f"theta = {np.round(shift_dict['theta'],1)}°", fontdict={'fontsize':10,'color':'white'})
     ax[1].set_facecolor("#191919")
     cell__ = []
     for fcoef in [ori_fft[: n_coef * 2], ori_fft[n_coef * 2 :]]:
