@@ -852,7 +852,7 @@ def plot_interpolation3(
     m = parameterize.get_intensity(protein_ch, x, y, k=7)
     m_normed = m / m.max()
     norm = plt.Normalize(vmin=0, vmax=1)
-    print(m_normed.min(), m_normed.max(), m_normed[1, :])
+    #print(m_normed.min(), m_normed.max(), m_normed[1, :])
     for i, (xi, yi) in enumerate(zip(x_, y_)):
         ax[2].scatter(
             yi + shift_dict["shift_c"][1],
