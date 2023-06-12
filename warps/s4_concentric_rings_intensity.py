@@ -87,9 +87,10 @@ def main():
                 ori_fft=ori_fft,
                 n_coef=cfg.N_COEFS,
                 inverse_func=inverse_func,
-                fourier_algo=cfg.COEF_FUNC
+                fourier_algo=cfg.COEF_FUNC,
+                binarize=True
             )
-            if np.random.random() > 0.9:
+            if np.random.random() > 0.1:
                 plotting.plot_interpolation3(
                     shape_path=raw_protein_path.replace("_protein.png",".npy"),
                     pro_path=raw_protein_path,
