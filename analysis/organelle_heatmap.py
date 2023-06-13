@@ -100,15 +100,15 @@ if __name__ == "__main__":
                 df_sl = mappings[mappings.cell_idx.isin(ls)]
                 ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
                 print(f"Found {len(ls_)}, eg: {ls[:3]}")
-                intensities = np.zeros((31,256))
+                intensities = np.zeros((21,256))
                 n = len(ls_)
                 for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):    
                     pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
-                    #try:
-                    #    thres = threshold_minimum(pilr)
-                    #except:
-                    #    thres = 0
-                    thres = 0 #print(thres)
+                    try:
+                        thres = threshold_minimum(pilr)
+                    except:
+                        thres = 0
+                    #thres = 0 #print(thres)
                     pilr = (pilr > thres).astype("float64")
                     intensities += pilr / n
                 print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
