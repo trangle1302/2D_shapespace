@@ -100,7 +100,7 @@ if __name__ == "__main__":
                 df_sl = mappings[mappings.cell_idx.isin(ls)]
                 ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
                 print(f"Found {len(ls_)}, eg: {ls[:3]}")
-                intensities = np.zeros((21,256))
+                intensities = np.zeros((31,256))
                 n = len(ls_)
                 for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):    
                     pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
@@ -120,14 +120,13 @@ if __name__ == "__main__":
     
     # Panel 2: Organelle heatmap through shapespace
     for PC in np.arange(1,7):
-        for b in np.arange(7):
+        for i, bin_ in enumerate(merged_bins):
             images = {}
-            for i, bin_ in enumerate(merged_bins):
-                if len(bin_) == 1:
-                    b = bin_[0]
-                    images = {}
-                    for org in cfg.ORGANELLES:
-                        images[org] = np.load(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.npy")
+            if len(bin_) == 1:
+                b = bin_[0]
+                images = {}
+                for org in cfg.ORGANELLES:
+                    images[org] = np.load(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.npy")
 
             ssim_scores = correlation(images, pearsonr)#structural_similarity)
             ssim_df = pd.DataFrame(ssim_scores, columns=list(images.keys()))
