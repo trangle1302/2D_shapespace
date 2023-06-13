@@ -67,7 +67,7 @@ if __name__ == "__main__":
     shape_mode_path = f"{project_dir}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
     avg_organelle_dir = f"{project_dir}/matrix_protein_avg"
     os.makedirs(avg_organelle_dir, exist_ok=True)
-    sampled_intensity_dir = f"{project_dir}/sampled_intensity"
+    sampled_intensity_dir = f"{project_dir}/sampled_intensity_bin"
 
     cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
     print(cellline_meta)
@@ -92,8 +92,8 @@ if __name__ == "__main__":
         pc_cells = cells_assigned[f"PC{PC}"]
         for org in cfg.ORGANELLES:
             for i, bin_ in enumerate(merged_bins):
-                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
-                   continue
+                #if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
+                #   continue
                 ls = [pc_cells[b] for b in bin_]
                 ls = helpers.flatten_list(ls)
                 ls = [os.path.basename(l).replace(".npy", "") for l in ls]
@@ -104,11 +104,11 @@ if __name__ == "__main__":
                 n = len(ls_)
                 for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):    
                     pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
-                    try:
-                        thres = threshold_minimum(pilr)
-                    except:
-                        thres = 0
-                    print(thres)
+                    #try:
+                    #    thres = threshold_minimum(pilr)
+                    #except:
+                    #    thres = 0
+                    thres = 0 #print(thres)
                     pilr = (pilr > thres).astype("float64")
                     intensities += pilr / n
                 print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
