@@ -68,7 +68,7 @@ def main():
             with open(shift_path, "r") as f_shift: 
                 for line in f_shift:
                     #print(line.find(img_id))
-                    if img_id in line: #line.find(img_id) != -1:
+                    if img_id+".npy" in line: #line.find(img_id) != -1:
                         #print(line, img_id)
                         data_shifts = line.strip().split(";")
                         break
@@ -94,11 +94,11 @@ def main():
                     n_coef=cfg.N_COEFS,
                     inverse_func=inverse_func,
                     fourier_algo=cfg.COEF_FUNC,
-                    binarize=True,
+                    binarize=False,
                     n_isos=args.n_isos
                 )
                 np.save(save_protein_path, intensity)
-            if np.random.random() > 0.9:
+            if np.random.random() > 0.95:
                 plotting.plot_interpolation3(
                     shape_path=raw_protein_path.replace("_protein.png",".npy"),
                     pro_path=raw_protein_path,
