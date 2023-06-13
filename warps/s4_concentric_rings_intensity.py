@@ -9,7 +9,15 @@ from tqdm import tqdm
 # import h5py
 import argparse
 import glob
+import subprocess
 
+def grep(pattern, file_path):
+    try:
+        output = subprocess.check_output(['grep', pattern, file_path], universal_newlines=True)
+        return output.splitlines()
+    except subprocess.CalledProcessError:
+        return []
+    
 def main():    
     parser = argparse.ArgumentParser()
     parser.add_argument("--cell_line", type=str)
@@ -63,7 +71,7 @@ def main():
             #print(raw_protein_path, save_protein_path, img_id)
             if os.path.exists(save_protein_path):
                 continue
-         
+            """
             data_shifts = None
             with open(shift_path, "r") as f_shift: 
                 for line in f_shift:
@@ -72,9 +80,12 @@ def main():
                         #print(line, img_id)
                         data_shifts = line.strip().split(";")
                         break
-            if data_shifts == None:
+            """
+            line_ = grep(img_id+".npy", shift_path)
+            if line_ == []:
                 print(f"{img_id} not found")
                 continue
+            data_shifts = line_[0].strip().split(";") 
             ori_fft = [
                 complex(s.replace("i", "j")) for s in data_[1:]
             ]  # applymap(lambda s: complex(s.replace('i', 'j')))
