@@ -865,7 +865,7 @@ def plot_interpolation3(
     ax[2].axis("scaled")
     # ax[2].set_facecolor("#541352FF")
     ax[2].set_facecolor("#191919")
-
+    ax[2].set_title(shift_dict['sc_label'], fontdict={'fontsize':20,'color':'white'})
     if reduced_fft !=None: 
         fcoef_c = reduced_fft[0 : n_coef * 2]
         fcoef_n = reduced_fft[n_coef * 2 :]
