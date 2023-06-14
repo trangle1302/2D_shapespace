@@ -11,6 +11,8 @@ import argparse
 import glob
 import subprocess
 import pandas as pd
+import multiprocessing
+from joblib import Parallel, delayed
 
 def grep(pattern, file_path):
     try:
@@ -18,7 +20,67 @@ def grep(pattern, file_path):
         return output.splitlines()
     except subprocess.CalledProcessError:
         return []
-    
+
+def sample_intensity(l_num, cfg, args, shift_path, data_dir, protein_dir, mappings, inverse_func):
+    #print(chunk)
+    #for l_num in chunk:
+    if True:
+        data_ = l_num.strip().split(",")
+        if len(data_[1:]) != cfg.N_COEFS * 4:
+            pass # continue
+        sc_path = data_[0]
+        img_id = os.path.basename(sc_path).replace(".npy","")
+        if mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
+            #print(mappings.id.str.contains(img_id).sum())
+            pass #continue
+        raw_protein_path = f"{data_dir}/{img_id}_protein.png"
+        save_protein_path = f"{protein_dir}/{img_id}_protein.npy"
+        #print(raw_protein_path, save_protein_path, img_id)
+        if os.path.exists(save_protein_path):
+            pass# continue
+        line_ = grep(img_id+".npy", shift_path)
+        if line_ == []:
+            print(f"{img_id} not found")
+            pass # continue
+        data_shifts = line_[0].strip().split(";") 
+        ori_fft = [
+            complex(s.replace("i", "j")) for s in data_[1:]
+        ]  # applymap(lambda s: complex(s.replace('i', 'j')))
+        
+        #print(sc_path, data_shifts)
+        shifts = dict()
+        shifts["theta"] = float(data_shifts[1])
+        shifts["shift_c"] = (
+                float(data_shifts[2].split(",")[0].strip("(")),
+                (float(data_shifts[2].split(",")[1].strip(")"))),
+            )
+        shifts["sc_label"] = mappings[mappings.cell_idx==img_id].sc_target.values
+        
+        if True:
+            intensity = plotting.get_protein_intensity(
+                pro_path=raw_protein_path,
+                shift_dict=shifts,
+                ori_fft=ori_fft,
+                n_coef=cfg.N_COEFS,
+                inverse_func=inverse_func,
+                fourier_algo=cfg.COEF_FUNC,
+                binarize=False,
+                n_isos=args.n_isos
+            )
+            np.save(save_protein_path, intensity)
+        if np.random.random() > 0.95:
+            plotting.plot_interpolation3(
+                shape_path=raw_protein_path.replace("_protein.png",".npy"),
+                pro_path=raw_protein_path,
+                shift_dict=shifts,
+                save_path=save_protein_path.replace(".npy",".png"),
+                ori_fft=ori_fft,
+                reduced_fft=None,
+                n_coef=cfg.N_COEFS,
+                inverse_func=inverse_func,
+                n_isos=args.n_isos
+            )
+
 def main():    
     parser = argparse.ArgumentParser()
     parser.add_argument("--cell_line", type=str)
@@ -62,79 +124,14 @@ def main():
     print(count, count2)
     completed = [os.path.basename(img_id).replace("_protein.npy","") for img_id in glob.glob(f"{protein_dir}/*.npy")]
     print(len(completed),completed[:4])
+    n_processes = multiprocessing.cpu_count() - 10
+    chunk_size = count//n_processes
+    print(f"processing {count} in {n_processes} cpu in chunk {chunk_size}")
     with open(fft_path, "r") as f: #, open(shift_path, "r") as f_shift:
-        # for pos, (l_num, l_shift) in enumerate(tqdm(zip(f,f_shift), total=count)):
-        # for l_shift in f_shift:
-        for l_num in tqdm(f, total=count):
-            data_ = l_num.strip().split(",")
-            if len(data_[1:]) != cfg.N_COEFS * 4:
-                continue
-            sc_path = data_[0]
-            img_id = os.path.basename(sc_path).replace(".npy","")
-            if mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
-                #print(mappings.id.str.contains(img_id).sum())
-                continue
-            raw_protein_path = f"{data_dir}/{img_id}_protein.png"
-            save_protein_path = f"{protein_dir}/{img_id}_protein.npy"
-            #print(raw_protein_path, save_protein_path, img_id)
-            if os.path.exists(save_protein_path):
-                continue
-            """
-            data_shifts = None
-            with open(shift_path, "r") as f_shift: 
-                for line in f_shift:
-                    #print(line.find(img_id))
-                    if img_id+".npy" in line: #line.find(img_id) != -1:
-                        #print(line, img_id)
-                        data_shifts = line.strip().split(";")
-                        break
-            """
-            line_ = grep(img_id+".npy", shift_path)
-            if line_ == []:
-                print(f"{img_id} not found")
-                continue
-            data_shifts = line_[0].strip().split(";") 
-            ori_fft = [
-                complex(s.replace("i", "j")) for s in data_[1:]
-            ]  # applymap(lambda s: complex(s.replace('i', 'j')))
-            
-            #print(sc_path, data_shifts)
-            shifts = dict()
-            shifts["theta"] = float(data_shifts[1])
-            shifts["shift_c"] = (
-                    float(data_shifts[2].split(",")[0].strip("(")),
-                    (float(data_shifts[2].split(",")[1].strip(")"))),
-                )
-            shifts["sc_label"] = mappings[mappings.cell_idx==img_id].sc_target.values
-            
-            if True:
-                intensity = plotting.get_protein_intensity(
-                    pro_path=raw_protein_path,
-                    shift_dict=shifts,
-                    ori_fft=ori_fft,
-                    n_coef=cfg.N_COEFS,
-                    inverse_func=inverse_func,
-                    fourier_algo=cfg.COEF_FUNC,
-                    binarize=False,
-                    n_isos=args.n_isos
-                )
-                np.save(save_protein_path, intensity)
-            if np.random.random() > 0.95:
-                plotting.plot_interpolation3(
-                    shape_path=raw_protein_path.replace("_protein.png",".npy"),
-                    pro_path=raw_protein_path,
-                    shift_dict=shifts,
-                    save_path=save_protein_path.replace(".npy",".png"),
-                    ori_fft=ori_fft,
-                    reduced_fft=None,
-                    n_coef=cfg.N_COEFS,
-                    inverse_func=inverse_func,
-                    n_isos=args.n_isos
-                )
-            # np.load('/data/2Dshapespace/U-2_OS/sampled_intensity/1118_F1_2_2_protein.npy')
-    # h5f = h5py.File(f"{protein_dir}/{cfg.CELL_LINE.replace(' ','_')}.h5","w")
-    # ds_ = f.create_dataset("data", (img_src.count, img_src.shape[0], img_src.shape[1]), dtype='uint8', chunks=(1,512,512), compression='gzip', compression_opts=9)
-
+        processed_list = Parallel(n_jobs=n_processes)(
+                delayed(sample_intensity)(l_num, cfg, args, shift_path, data_dir, protein_dir, mappings, inverse_func,)
+                for l_num in f)
+        
 if __name__ == "__main__":
     """
     main()
