@@ -10,6 +10,7 @@ from tqdm import tqdm
 import argparse
 import glob
 import subprocess
+import pandas as pd
 
 def grep(pattern, file_path):
     try:
@@ -45,7 +46,11 @@ def main():
     protein_dir = f"{project_dir}/sampled_intensity_bin"
     if not os.path.exists(protein_dir):
         os.makedirs(protein_dir)
-
+    
+    cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
+    mappings = pd.read_csv(cellline_meta)
+    mappings = mappings[~mappings.sc_target.isin(["Negative","Multi-Location"])]
+    #print(mappings.sc_target.value_counts(), mappings.cell_idx)
     log_dir = f"{project_dir}/logs"
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
@@ -66,6 +71,9 @@ def main():
                 continue
             sc_path = data_[0]
             img_id = os.path.basename(sc_path).replace(".npy","")
+            if mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
+                #print(mappings.id.str.contains(img_id).sum())
+                continue
             raw_protein_path = f"{data_dir}/{img_id}_protein.png"
             save_protein_path = f"{protein_dir}/{img_id}_protein.npy"
             #print(raw_protein_path, save_protein_path, img_id)
@@ -97,6 +105,8 @@ def main():
                     float(data_shifts[2].split(",")[0].strip("(")),
                     (float(data_shifts[2].split(",")[1].strip(")"))),
                 )
+            shifts["sc_label"] = mappings[mappings.cell_idx==img_id].sc_target.values
+            
             if True:
                 intensity = plotting.get_protein_intensity(
                     pro_path=raw_protein_path,
