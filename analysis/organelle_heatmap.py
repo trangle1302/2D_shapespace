@@ -58,8 +58,8 @@ if __name__ == "__main__":
 
     import configs.config as cfg
     
-    cell_line = args.cell_line #cfg.CELL_LINE #args.cell_line
-    project_dir =  os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line) # cfg.PROJECT_DIR#os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
+    cell_line = cfg.CELL_LINE #args.cell_line
+    project_dir =  cfg.PROJECT_DIR#os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
 
     log_dir = f"{project_dir}/logs"
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
@@ -101,6 +101,9 @@ if __name__ == "__main__":
                 ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
                 print(f"Found {len(ls_)}, eg: {ls[:3]}")
                 intensities = np.zeros((31,256))
+                if len(ls_) > 500:
+                    import random
+                    ls_ = random.sample(ls_, 500)
                 n = len(ls_)
                 for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):    
                     pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
