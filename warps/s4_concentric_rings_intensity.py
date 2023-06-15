@@ -27,6 +27,8 @@ def sample_intensity(l_num, cfg, args, shift_path, data_dir, protein_dir, mappin
         return # continue
     sc_path = data_[0]
     img_id = os.path.basename(sc_path).replace(".npy","")
+    if not img_id in mappings.cell_idx.tolist():
+        return
     if mappings[mappings.cell_idx==img_id].sc_target.values[0] in ["Negative","Multi-Location"]:
         #mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
         return 
@@ -51,6 +53,7 @@ def sample_intensity(l_num, cfg, args, shift_path, data_dir, protein_dir, mappin
             float(data_shifts[2].split(",")[0].strip("(")),
             (float(data_shifts[2].split(",")[1].strip(")"))),
         )
+    #print(mappings[mappings.cell_idx==img_id].sc_target.values)
     shifts["sc_label"] = mappings[mappings.cell_idx==img_id].sc_target.values[0]
     
     if True:
@@ -61,9 +64,10 @@ def sample_intensity(l_num, cfg, args, shift_path, data_dir, protein_dir, mappin
             n_coef=cfg.N_COEFS,
             inverse_func=inverse_func,
             fourier_algo=cfg.COEF_FUNC,
-            binarize=False,
+            binarize=True,
             n_isos=args.n_isos
         )
+        print(img_id, shifts["sc_label"], intensity.sum(axis=1))
         np.save(save_protein_path, intensity)
     if np.random.random() > 0.95:
         plotting.plot_interpolation3(
@@ -75,7 +79,8 @@ def sample_intensity(l_num, cfg, args, shift_path, data_dir, protein_dir, mappin
             reduced_fft=None,
             n_coef=cfg.N_COEFS,
             inverse_func=inverse_func,
-            n_isos=args.n_isos
+            n_isos=args.n_isos,
+            binarize=True
         )
 
 def main():    
@@ -95,7 +100,7 @@ def main():
     cell_line = args.cell_line
     project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
     data_dir = f"{project_dir}/cell_masks"
-    protein_dir = f"{project_dir}/sampled_intensity_bin"
+    protein_dir = f"{project_dir}/sampled_intensity_bin2"
     if not os.path.exists(protein_dir):
         os.makedirs(protein_dir)
     
@@ -114,7 +119,7 @@ def main():
     print(count, count2)
     completed = [os.path.basename(img_id).replace("_protein.npy","") for img_id in glob.glob(f"{protein_dir}/*.npy")]
     print(len(completed),completed[:4])
-    n_processes = multiprocessing.cpu_count() - 10
+    n_processes = multiprocessing.cpu_count() - 20
     chunk_size = count//n_processes
     print(f"processing {count} in {n_processes} cpu in chunk {chunk_size}")
     with open(fft_path, "r") as f: #, open(shift_path, "r") as f_shift:
