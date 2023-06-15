@@ -119,7 +119,7 @@ def main():
     print(count, count2)
     completed = [os.path.basename(img_id).replace("_protein.npy","") for img_id in glob.glob(f"{protein_dir}/*.npy")]
     print(len(completed),completed[:4])
-    n_processes = multiprocessing.cpu_count() - 20
+    n_processes = multiprocessing.cpu_count()
     chunk_size = count//n_processes
     print(f"processing {count} in {n_processes} cpu in chunk {chunk_size}")
     with open(fft_path, "r") as f: #, open(shift_path, "r") as f_shift:
