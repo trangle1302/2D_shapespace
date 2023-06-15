@@ -22,64 +22,62 @@ def grep(pattern, file_path):
         return []
 
 def sample_intensity(l_num, cfg, args, shift_path, data_dir, protein_dir, mappings, inverse_func):
-    #print(chunk)
-    #for l_num in chunk:
+    data_ = l_num.strip().split(",")
+    if len(data_[1:]) != cfg.N_COEFS * 4:
+        return # continue
+    sc_path = data_[0]
+    img_id = os.path.basename(sc_path).replace(".npy","")
+    if mappings[mappings.cell_idx==img_id].sc_target.values[0] in ["Negative","Multi-Location"]:
+        #mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
+        #print(mappings.id.str.contains(img_id).sum())
+        return #continue
+    raw_protein_path = f"{data_dir}/{img_id}_protein.png"
+    save_protein_path = f"{protein_dir}/{img_id}_protein.npy"
+    #print(raw_protein_path, save_protein_path, img_id)
+    if os.path.exists(save_protein_path):
+        return# continue
+    line_ = grep(img_id+".npy", shift_path)
+    if line_ == []:
+        print(f"{img_id} not found")
+        return # continue
+    data_shifts = line_[0].strip().split(";") 
+    ori_fft = [
+        complex(s.replace("i", "j")) for s in data_[1:]
+    ]  # applymap(lambda s: complex(s.replace('i', 'j')))
+    
+    #print(sc_path, data_shifts)
+    shifts = dict()
+    shifts["theta"] = float(data_shifts[1])
+    shifts["shift_c"] = (
+            float(data_shifts[2].split(",")[0].strip("(")),
+            (float(data_shifts[2].split(",")[1].strip(")"))),
+        )
+    shifts["sc_label"] = mappings[mappings.cell_idx==img_id].sc_target.values[0]
+    
     if True:
-        data_ = l_num.strip().split(",")
-        if len(data_[1:]) != cfg.N_COEFS * 4:
-            pass # continue
-        sc_path = data_[0]
-        img_id = os.path.basename(sc_path).replace(".npy","")
-        if mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
-            #print(mappings.id.str.contains(img_id).sum())
-            pass #continue
-        raw_protein_path = f"{data_dir}/{img_id}_protein.png"
-        save_protein_path = f"{protein_dir}/{img_id}_protein.npy"
-        #print(raw_protein_path, save_protein_path, img_id)
-        if os.path.exists(save_protein_path):
-            pass# continue
-        line_ = grep(img_id+".npy", shift_path)
-        if line_ == []:
-            print(f"{img_id} not found")
-            pass # continue
-        data_shifts = line_[0].strip().split(";") 
-        ori_fft = [
-            complex(s.replace("i", "j")) for s in data_[1:]
-        ]  # applymap(lambda s: complex(s.replace('i', 'j')))
-        
-        #print(sc_path, data_shifts)
-        shifts = dict()
-        shifts["theta"] = float(data_shifts[1])
-        shifts["shift_c"] = (
-                float(data_shifts[2].split(",")[0].strip("(")),
-                (float(data_shifts[2].split(",")[1].strip(")"))),
-            )
-        shifts["sc_label"] = mappings[mappings.cell_idx==img_id].sc_target.values
-        
-        if True:
-            intensity = plotting.get_protein_intensity(
-                pro_path=raw_protein_path,
-                shift_dict=shifts,
-                ori_fft=ori_fft,
-                n_coef=cfg.N_COEFS,
-                inverse_func=inverse_func,
-                fourier_algo=cfg.COEF_FUNC,
-                binarize=False,
-                n_isos=args.n_isos
-            )
-            np.save(save_protein_path, intensity)
-        if np.random.random() > 0.95:
-            plotting.plot_interpolation3(
-                shape_path=raw_protein_path.replace("_protein.png",".npy"),
-                pro_path=raw_protein_path,
-                shift_dict=shifts,
-                save_path=save_protein_path.replace(".npy",".png"),
-                ori_fft=ori_fft,
-                reduced_fft=None,
-                n_coef=cfg.N_COEFS,
-                inverse_func=inverse_func,
-                n_isos=args.n_isos
-            )
+        intensity = plotting.get_protein_intensity(
+            pro_path=raw_protein_path,
+            shift_dict=shifts,
+            ori_fft=ori_fft,
+            n_coef=cfg.N_COEFS,
+            inverse_func=inverse_func,
+            fourier_algo=cfg.COEF_FUNC,
+            binarize=False,
+            n_isos=args.n_isos
+        )
+        np.save(save_protein_path, intensity)
+    if np.random.random() > 0.95:
+        plotting.plot_interpolation3(
+            shape_path=raw_protein_path.replace("_protein.png",".npy"),
+            pro_path=raw_protein_path,
+            shift_dict=shifts,
+            save_path=save_protein_path.replace(".npy",".png"),
+            ori_fft=ori_fft,
+            reduced_fft=None,
+            n_coef=cfg.N_COEFS,
+            inverse_func=inverse_func,
+            n_isos=args.n_isos
+        )
 
 def main():    
     parser = argparse.ArgumentParser()
@@ -111,7 +109,7 @@ def main():
     
     cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
     mappings = pd.read_csv(cellline_meta)
-    mappings = mappings[~mappings.sc_target.isin(["Negative","Multi-Location"])]
+    #mappings = mappings[~mappings.sc_target.isin(["Negative","Multi-Location"])]
     #print(mappings.sc_target.value_counts(), mappings.cell_idx)
     log_dir = f"{project_dir}/logs"
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
