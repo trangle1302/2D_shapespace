@@ -58,8 +58,8 @@ if __name__ == "__main__":
 
     import configs.config as cfg
     
-    cell_line = cfg.CELL_LINE #args.cell_line
-    project_dir =  cfg.PROJECT_DIR#os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
+    cell_line = args.cell_line #cfg.CELL_LINE #args.cell_line
+    project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line) #cfg.PROJECT_DIR#os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
 
     log_dir = f"{project_dir}/logs"
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
@@ -92,20 +92,21 @@ if __name__ == "__main__":
         pc_cells = cells_assigned[f"PC{PC}"]
         for org in cfg.ORGANELLES:
             for i, bin_ in enumerate(merged_bins):
-                #if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
-                #   continue
+                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
+                   continue
                 ls = [pc_cells[b] for b in bin_]
                 ls = helpers.flatten_list(ls)
                 ls = [os.path.basename(l).replace(".npy", "") for l in ls]
                 df_sl = mappings[mappings.cell_idx.isin(ls)]
                 ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
-                print(f"Found {len(ls_)}, eg: {ls[:3]}")
+                print(f"{org}: Found {len(ls_)}, eg: {ls[:3]}")
                 intensities = np.zeros((31,256))
                 if len(ls_) > 500:
                     import random
                     ls_ = random.sample(ls_, 500)
                 n = len(ls_)
                 for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):    
+                    print(mappings[mappings.cell_idx==img_id])
                     pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
                     try:
                         thres = threshold_minimum(pilr)
@@ -115,6 +116,7 @@ if __name__ == "__main__":
                     pilr = (pilr > thres).astype("float64")
                     intensities += pilr / n
                 print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
+                print(org, intensities.sum(axis=1))
                 np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
                 lines += [f"PC{PC}", org, bin_[0], n]
     df = pd.DataFrame(lines)
