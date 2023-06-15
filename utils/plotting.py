@@ -11,7 +11,7 @@ from imageio import imread
 from scipy.ndimage import rotate
 from more_itertools import windowed
 from skimage import exposure
-from skimage.filters import threshold_mean
+from skimage.filters import threshold_mean, threshold_local, threshold_otsu
 from warps import parameterize
 from scipy.ndimage import center_of_mass
 
@@ -796,6 +796,7 @@ def plot_interpolation3(
     n_coef,
     inverse_func,
     n_isos,
+    binarize
 ):
 
     protein_ch = rotate(imread(pro_path), shift_dict["theta"])
@@ -811,6 +812,11 @@ def plot_interpolation3(
         protein_ch = rotate(protein_ch.copy(), 180)
         cell = rotate(cell.copy(), 180)
         nuclei = rotate(nuclei.copy(), 180)
+    
+    if binarize:
+        thresh = threshold_otsu(protein_ch)
+        protein_ch[protein_ch < thresh] = 0
+        protein_ch[protein_ch >= thresh] = 1
     fig, ax = plt.subplots(1, (4 if reduced_fft != None else 3), figsize=(25, 30))
     fig.patch.set_facecolor("#191919")
     # fig.patch.set_alpha(1)
@@ -849,7 +855,7 @@ def plot_interpolation3(
     # Get intensity
     x = np.array(x_) + shift_dict["shift_c"][0]
     y = np.array(y_) + shift_dict["shift_c"][1]
-    m = parameterize.get_intensity(protein_ch, x, y, k=7)
+    m = parameterize.get_intensity(protein_ch, x, y, k=5)
     m_normed = m / m.max()
     norm = plt.Normalize(vmin=0, vmax=1)
     #print(m_normed.min(), m_normed.max(), m_normed[1, :])
@@ -908,8 +914,8 @@ def get_protein_intensity(
         protein_ch = rotate(protein_ch, 180)
 
     if binarize:
-        # protein_ch = exposure.equalize_hist(protein_ch)
-        thresh = threshold_mean(protein_ch)
+        #protein_ch = exposure.equalize_hist(protein_ch)
+        thresh = threshold_otsu(protein_ch)
         protein_ch[protein_ch < thresh] = 0
         protein_ch[protein_ch >= thresh] = 1
 
