@@ -29,17 +29,16 @@ def sample_intensity(l_num, cfg, args, shift_path, data_dir, protein_dir, mappin
     img_id = os.path.basename(sc_path).replace(".npy","")
     if mappings[mappings.cell_idx==img_id].sc_target.values[0] in ["Negative","Multi-Location"]:
         #mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
-        #print(mappings.id.str.contains(img_id).sum())
-        return #continue
+        return 
     raw_protein_path = f"{data_dir}/{img_id}_protein.png"
     save_protein_path = f"{protein_dir}/{img_id}_protein.npy"
     #print(raw_protein_path, save_protein_path, img_id)
     if os.path.exists(save_protein_path):
-        return# continue
+        return 
     line_ = grep(img_id+".npy", shift_path)
     if line_ == []:
         print(f"{img_id} not found")
-        return # continue
+        return 
     data_shifts = line_[0].strip().split(";") 
     ori_fft = [
         complex(s.replace("i", "j")) for s in data_[1:]
@@ -85,17 +84,10 @@ def main():
     parser.add_argument("--n_isos", nargs='+', type=int)
     args = parser.parse_args()
     import configs.config as cfg
-    """
-    num_cores = multiprocessing.cpu_count() -1 # save 1 core for some other processes
-    pool = multiprocessing.Pool()
-    processed_list = Parallel(n_jobs=num_cores)(delayed(myfunction)(i, im_df, mask_dir, image_dir, save_dir, log_dir) for i in inputs)
 
-    n_cv = 10
-    fourier_df = read_complex_df(fft_dir=fft_path, cfg.N_COEFS=128, n_cv=10, n_samples = 1000)
-    """
     if cfg.COEF_FUNC == "fft":
-        get_coef_fun = coefs.fourier_coeffs  # coefs.wavelet_coefs  #
-        inverse_func = coefs.inverse_fft  # coefs.inverse_wavelet
+        get_coef_fun = coefs.fourier_coeffs 
+        inverse_func = coefs.inverse_fft 
     elif cfg.COEF_FUNC == "wavelet":
         get_coef_fun = coefs.wavelet_coefs
         inverse_func = coefs.inverse_wavelet
