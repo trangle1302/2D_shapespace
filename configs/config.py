@@ -62,11 +62,11 @@ COLORS_MAP = {
 }
 
 ORGANELLES = ["Nucleoplasm","Nucleoli","NucleoliFC","NuclearS","NuclearB","NuclearM",
-              "GolgiA", "IntermediateF","ActinF","Mitochondria",""
+              "GolgiA", "IntermediateF","ActinF","Mitochondria","EndoplasmicR",
               "Cytosol","PlasmaM","Microtubules"]
 
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
-CELL_LINE = "RT4"
+CELL_LINE = "U-2 OS"#"RT4"
 N_COEFS = 128
 N_SAMPLES = -1  # 5000
 N_CV = 1
@@ -76,7 +76,7 @@ COEF_FUNC = "fft" # ["efd", "wavelet"]
 N_ISOS = [10,20]
 
 # >>>>>>>>>>>>>>>>>>>>> COMPUTE RESOURCE + PACKAGE
-SERVER = "sherlock"
+SERVER = "callisto"
 if SERVER == "callisto":
     PROJECT_DIR = f"/data/2Dshapespace/{CELL_LINE.replace(' ','_')}"
     META_PATH = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
