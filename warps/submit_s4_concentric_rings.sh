@@ -3,8 +3,8 @@
 #SBATCH --job-name=sampling
 #
 #SBATCH --time=20:00:00
-#SBATCH --ntasks=7
-#SBATCH --cpus-per-task=1
+#SBATCH --ntasks=6
+#SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=10G
 
 module load python/3.9.0
@@ -16,7 +16,7 @@ pip install tqdm
 srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line A-431 --n_isos 10 20 &
 srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line RT4 --n_isos 10 20 &
 srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line K-562  --n_isos 10 20 &
-srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line BJ  --n_isos 10 10 &
+srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line BJ  --n_isos 10 20 &
 srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line MCF7  --n_isos 10 20 &
-srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line HEK_293  --n_isos 10 20 &
-srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line HEL  --n_isos 10 10
+#srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line HEK_293  --n_isos 10 20 &
+srun -N 1 -n1 python3 s4_concentric_rings_intensity.py --cell_line HEL  --n_isos 10 20
