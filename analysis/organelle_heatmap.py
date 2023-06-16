@@ -67,7 +67,7 @@ if __name__ == "__main__":
     shape_mode_path = f"{project_dir}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
     avg_organelle_dir = f"{project_dir}/matrix_protein_avg"
     os.makedirs(avg_organelle_dir, exist_ok=True)
-    sampled_intensity_dir = f"{project_dir}/sampled_intensity_bin"
+    sampled_intensity_dir = f"{project_dir}/sampled_intensity_bin2"
 
     cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
     print(cellline_meta)
@@ -106,7 +106,7 @@ if __name__ == "__main__":
                     ls_ = random.sample(ls_, 500)
                 n = len(ls_)
                 for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):    
-                    print(mappings[mappings.cell_idx==img_id])
+                    #print(mappings[mappings.cell_idx==img_id])
                     pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
                     try:
                         thres = threshold_minimum(pilr)
