@@ -4,6 +4,7 @@ sys.path.append("..")
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 from skimage.filters import threshold_minimum
 from skimage.metrics import structural_similarity
 from scipy.stats import pearsonr
@@ -85,15 +86,11 @@ if __name__ == "__main__":
     cells_assigned = json.load(f)
     merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
     # Panel 1: Organelle through shapespace
-    
-
     for PC in np.arange(1,7):
         lines = []
         pc_cells = cells_assigned[f"PC{PC}"]
         for org in cfg.ORGANELLES:
             for i, bin_ in enumerate(merged_bins):
-                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
-                   continue
                 ls = [pc_cells[b] for b in bin_]
                 ls = helpers.flatten_list(ls)
                 ls = [os.path.basename(l).replace(".npy", "") for l in ls]
@@ -101,12 +98,15 @@ if __name__ == "__main__":
                 ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
                 print(f"{org}: Found {len(ls_)}, eg: {ls[:3]}")
                 intensities = np.zeros((31,256))
-                if len(ls_) > 500:
+                n0 = len(ls_)
+                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
+                   continue
+                if n0 > 500:
                     import random
                     ls_ = random.sample(ls_, 500)
                 n = len(ls_)
                 for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):    
-                    print(mappings[mappings.cell_idx==img_id])
+                    #print(mappings[mappings.cell_idx==img_id])
                     pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
                     try:
                         thres = threshold_minimum(pilr)
@@ -114,11 +114,12 @@ if __name__ == "__main__":
                         thres = 0
                     #thres = 0 #print(thres)
                     pilr = (pilr > thres).astype("float64")
+                    print(img_id, pilr.sum(axis=1))
                     intensities += pilr / n
                 print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
                 print(org, intensities.sum(axis=1))
                 np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
-                lines += [f"PC{PC}", org, bin_[0], n]
+                lines += [[f"PC{PC}", org, bin_[0], n0]]
     df = pd.DataFrame(lines)
     print(df)
     df.to_csv(f"{avg_organelle_dir}/organelle_distr.csv", index=False)
@@ -137,3 +138,6 @@ if __name__ == "__main__":
             ssim_df = pd.DataFrame(ssim_scores, columns=list(images.keys()))
             ssim_df.index = list(images.keys())
             ssim_df.to_csv(f"{avg_organelle_dir}/PC{PC}_bin{b}_pearsonr_df.csv")
+            plt.figure()
+            sns.heatmap(ssim_df, cmap="RdBu", vmin=-1, vmax=1)
+            plt.savefig(f"{avg_organelle_dir}/PC{PC}_bin{b}_pearsonr.png")
