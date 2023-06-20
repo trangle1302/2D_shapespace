@@ -15,6 +15,7 @@ from joblib import Parallel, delayed
 from warps import image_warp_new as image_warp
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
+from imageio import imread,imwrite
 
 def grep(pattern, file_path):
     try:
@@ -60,7 +61,7 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
 
     return pts_avg, (shape_x, shape_y)
 
-def image_warping(l_num, cfg, args, shift_path, data_dir, protein_dir, mappings, pts_avg, shape_x, shape_y):
+def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_avg, shape_x, shape_y):
     data_ = l_num.strip().split(",")
     if len(data_[1:]) != cfg.N_COEFS * 4:
         return # continue
@@ -165,14 +166,8 @@ def image_warping(l_num, cfg, args, shift_path, data_dir, protein_dir, mappings,
 def main():    
     parser = argparse.ArgumentParser()
     parser.add_argument("--cell_line", type=str)
-    parser.add_argument("--n_isos", nargs='+', type=int)
     args = parser.parse_args()
     import configs.config as cfg
-
-    if cfg.SERVER == "callisto":
-        from imageio import imread, imwrite
-    elif cfg.SERVER == "sherlock":
-        from imageio.v2 import imread, imwrite
 
     if cfg.COEF_FUNC == "fft":
         get_coef_fun = coefs.fourier_coeffs 
@@ -220,7 +215,7 @@ def main():
     print(f"processing {count} in {n_processes} cpu in chunk {chunk_size}")
     with open(fft_path, "r") as f:
         processed_list = Parallel(n_jobs=n_processes)(
-                delayed(image_warping)(l_num, cfg, args, shift_path, data_dir, protein_dir, mappings, pts_avg, shape_x, shape_y,)
+                delayed(image_warping)(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_avg, shape_x, shape_y,)
                 for l_num in f)
         
 if __name__ == "__main__":
