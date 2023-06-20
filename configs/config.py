@@ -62,7 +62,8 @@ COLORS_MAP = {
 }
 
 ORGANELLES = ["Nucleoplasm","Nucleoli","NucleoliFC","NuclearS","NuclearB","NuclearM",
-              "GolgiA", "IntermediateF","ActinF","Mitochondria","EndoplasmicR",
+              "GolgiA", "Vesicles","Peroxisomes","Endosomes","Mitochondria",
+              "IntermediateF","ActinF","EndoplasmicR",
               "Cytosol","PlasmaM","Microtubules"]
 
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
