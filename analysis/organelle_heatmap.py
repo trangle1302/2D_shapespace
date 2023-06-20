@@ -86,8 +86,9 @@ if __name__ == "__main__":
     cells_assigned = json.load(f)
     merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
     # Panel 1: Organelle through shapespace
+    lines = []
+    lines.append(["PC","Organelle", "bin","n_cells"])
     for PC in np.arange(1,7):
-        lines = []
         pc_cells = cells_assigned[f"PC{PC}"]
         for org in cfg.ORGANELLES:
             for i, bin_ in enumerate(merged_bins):
@@ -96,9 +97,10 @@ if __name__ == "__main__":
                 ls = [os.path.basename(l).replace(".npy", "") for l in ls]
                 df_sl = mappings[mappings.cell_idx.isin(ls)]
                 ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
-                print(f"{org}: Found {len(ls_)}, eg: {ls[:3]}")
+                #print(f"{org}: Found {len(ls_)}, eg: {ls[:3]}")
                 intensities = np.zeros((31,256))
                 n0 = len(ls_)
+                lines.append([f"PC{PC}", org, bin_[0], n0])
                 if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
                    continue
                 if n0 > 500:
@@ -119,11 +121,11 @@ if __name__ == "__main__":
                 print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
                 print(org, intensities.sum(axis=1))
                 np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
-                lines += [[f"PC{PC}", org, bin_[0], n0]]
+                #lines.append([f"PC{PC}", org, bin_[0], n0]) 
     df = pd.DataFrame(lines)
     print(df)
     df.to_csv(f"{avg_organelle_dir}/organelle_distr.csv", index=False)
-    
+     
     # Panel 2: Organelle heatmap through shapespace
     for PC in np.arange(1,7):
         for i, bin_ in enumerate(merged_bins):
