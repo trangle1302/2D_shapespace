@@ -75,6 +75,7 @@ MODE = "cell_nuclei"  # ["nuclei" #"cell_nuclei"]
 ALIGNMENT = "fft_cell_major_axis_polarized"  # ["fft_nuclei_major_axis","fft_nuclei_major_axis","fft_cell_nuclei_centroid"]
 COEF_FUNC = "fft" # ["efd", "wavelet"]
 N_ISOS = [10,20]
+N_LANDMARKS = 32
 
 # >>>>>>>>>>>>>>>>>>>>> COMPUTE RESOURCE + PACKAGE
 SERVER = "sherlock"
