@@ -180,6 +180,7 @@ def main():
     project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
     data_dir = f"{project_dir}/cell_masks"
     protein_dir = f"{project_dir}/warps"
+    print(f"Saving to {protein_dir}")
     if not os.path.exists(protein_dir):
         os.makedirs(protein_dir)
     
