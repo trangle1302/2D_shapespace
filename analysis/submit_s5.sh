@@ -13,8 +13,7 @@ module load py-scikit-learn/0.24.2_py36
 module load py-numpy
 module load viz 
 module load py-scikit-image/0.17.2_py36
-pip install tqdm
-pip install more-itertools
+pip install imageio
 srun -n 1 python3 organelle_heatmap.py --cell_line A-431
 srun -n 1 python3 organelle_heatmap.py --cell_line HEK_293
 srun -n 1 python3 organelle_heatmap.py --cell_line MCF7
