@@ -11,6 +11,7 @@ from scipy.stats import pearsonr
 import json
 from utils import helpers
 import argparse
+from imageio import imread, imwrite
 
 def correlation(value_dict, method_func):
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
@@ -66,9 +67,9 @@ if __name__ == "__main__":
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
     shape_mode_path = f"{project_dir}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
-    avg_organelle_dir = f"{project_dir}/matrix_protein_avg"
+    avg_organelle_dir = f"{project_dir}/warps_protein_avg" #matrix_protein_avg"
     os.makedirs(avg_organelle_dir, exist_ok=True)
-    sampled_intensity_dir = f"{project_dir}/sampled_intensity_bin2"
+    sampled_intensity_dir = f"{project_dir}/warps" #sampled_intensity_bin2"
 
     cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
     print(cellline_meta)
@@ -98,7 +99,9 @@ if __name__ == "__main__":
                 df_sl = mappings[mappings.cell_idx.isin(ls)]
                 ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
                 #print(f"{org}: Found {len(ls_)}, eg: {ls[:3]}")
-                intensities = np.zeros((31,256))
+                #intensities = np.zeros((31,256))
+                sample_img = imread(f"{sampled_intensity_dir}/{ls_[0]}_protein.png")
+                intensities = np.zeros(sample_img.shape)
                 n0 = len(ls_)
                 lines.append([f"PC{PC}", org, bin_[0], n0])
                 if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
@@ -109,7 +112,8 @@ if __name__ == "__main__":
                 n = len(ls_)
                 for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):    
                     #print(mappings[mappings.cell_idx==img_id])
-                    pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
+                    #pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
+                    pilr = imread(f"{sampled_intensity_dir}/{img_id}_protein.png")
                     try:
                         thres = threshold_minimum(pilr)
                     except:
@@ -120,7 +124,8 @@ if __name__ == "__main__":
                     intensities += pilr / n
                 print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
                 print(org, intensities.sum(axis=1))
-                np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
+                #np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
+                imwrite(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png", intensities)
                 #lines.append([f"PC{PC}", org, bin_[0], n0]) 
     df = pd.DataFrame(lines)
     print(df)
