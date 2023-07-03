@@ -19,19 +19,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args.PC)
 
-    n_coef = 128
-    cell_line = "U-2 OS"
-    project_dir = f"/scratch/users/tle1302/2Dshapespace/{cell_line.replace(' ','_')}"
-    log_dir = f"{project_dir}/logs"
-    fftcoefs_dir = f"{project_dir}/fftcoefs"
-    fft_path = os.path.join(fftcoefs_dir, f"fftcoefs_{n_coef}.txt")
-    shape_mode_path = f"{project_dir}/shapemode/{cell_line.replace(' ','_')}/ratio8"
+    import configs.config as cfg
+    log_dir = f"{cfg.PROJECT_DIR}/logs"
+    fft_path = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}/fftcoefs_{cfg.N_COEFS}.txt" 
+    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
 
-    sampled_intensity_dir = f"{project_dir}/sampled_intensity"
+    sampled_intensity_dir = f"{cfg.PROJECT_DIR}/sampled_intensity"
 
-    mappings = pd.read_csv(
-        "/scratch/users/tle1302/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
-    )
+    mappings = pd.read_csv(cfg.META_PATH)
     id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
     mappings["Link"] = [
         f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy"
@@ -43,7 +38,7 @@ if __name__ == "__main__":
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json")
     cells_assigned = json.load(f)
     print(cells_assigned.keys())
-    save_dir = f"{project_dir}/shapemode/covar_sc"
+    save_dir = f"{cfg.PROJECT_DIR}/covar_sc"
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
     meta = []
@@ -51,7 +46,7 @@ if __name__ == "__main__":
     PC = args.PC
     pc_cells = cells_assigned[f"PC{PC}"]
     if True:  # for PC, pc_cells in cells_assigned.items():
-        shape = (21, n_coef * 2)
+        shape = (21, cfg.N_COEFS * 2)
         intensities_pcX = []
         counts = []
         for i, bin_ in enumerate(merged_bins):
@@ -90,6 +85,7 @@ if __name__ == "__main__":
                 intensities["cell_labs"] = cell_labs
                 # intensities = intensities.groupby('ensembl_ids').agg("mean")
                 intensities.to_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
+
             """
             if os.path.exists(f"{save_dir}/PC{PC}_{i}.csv"):
                 covar_mat = pd.read_csv(f"{save_dir}/PC{PC}_{i}.csv")
