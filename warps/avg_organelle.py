@@ -16,60 +16,6 @@ import time
 import gc
 import argparse
 
-LABEL_TO_ALIAS = {
-    0: "Nucleoplasm",
-    1: "NuclearM",
-    2: "Nucleoli",
-    3: "NucleoliFC",
-    4: "NuclearS",
-    5: "NuclearB",
-    6: "EndoplasmicR",
-    7: "GolgiA",
-    8: "IntermediateF",
-    9: "ActinF",
-    10: "Microtubules",
-    11: "MitoticS",
-    12: "Centrosome",
-    13: "PlasmaM",
-    14: "Mitochondria",
-    15: "Aggresome",
-    16: "Cytosol",
-    17: "VesiclesPCP",
-    19: "Negative",
-    19: "Multi-Location",
-}
-
-LABELS = [
-    "Nucleoplasm",
-    "NuclearM",
-    "Nucleoli",
-    "NucleoliFC",
-    "NuclearS",
-    "NuclearB",
-    "EndoplasmicR",
-    "GolgiA",
-    "IntermediateF",
-    "ActinF",
-    "Microtubules",
-    "MitoticS",
-    "Centrosome",
-    "PlasmaM",
-    "Mitochondria",
-    "Aggresome",
-    "Cytosol",
-    "Lipid droplets",
-    "Endosomes",
-    "Lysosomes",
-    "Peroxisomes",
-    "Vesicles",
-    "Cytoplasmic bodies",
-    "Negative",
-    "Multi-Location",
-]
-
-all_locations = dict((v, k) for k, v in LABEL_TO_ALIAS.items())
-
-
 def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
     nu_centroid = helpers.find_centroid([(x_, y_) for x_, y_ in zip(ix_n, iy_n)])
     nu_centroid = [nu_centroid[0], nu_centroid[1]]
@@ -191,7 +137,7 @@ def main():
         ls = helpers.flatten_list(ls)
         ls = [os.path.basename(l).replace(".npy", "") for l in ls]
         df_sl = mappings[mappings.cell_idx.isin(ls)]
-        df_sl = df_sl[df_sl.sc_target.isin(LABELS)]  # rm Negative, Multi-loc
+        df_sl = df_sl[df_sl.sc_target.isin(cfg.ORGANELLES)]  # rm Negative, Multi-loc
         org_percent[f"bin{i}"] = df_sl.sc_target.value_counts().to_dict()
 
     df = pd.DataFrame(org_percent)
@@ -218,7 +164,7 @@ def main():
         df_sl = mappings[mappings.cell_idx.isin(ls)]
         
         df_sl = df_sl[
-            df_sl.location.isin(LABEL_TO_ALIAS.values())
+            df_sl.location.isin(cfg.LABEL_TO_ALIAS.values())
         ]  # rm Negative, Multi-loc
         
         if not os.path.exists(
@@ -243,7 +189,6 @@ def main():
             print(f"Found {len(ls_)}")
             if len(ls_) > 500:
                 import random
-
                 ls_ = random.sample(ls_, 500)
             for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):
                 for line in lines:
