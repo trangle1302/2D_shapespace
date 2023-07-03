@@ -13,15 +13,27 @@ from utils import helpers
 import argparse
 from imageio import imread, imwrite
 
-def correlation(value_dict, method_func):
+def correlation(value_dict, method_func, masking = False):
+    if masking:
+        tmp = np.sum([v for v in value_dict.values()])
+        mask = tmp.flatten() > 0
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
     for i, (k1, v1) in enumerate(value_dict.items()):
         for j, (k2, v2) in enumerate(value_dict.items()):
-            print(k1, k2, method_func(v1.flatten(),v2.flatten()))
-            try:
-                cor_mat[i, j] = method_func(v1, v2)
-            except:
-                (cor_mat[i, j],_) = method_func(v1.flatten(), v2.flatten())
+            if masking:
+                v1_ = v1.flatten()[mask]
+                v2_ = v2.flatten()[mask]
+                len(f"{np.sum(mask)}/{len(v1.flatten)} px not masked")
+                print(k1, k2, method_func(v1_, v2_))
+                try:
+                    cor_mat[i, j] = method_func(v1, v2)
+                except:
+                    (cor_mat[i, j],_) = method_func(v1_, v2_)
+            else:
+                try:
+                    cor_mat[i, j] = method_func(v1, v2)
+                except:
+                    (cor_mat[i, j],_) = method_func(v1.flatten(), v2.flatten())
     return cor_mat
 
 
@@ -69,7 +81,7 @@ if __name__ == "__main__":
     shape_mode_path = f"{project_dir}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
     avg_organelle_dir = f"{project_dir}/warps_protein_avg" #matrix_protein_avg"
     os.makedirs(avg_organelle_dir, exist_ok=True)
-    sampled_intensity_dir = f"{project_dir}/warps" #sampled_intensity_bin2"
+    sampled_intensity_dir = f"{project_dir}/warps" #sampled_intensity_bin" #warps" #
 
     cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
     print(cellline_meta)
@@ -104,7 +116,7 @@ if __name__ == "__main__":
                 intensities = np.zeros(sample_img.shape)
                 n0 = len(ls_)
                 lines.append([f"PC{PC}", org, bin_[0], n0])
-                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy"):
+                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
                    continue
                 if n0 > 500:
                     import random
@@ -120,7 +132,7 @@ if __name__ == "__main__":
                         thres = 0
                     #thres = 0 #print(thres)
                     pilr = (pilr > thres).astype("float64")
-                    print(img_id, pilr.sum(axis=1))
+                    #print(img_id, pilr.sum(axis=1))
                     intensities += pilr / n
                 print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
                 print(org, intensities.sum(axis=1))
@@ -128,7 +140,7 @@ if __name__ == "__main__":
                 imwrite(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png", intensities)
                 #lines.append([f"PC{PC}", org, bin_[0], n0]) 
     df = pd.DataFrame(lines)
-    print(df)
+    #print(df)
     df.to_csv(f"{avg_organelle_dir}/organelle_distr.csv", index=False)
      
     # Panel 2: Organelle heatmap through shapespace
@@ -139,9 +151,11 @@ if __name__ == "__main__":
                 b = bin_[0]
                 images = {}
                 for org in cfg.ORGANELLES:
-                    images[org] = np.load(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.npy")
+                    #ch = np.load(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.npy")
+                    ch = imread(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png")
+                    images[org] = ch
 
-            ssim_scores = correlation(images, pearsonr)#structural_similarity)
+            ssim_scores = correlation(images, pearsonr, masking=True)#structural_similarity)
             ssim_df = pd.DataFrame(ssim_scores, columns=list(images.keys()))
             ssim_df.index = list(images.keys())
             ssim_df.to_csv(f"{avg_organelle_dir}/PC{PC}_bin{b}_pearsonr_df.csv")
