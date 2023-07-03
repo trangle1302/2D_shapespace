@@ -218,7 +218,7 @@ def main():
     with open(fft_path, "r") as f:
         processed_list = Parallel(n_jobs=n_processes)(
                 delayed(image_warping)(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_avg, shape_x, shape_y,)
-                for l_num in tqdm(f))
+                for l_num in tqdm(f, total=count))
         
 if __name__ == "__main__":
     try:
