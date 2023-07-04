@@ -4,14 +4,14 @@ sys.path.append("..")
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
+#import seaborn as sns
 from skimage.filters import threshold_minimum
 from skimage.metrics import structural_similarity
 from scipy.stats import pearsonr
 import json
 from utils import helpers
 import argparse
-from imageio import imread, imwrite
+from imageio.v2 import imread, imwrite
 
 def correlation(value_dict, method_func, masking = False):
     if masking:
@@ -21,9 +21,10 @@ def correlation(value_dict, method_func, masking = False):
     for i, (k1, v1) in enumerate(value_dict.items()):
         for j, (k2, v2) in enumerate(value_dict.items()):
             if masking:
-                v1_ = v1.flatten()[mask]
-                v2_ = v2.flatten()[mask]
-                len(f"{np.sum(mask)}/{len(v1.flatten)} px not masked")
+                v1_ = (np.zeros(sum(mask)) if v1.all()==0 else v1.flatten()[mask])
+                v2_ = (np.zeros(sum(mask)) if v2.all()==0 else v2.flatten()[mask])
+                print(k1, v1.shape, k2, v2.shape)
+                len(f"{np.sum(mask)}/{len(v1_)} px not masked")
                 print(k1, k2, method_func(v1_, v2_))
                 try:
                     cor_mat[i, j] = method_func(v1, v2)
@@ -110,7 +111,9 @@ if __name__ == "__main__":
                 ls = [os.path.basename(l).replace(".npy", "") for l in ls]
                 df_sl = mappings[mappings.cell_idx.isin(ls)]
                 ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
-                #print(f"{org}: Found {len(ls_)}, eg: {ls[:3]}")
+                if len(ls_)==0:
+                    print(f"{org}: Found {len(ls_)}, eg: {ls_[:3]}")
+                    continue
                 #intensities = np.zeros((31,256))
                 sample_img = imread(f"{sampled_intensity_dir}/{ls_[0]}_protein.png")
                 intensities = np.zeros(sample_img.shape)
@@ -152,7 +155,11 @@ if __name__ == "__main__":
                 images = {}
                 for org in cfg.ORGANELLES:
                     #ch = np.load(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.npy")
-                    ch = imread(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png")
+                    try:
+                        ch = imread(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png")
+                    except:
+                        print(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png not found, defaulting it to 0")
+                        ch = np.array([0])
                     images[org] = ch
 
             ssim_scores = correlation(images, pearsonr, masking=True)#structural_similarity)
