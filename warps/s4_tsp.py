@@ -70,24 +70,25 @@ def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_a
     img_id = os.path.basename(sc_path).replace(".npy","")
     if not img_id in mappings.cell_idx.tolist():
         return
-    if mappings[mappings.cell_idx==img_id].sc_target.values[0] in ["Negative","Multi-Location"]:
-        #mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
-        return 
     raw_protein_path = f"{data_dir}/{img_id}_protein.png"
     save_protein_path = f"{protein_dir}/{img_id}_protein.png"
     #print(raw_protein_path, save_protein_path, img_id)
     if os.path.exists(save_protein_path):
         return 
+    if mappings[mappings.cell_idx==img_id].sc_target.values[0] in ["Negative","Multi-Location"]:
+        #mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
+        return
     line_ = grep(img_id+".npy", shift_path)
     if line_ == []:
         print(f"{img_id} not found")
         return 
+    print(f"processing {img_id}")
     data_shifts = line_[0].strip().split(";") 
     ori_fft = [
         complex(s.replace("i", "j")) for s in data_[1:]
     ]  # applymap(lambda s: complex(s.replace('i', 'j')))
     
-    #print(sc_path, data_shifts)
+    
     shifts = dict()
     shifts["theta"] = float(data_shifts[1])
     shifts["shift_c"] = (
@@ -210,11 +211,11 @@ def main():
                 ix_n, iy_n, ix_c, iy_c, n_landmarks=cfg.N_LANDMARKS
             )
 
-    completed = [os.path.basename(img_id).replace("_protein.npy","") for img_id in glob.glob(f"{protein_dir}/*.npy")]
+    completed = [os.path.basename(img_id).replace("_protein.npy","png") for img_id in glob.glob(f"{protein_dir}/*.png")]
     print(len(completed),completed[:4])
     n_processes = multiprocessing.cpu_count()
     chunk_size = count//n_processes
-    print(f"processing {count} in {n_processes} cpu in chunk {chunk_size}")
+    print(f"processing {count - len(completed)} in {n_processes} cpu in chunk {chunk_size}")
     with open(fft_path, "r") as f:
         processed_list = Parallel(n_jobs=n_processes)(
                 delayed(image_warping)(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_avg, shape_x, shape_y,)
