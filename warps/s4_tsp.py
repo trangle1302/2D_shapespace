@@ -6,6 +6,7 @@ from utils import plotting
 import matplotlib.pyplot as plt
 import numpy as np
 from utils import helpers
+from utils.helpers import grep
 import argparse
 import glob
 import subprocess
@@ -17,13 +18,6 @@ from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
 from imageio import imread,imwrite
 from tqdm import tqdm
-
-def grep(pattern, file_path):
-    try:
-        output = subprocess.check_output(['grep', pattern, file_path], universal_newlines=True)
-        return output.splitlines()
-    except subprocess.CalledProcessError:
-        return []
 
 def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
     nu_centroid = helpers.find_centroid([(x_, y_) for x_, y_ in zip(ix_n, iy_n)])

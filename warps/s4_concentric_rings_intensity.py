@@ -3,6 +3,7 @@ import sys
 sys.path.append("..")
 from coefficients import coefs
 from utils import plotting
+from utils.helpers import grep
 from pathlib import Path
 import numpy as np
 from tqdm import tqdm
@@ -13,13 +14,6 @@ import subprocess
 import pandas as pd
 import multiprocessing
 from joblib import Parallel, delayed
-
-def grep(pattern, file_path):
-    try:
-        output = subprocess.check_output(['grep', pattern, file_path], universal_newlines=True)
-        return output.splitlines()
-    except subprocess.CalledProcessError:
-        return []
 
 def sample_intensity(l_num, cfg, args, shift_path, data_dir, protein_dir, mappings, inverse_func):
     data_ = l_num.strip().split(",")
