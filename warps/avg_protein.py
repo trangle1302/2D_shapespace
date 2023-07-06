@@ -3,6 +3,7 @@ import sys
 sys.path.append("..")
 import numpy as np
 from utils import helpers
+from utils.helpers import grep
 import matplotlib.pyplot as plt
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
@@ -102,8 +103,7 @@ def main():
     print(f"Keeping {sum(idx_keep)} ab with >=5 cells/bin")
     avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}_cell_nuclei.npz")
 
-    with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
-        lines = F.readlines()
+    shift_path = f"{fft_dir}/shift_error_meta_fft128.txt"
 
     print(f"Processing {bin_} of {PC}")
     # created a folder where avg protein for each bin is saved
@@ -139,10 +139,11 @@ def main():
             ls_ = [os.path.basename(l).replace(".npy", "") for l in ls_]
             print(f"There are {len(ls_)} proteins for this {ab_id}_bin{bin_[0]} ")
             for img_id in tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{ab_id}", total=len(ls_)):
-                for line in lines:
-                    if line.find(img_id) != -1:
-                        vals = line.strip().split(";")
-                        break
+                line_ = grep(img_id+".npy", shift_path)                            
+                if line_ == []:
+                    print(f"{img_id} not found")
+                    return 
+                vals = line_[0].strip().split(";") 
                 theta = float(vals[1])
                 shift_c = (
                     float(vals[2].split(",")[0].strip("(")),
