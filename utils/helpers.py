@@ -17,6 +17,13 @@ import matplotlib.pyplot as plt
 # from aicsshparam import shtools
 from skimage.morphology import ball, cube, octahedron
 
+import subprocess
+def grep(pattern, file_path):
+    try:
+        output = subprocess.check_output(['grep', pattern, file_path], universal_newlines=True)
+        return output.splitlines()
+    except subprocess.CalledProcessError:
+        return []
 
 def find(dirpath, prefix=None, suffix=None, recursive=True, full_path=True):
     """Function to find recursively all files with specific prefix and suffix in a directory
