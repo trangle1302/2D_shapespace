@@ -4,14 +4,14 @@ sys.path.append("..")
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-#import seaborn as sns
+import seaborn as sns
 from skimage.filters import threshold_minimum
 from skimage.metrics import structural_similarity
 from scipy.stats import pearsonr
 import json
 from utils import helpers
 import argparse
-from imageio.v2 import imread, imwrite
+from imageio import imread, imwrite
 
 def correlation(value_dict, method_func, masking = False):
     if masking:
@@ -128,7 +128,10 @@ if __name__ == "__main__":
                 for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):    
                     #print(mappings[mappings.cell_idx==img_id])
                     #pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
-                    pilr = imread(f"{sampled_intensity_dir}/{img_id}_protein.png")
+                    try:
+                        pilr = imread(f"{sampled_intensity_dir}/{img_id}_protein.png")
+                    except:
+                        print(f"{sampled_intensity_dir}/{img_id}_protein.png reading err")
                     try:
                         thres = threshold_minimum(pilr)
                     except:
