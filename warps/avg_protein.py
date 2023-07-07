@@ -126,8 +126,9 @@ def main():
         # print("examples of antibodies", ab_keep[:5])
         # ab_keep = ["HPA030782","HPA050556","HPA051349","HPA036914","HPA040748"]
         for ab_id in ab_keep:
-            # if os.path.exists(f"{save_dir}/{PC}/{ab_id}_bin{bin_[0]}.png"):
-            #    continue
+            save_path = f"{save_dir}/{PC}/{ab_id}_bin{bin_[0]}.png"
+            if os.path.exists(save_path):
+                continue
             print(f"Preparing for {PC}/{ab_id}_bin{bin_[0]}.png")
             print(len(ls), len([f for f in ls if f.__contains__(ab_id)]))
             # 1 empty avg_img (initialization) for each protein_pc_bin combination
@@ -149,12 +150,12 @@ def main():
                     float(vals[2].split(",")[0].strip("(")),
                     (float(vals[2].split(",")[1].strip(")"))),
                 )
-
+                #print(vals, f"{data_dir}/{ab_id}/{img_id}_protein.png")
                 cell_shape = np.load(f"{data_dir}/{ab_id}/{img_id}.npy")
                 img_ori = imread(f"{data_dir}/{ab_id}/{img_id}_protein.png")
                 if img_ori.dtype == "uint16":
                     img_ori = (img_ori / 256).astype(np.uint8)
-                # print(f"Image value max {img.max()}, image dtype: {img.dtype}")
+                #print(f"Image value max {img_ori.max()}, image dtype: {img_ori.dtype}")
                 img = rotate(img_ori, theta)
                 nu_ = rotate(cell_shape[1, :, :], theta)
                 cell_ = rotate(cell_shape[0, :, :], theta)
@@ -176,7 +177,7 @@ def main():
                 pts_ori = image_warp.find_landmarks(
                     nu_resized, cell_resized, n_points=n_landmarks, border_points=False
                 )
-                print(img_resized.shape, avg_img.shape, (shape_x, shape_y))
+                #print(img_resized.shape, avg_img.shape, (shape_x, shape_y))
                 pts_convex = (pts_avg + pts_ori) / 2
                 warped1 = image_warp.warp_image(
                     pts_ori, pts_convex, img_resized
@@ -244,10 +245,8 @@ def main():
                 warped.max(),
                 warped.dtype,
             )
-            imwrite(
-                f"{save_dir}/{PC}/{ab_id}_bin{bin_[0]}.png",
-                (avg_img * 255).astype(np.uint8),
-            )
+            print(f"Saving to {save_path}")
+            imwrite(save_path, (avg_img * 255).astype(np.uint8))
             gc.collect()
     print(f"Time elapsed: {(time.time() - s)/3600} h.")
 
