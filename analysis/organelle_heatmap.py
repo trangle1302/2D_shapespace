@@ -65,12 +65,45 @@ def unmerge_label(
             mappings_df.loc[i, "sc_target"] = r.target
     return mappings_df
 
+def get_average_intensities_tsp(ls_): #warping
+    n = len(ls_)
+    sample_img = imread(f"{sampled_intensity_dir}/{ls_[0]}_protein.png")
+    intensities = np.zeros(sample_img.shape)
+    for img_id in ls_:
+        try:
+            pilr = imread(f"{sampled_intensity_dir}/{img_id}_protein.png")
+        except:
+            print(f"{sampled_intensity_dir}/{img_id}_protein.png reading err")
+        try:
+            thres = threshold_otsu(pilr)
+        except:
+            thres = 0
+        pilr = (pilr > thres).astype("float64")
+        intensities += pilr / n
+    return intensities
+
+def get_average_intensities_cr(ls_): #concentric rings
+    n = len(ls_)
+    intensities = np.zeros((31,256))
+    for img_id in ls_:
+        try:
+            pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
+        except:
+            print(f"{sampled_intensity_dir}/{img_id}_protein.npy reading err")
+        try:
+            thres = threshold_otsu(pilr)
+        except:
+            thres = 0
+        pilr = (pilr > thres).astype("float64")
+        intensities += pilr / n
+    return intensities
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cell_line", help="principle component", type=str)
     args = parser.parse_args()
-
+    intensity_sampling_concentric_ring = False
+    intensity_warping = True
     import configs.config as cfg
     
     cell_line = args.cell_line #cfg.CELL_LINE #args.cell_line
@@ -80,10 +113,14 @@ if __name__ == "__main__":
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
     shape_mode_path = f"{project_dir}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
-    avg_organelle_dir = f"{project_dir}/warps_protein_avg" #matrix_protein_avg"
+    if intensity_sampling_concentric_ring:
+        avg_organelle_dir = f"{project_dir}/matrix_protein_avg"
+        sampled_intensity_dir = f"{project_dir}/sampled_intensity_bin"
+    if intensity_warping:
+        avg_organelle_dir = f"{project_dir}/warps_protein_avg" 
+        sampled_intensity_dir = f"{project_dir}/warps" 
+    
     os.makedirs(avg_organelle_dir, exist_ok=True)
-    sampled_intensity_dir = f"{project_dir}/warps" #sampled_intensity_bin" #warps" #
-
     cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
     print(cellline_meta)
     if os.path.exists(cellline_meta):
@@ -99,7 +136,8 @@ if __name__ == "__main__":
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "r")
     cells_assigned = json.load(f)
     merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
-    # Panel 1: Organelle through shapespace
+
+    # Average organelles
     lines = []
     lines.append(["PC","Organelle", "bin","n_cells"])
     for PC in np.arange(1,7):
@@ -114,9 +152,6 @@ if __name__ == "__main__":
                 if len(ls_)==0:
                     print(f"{org}: Found {len(ls_)}, eg: {ls_[:3]}")
                     continue
-                #intensities = np.zeros((31,256))
-                sample_img = imread(f"{sampled_intensity_dir}/{ls_[0]}_protein.png")
-                intensities = np.zeros(sample_img.shape)
                 n0 = len(ls_)
                 lines.append([f"PC{PC}", org, bin_[0], n0])
                 if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
@@ -127,29 +162,18 @@ if __name__ == "__main__":
                 if n0 > 500:
                     import random
                     ls_ = random.sample(ls_, 500)
-                n = len(ls_)
-                for img_id in ls_: #tqdm(ls_, desc=f"{PC}_bin{bin_[0]}_{org}"):    
-                    #print(mappings[mappings.cell_idx==img_id])
-                    #pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
-                    try:
-                        pilr = imread(f"{sampled_intensity_dir}/{img_id}_protein.png")
-                    except:
-                        print(f"{sampled_intensity_dir}/{img_id}_protein.png reading err")
-                    try:
-                        thres = threshold_otsu(pilr)
-                    except:
-                        thres = 0
-                    pilr = (pilr > thres).astype("float64")
-                    intensities += pilr / n
-                print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
+                if intensity_sampling_concentric_ring:
+                    intensities = get_average_intensities_cr(ls_)
+                    np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
+                if intensity_warping:
+                    intensities = get_average_intensities_tsp(ls_)
+                    imwrite(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png", intensities)
+                print("Accumulated: ", intensities.max(), intensities.dtype)
                 print(org, intensities.sum(axis=1))
-                #np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
-                imwrite(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png", intensities)
-                #lines.append([f"PC{PC}", org, bin_[0], n0]) 
     df = pd.DataFrame(lines)
     df.to_csv(f"{avg_organelle_dir}/organelle_distr.csv", index=False)
      
-    # Panel 2: Organelle heatmap through shapespace
+    # Organelle heatmap through shapespace
     for PC in np.arange(1,7):
         for i, bin_ in enumerate(merged_bins):
             images = {}
@@ -165,7 +189,7 @@ if __name__ == "__main__":
                         ch = np.array([0])
                     images[org] = ch
 
-            ssim_scores = correlation(images, pearsonr, masking=True)#structural_similarity)
+            ssim_scores = correlation(images, pearsonr, masking=True) #structural_similarity)
             ssim_df = pd.DataFrame(ssim_scores, columns=list(images.keys()))
             ssim_df.index = list(images.keys())
             ssim_df.to_csv(f"{avg_organelle_dir}/PC{PC}_bin{b}_pearsonr_df.csv")
