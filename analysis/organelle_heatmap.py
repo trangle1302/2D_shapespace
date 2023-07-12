@@ -181,12 +181,14 @@ if __name__ == "__main__":
                 b = bin_[0]
                 images = {}
                 for org in cfg.ORGANELLES:
-                    #ch = np.load(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.npy")
-                    try:
-                        ch = imread(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png")
-                    except:
-                        print(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png not found, defaulting it to 0")
-                        ch = np.array([0])
+                    if intensity_sampling_concentric_ring:
+                        ch = np.load(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.npy")
+                    if intensity_warping:
+                        try:
+                            ch = imread(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png")
+                        except:
+                            print(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png not found, defaulting it to 0")
+                            ch = np.array([0])
                     images[org] = ch
 
             ssim_scores = correlation(images, pearsonr, masking=True) #structural_similarity)
