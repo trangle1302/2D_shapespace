@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from skimage.filters import threshold_minimum
+from skimage.filters import threshold_minimum, threshold_otsu
 from skimage.metrics import structural_similarity
 from scipy.stats import pearsonr
 import json
@@ -16,14 +16,15 @@ from imageio import imread, imwrite
 def correlation(value_dict, method_func, masking = False):
     if masking:
         tmp = np.sum([v for v in value_dict.values()])
-        mask = tmp.flatten() > 0
+        thres = threshold_otsu(tmp)
+        mask = np.where(tmp.flatten() > thres)
+        print(mask, thres)
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
     for i, (k1, v1) in enumerate(value_dict.items()):
         for j, (k2, v2) in enumerate(value_dict.items()):
             if masking:
-                v1_ = (np.zeros(sum(mask)) if v1.all()==0 else v1.flatten()[mask])
-                v2_ = (np.zeros(sum(mask)) if v2.all()==0 else v2.flatten()[mask])
-                print(k1, v1.shape, k2, v2.shape)
+                v1_ = (np.zeros_like(mask) if v1.all()==0 else v1.flatten()[mask])
+                v2_ = (np.zeros_like(mask) if v2.all()==0 else v2.flatten()[mask])
                 len(f"{np.sum(mask)}/{len(v1_)} px not masked")
                 print(k1, k2, method_func(v1_, v2_))
                 try:
@@ -36,7 +37,6 @@ def correlation(value_dict, method_func, masking = False):
                 except:
                     (cor_mat[i, j],_) = method_func(v1.flatten(), v2.flatten())
     return cor_mat
-
 
 def unmerge_label(
     mappings_df,
@@ -121,6 +121,9 @@ if __name__ == "__main__":
                 lines.append([f"PC{PC}", org, bin_[0], n0])
                 if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
                    continue
+                if len(ls_) < 5:
+                    print(f"{org} has less than 5 cells ({len(ls_)}) -> move on")
+                    continue
                 if n0 > 500:
                     import random
                     ls_ = random.sample(ls_, 500)
@@ -133,12 +136,10 @@ if __name__ == "__main__":
                     except:
                         print(f"{sampled_intensity_dir}/{img_id}_protein.png reading err")
                     try:
-                        thres = threshold_minimum(pilr)
+                        thres = threshold_otsu(pilr)
                     except:
                         thres = 0
-                    #thres = 0 #print(thres)
                     pilr = (pilr > thres).astype("float64")
-                    #print(img_id, pilr.sum(axis=1))
                     intensities += pilr / n
                 print("Accumulated: ", intensities.max(), intensities.dtype, "Addition: ", pilr.max(), pilr.dtype,  (pilr / len(ls_)).max())
                 print(org, intensities.sum(axis=1))
@@ -146,7 +147,6 @@ if __name__ == "__main__":
                 imwrite(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png", intensities)
                 #lines.append([f"PC{PC}", org, bin_[0], n0]) 
     df = pd.DataFrame(lines)
-    #print(df)
     df.to_csv(f"{avg_organelle_dir}/organelle_distr.csv", index=False)
      
     # Panel 2: Organelle heatmap through shapespace
