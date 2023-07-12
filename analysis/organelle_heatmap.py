@@ -117,7 +117,7 @@ if __name__ == "__main__":
         avg_organelle_dir = f"{project_dir}/matrix_protein_avg"
         sampled_intensity_dir = f"{project_dir}/sampled_intensity_bin"
     if intensity_warping:
-        avg_organelle_dir = f"{project_dir}/warps_protein_avg" 
+        avg_organelle_dir = f"{project_dir}/warps_protein_avg_otsu" 
         sampled_intensity_dir = f"{project_dir}/warps" 
     
     os.makedirs(avg_organelle_dir, exist_ok=True)
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     # Average organelles
     lines = []
     lines.append(["PC","Organelle", "bin","n_cells"])
-    for PC in np.arange(1,7):
+    for PC in [1]:#np.arange(1,7):
         pc_cells = cells_assigned[f"PC{PC}"]
         for org in cfg.ORGANELLES:
             for i, bin_ in enumerate(merged_bins):
@@ -169,12 +169,12 @@ if __name__ == "__main__":
                     intensities = get_average_intensities_tsp(ls_)
                     imwrite(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png", intensities)
                 print("Accumulated: ", intensities.max(), intensities.dtype)
-                print(org, intensities.sum(axis=1))
+                #print(org, intensities.sum(axis=1))
     df = pd.DataFrame(lines)
     df.to_csv(f"{avg_organelle_dir}/organelle_distr.csv", index=False)
      
     # Organelle heatmap through shapespace
-    for PC in np.arange(1,7):
+    for PC in [1]:#np.arange(1,7):
         for i, bin_ in enumerate(merged_bins):
             images = {}
             if len(bin_) == 1:
