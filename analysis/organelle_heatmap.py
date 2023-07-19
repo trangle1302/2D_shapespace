@@ -13,20 +13,13 @@ from utils import helpers
 import argparse
 from imageio import imread, imwrite
 
-def correlation(value_dict, method_func, masking = False):
-    if masking:
-        tmp = np.sum([v for v in value_dict.values()])
-        thres = threshold_otsu(tmp)
-        mask = np.where(tmp.flatten() > thres)
-        print(mask, thres)
+def correlation(value_dict, method_func, mask):
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
     for i, (k1, v1) in enumerate(value_dict.items()):
         for j, (k2, v2) in enumerate(value_dict.items()):
-            if masking:
-                v1_ = (np.zeros_like(mask) if v1.all()==0 else v1.flatten()[mask])
-                v2_ = (np.zeros_like(mask) if v2.all()==0 else v2.flatten()[mask])
-                len(f"{np.sum(mask)}/{len(v1_)} px not masked")
-                print(k1, k2, method_func(v1_, v2_))
+            if True:
+                v1_ = (np.zeros_like(mask) if v1.max()==0 else v1.flatten()[mask])
+                v2_ = (np.zeros_like(mask) if v2.max()==0 else v2.flatten()[mask])
                 try:
                     cor_mat[i, j] = method_func(v1, v2)
                 except:
@@ -75,7 +68,8 @@ def get_average_intensities_tsp(ls_): #warping
         except:
             print(f"{sampled_intensity_dir}/{img_id}_protein.png reading err")
         try:
-            thres = threshold_otsu(pilr)
+            #thres = threshold_otsu(pilr)
+            thres = np.percentile(pilr.ravel(), 90)
         except:
             thres = 0
         pilr = (pilr > thres).astype("float64")
@@ -98,6 +92,24 @@ def get_average_intensities_cr(ls_): #concentric rings
         intensities += pilr / n
     return intensities
 
+def get_mask(file_path=f"Avg_cell.npz"):
+    avgcell = np.load(file_path)
+    ix_c = avgcell["ix_c"]
+    iy_c = avgcell["iy_c"]
+    min_x = np.min(ix_c)
+    min_y = np.min(iy_c)
+    nu_centroid = [0,0]
+    nu_centroid[0] = -min_x
+    nu_centroid[1] = -min_y
+    ix_c -= min_x
+    iy_c -= min_y
+    from skimage.draw import polygon
+    img = np.zeros((336, 699))
+    rr, cc = polygon(ix_c, iy_c, img.shape)
+    img[rr, cc] = 1
+    id_keep = np.where(img.flatten()==1)[0]
+    return id_keep
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cell_line", help="principle component", type=str)
@@ -117,7 +129,7 @@ if __name__ == "__main__":
         avg_organelle_dir = f"{project_dir}/matrix_protein_avg"
         sampled_intensity_dir = f"{project_dir}/sampled_intensity_bin"
     if intensity_warping:
-        avg_organelle_dir = f"{project_dir}/warps_protein_avg_otsu" 
+        avg_organelle_dir = f"{project_dir}/warps_protein_avg_90th" 
         sampled_intensity_dir = f"{project_dir}/warps" 
     
     os.makedirs(avg_organelle_dir, exist_ok=True)
@@ -176,7 +188,6 @@ if __name__ == "__main__":
     # Organelle heatmap through shapespace
     for PC in [1]:#np.arange(1,7):
         for i, bin_ in enumerate(merged_bins):
-            images = {}
             if len(bin_) == 1:
                 b = bin_[0]
                 images = {}
@@ -188,10 +199,10 @@ if __name__ == "__main__":
                             ch = imread(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png")
                         except:
                             print(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png not found, defaulting it to 0")
-                            ch = np.array([0])
+                            ch = np.zeros_like(ch) #np.array([0])
                     images[org] = ch
-
-            ssim_scores = correlation(images, pearsonr, masking=True) #structural_similarity)
+            id_keep = get_mask(file_path=f"{shape_mode_path}/Avg_cell.npz")
+            ssim_scores = correlation(images, pearsonr, id_keep) #structural_similarity)
             ssim_df = pd.DataFrame(ssim_scores, columns=list(images.keys()))
             ssim_df.index = list(images.keys())
             ssim_df.to_csv(f"{avg_organelle_dir}/PC{PC}_bin{b}_pearsonr_df.csv")
