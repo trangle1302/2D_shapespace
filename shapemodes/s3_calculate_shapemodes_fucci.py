@@ -38,7 +38,7 @@ def get_memory():
     return free_memory
 
 
-def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path=""):
+def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path="", fft_path=""):
     """ Calculate shapemodes based on the coefficient matrix given
     Parameters
         df: Matrix of coefficient
@@ -141,6 +141,13 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path=""):
         pc_indexes_assigned, bin_links = pm.assign_cells(pc)
         cells_assigned[pc] = [list(b) for b in bin_links]
         print(cells_assigned[pc][:3])
+    
+        plotting.plot_example_cells(bin_links, 
+                                    n_coef=n_coef, 
+                                    cells_per_bin=5, 
+                                    shape_coef_path=fft_path, 
+                                    save_path=f"{shape_mode_path}/{pc}_example_cells.png")
+
     with open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "w") as fp:
         json.dump(cells_assigned, fp)
     return df_trans
@@ -207,6 +214,7 @@ def main():
             cfg.MODE,
             fun=cfg.COEF_FUNC,
             shape_mode_path=shape_mode_path,
+            fft_path=fft_path
         )
 
         # Shape modes of G1, G2/S, G2 cells:
@@ -237,7 +245,7 @@ def main():
             # calculate_shapemode(df, cfg.N_COEFS, mode, shape_mode_path=shape_mode_path)
             save_dir = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}_{g}"
             print("Saving to: ", save_dir)
-            _ = calculate_shapemode(df_, cfg.N_COEFS, cfg.MODE, shape_mode_path=save_dir)
+            _ = calculate_shapemode(df_, cfg.N_COEFS, cfg.MODE, shape_mode_path=save_dir, fft_path=fft_path)
 
 
 if __name__ == "__main__":
