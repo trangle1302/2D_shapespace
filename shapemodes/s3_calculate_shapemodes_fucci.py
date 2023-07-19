@@ -215,6 +215,7 @@ def main():
         print(sc_stats.matchid[:3])
         
         df_trans = df_trans.merge(sc_stats, on="matchid")
+        df_trans.to_csv(f"{save_dir}/transformed_matrix.csv")
         plt.scatter(df_trans["PC1"], df_trans["PC2"], c=df_trans["pseudotime"], cmap='RdYlGn', alpha=0.1)    
         # Add colorbar
         cbar = plt.colorbar()
