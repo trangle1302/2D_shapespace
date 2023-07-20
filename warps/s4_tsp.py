@@ -16,7 +16,7 @@ from joblib import Parallel, delayed
 from warps import image_warp_new as image_warp
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
-from imageio import imread,imwrite
+from imageio.v2 import imread,imwrite
 from tqdm import tqdm
 
 def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
@@ -121,8 +121,9 @@ def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_a
     pts_convex = (pts_avg + pts_ori) / 2
     warped1 = image_warp.warp_image(pts_ori, pts_convex, img_resized)
     warped = image_warp.warp_image(pts_convex, pts_avg, warped1)
+    warped = (warped*255).astype('uint8')
+    #print(warped.max())
     imwrite(save_protein_path, warped)
-
     if np.random.choice([True, False], p=[0.01, 0.99]):
         # Plot landmark points at morphing
         fig, ax = plt.subplots(1, 5, figsize=(15, 30))
@@ -211,9 +212,11 @@ def main():
     chunk_size = count//n_processes
     print(f"processing {count - len(completed)} in {n_processes} cpu in chunk {chunk_size}")
     with open(fft_path, "r") as f:
-        processed_list = Parallel(n_jobs=n_processes)(
-                delayed(image_warping)(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_avg, shape_x, shape_y,)
-                for l_num in tqdm(f, total=count))
+        for l_num in tqdm(f, total=count):
+            image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_avg, shape_x, shape_y) 
+        # processed_list = Parallel(n_jobs=n_processes)(
+        #         delayed(image_warping)(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_avg, shape_x, shape_y,)
+        #         for l_num in tqdm(f, total=count))
         
 if __name__ == "__main__":
     try:
