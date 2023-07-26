@@ -12,6 +12,7 @@ import json
 from utils import helpers
 import argparse
 from imageio import imread, imwrite
+import glob
 
 def correlation(value_dict, method_func, mask):
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
@@ -68,8 +69,8 @@ def get_average_intensities_tsp(ls_): #warping
         except:
             print(f"{sampled_intensity_dir}/{img_id}_protein.png reading err")
         try:
-            #thres = threshold_otsu(pilr)
-            thres = np.percentile(pilr.ravel(), 90)
+            thres = threshold_otsu(pilr)
+            #thres = np.percentile(pilr.ravel(), 90)
         except:
             thres = 0
         pilr = (pilr > thres).astype("float64")
@@ -92,7 +93,7 @@ def get_average_intensities_cr(ls_): #concentric rings
         intensities += pilr / n
     return intensities
 
-def get_mask(file_path=f"Avg_cell.npz"):
+def get_mask(file_path=f"Avg_cell.npz", shape_=(336, 699)):
     avgcell = np.load(file_path)
     ix_c = avgcell["ix_c"]
     iy_c = avgcell["iy_c"]
@@ -104,7 +105,7 @@ def get_mask(file_path=f"Avg_cell.npz"):
     ix_c -= min_x
     iy_c -= min_y
     from skimage.draw import polygon
-    img = np.zeros((336, 699))
+    img = np.zeros(shape_)
     rr, cc = polygon(ix_c, iy_c, img.shape)
     img[rr, cc] = 1
     id_keep = np.where(img.flatten()==1)[0]
@@ -129,7 +130,7 @@ if __name__ == "__main__":
         avg_organelle_dir = f"{project_dir}/matrix_protein_avg"
         sampled_intensity_dir = f"{project_dir}/sampled_intensity_bin"
     if intensity_warping:
-        avg_organelle_dir = f"{project_dir}/warps_protein_avg_90th" 
+        avg_organelle_dir = f"{project_dir}/warps_protein_avg_otsu" 
         sampled_intensity_dir = f"{project_dir}/warps" 
     
     os.makedirs(avg_organelle_dir, exist_ok=True)
@@ -147,8 +148,8 @@ if __name__ == "__main__":
 
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "r")
     cells_assigned = json.load(f)
-    merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
-
+    #merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
+    merged_bins = [[0], [3], [6]]
     # Average organelles
     lines = []
     lines.append(["PC","Organelle", "bin","n_cells"])
@@ -179,12 +180,13 @@ if __name__ == "__main__":
                     np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
                 if intensity_warping:
                     intensities = get_average_intensities_tsp(ls_)
+                    intensities = (intensities*255).astype('uint8')
                     imwrite(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png", intensities)
                 print("Accumulated: ", intensities.max(), intensities.dtype)
                 #print(org, intensities.sum(axis=1))
     df = pd.DataFrame(lines)
     df.to_csv(f"{avg_organelle_dir}/organelle_distr.csv", index=False)
-     
+    shape_ = imread(glob.glob(f"{avg_organelle_dir}/*.png")[0]).shape
     # Organelle heatmap through shapespace
     for PC in [1]:#np.arange(1,7):
         for i, bin_ in enumerate(merged_bins):
@@ -199,12 +201,14 @@ if __name__ == "__main__":
                             ch = imread(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png")
                         except:
                             print(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.png not found, defaulting it to 0")
-                            ch = np.zeros_like(ch) #np.array([0])
+                            ch = np.zeros(shape_) #np.array([0])
                     images[org] = ch
-            id_keep = get_mask(file_path=f"{shape_mode_path}/Avg_cell.npz")
+            
+            id_keep = get_mask(file_path=f"{shape_mode_path}/Avg_cell.npz", shape_=ch.shape)
             ssim_scores = correlation(images, pearsonr, id_keep) #structural_similarity)
             ssim_df = pd.DataFrame(ssim_scores, columns=list(images.keys()))
             ssim_df.index = list(images.keys())
+            print(ssim_df)
             ssim_df.to_csv(f"{avg_organelle_dir}/PC{PC}_bin{b}_pearsonr_df.csv")
             plt.figure()
             sns.heatmap(ssim_df, cmap="RdBu", vmin=-1, vmax=1)
