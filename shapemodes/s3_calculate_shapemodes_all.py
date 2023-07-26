@@ -5,11 +5,9 @@ from shapemodes import dimreduction
 from coefficients import coefs
 from utils import plotting
 from sklearn.decomposition import PCA, IncrementalPCA
-from pathlib import Path
 import pandas as pd
 import numpy as np
 import glob
-from tqdm import tqdm
 import random
 import json
 import resource
