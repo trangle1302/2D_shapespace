@@ -51,12 +51,12 @@ def find_landmarks(nuclei, cell, n_points=32, border_points=False):
         (x_max, y_max) = cell.shape
         border_anchors = [
             [0, 0],
-            [x_max // 2, 0],
+            #[x_max // 2, 0],
             [x_max, 0],
-            [0, y_max // 2],
+            #[0, y_max // 2],
             [0, y_max],
-            [x_max // 2, y_max],
-            [x_max, y_max // 2],
+            #[x_max // 2, y_max],
+            #[x_max, y_max // 2],
             [x_max, y_max],
         ]
         landmarks = np.vstack(
