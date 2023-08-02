@@ -7,7 +7,7 @@ from utils import helpers
 import matplotlib.pyplot as plt
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
-from skimage.filters import threshold_minimum
+from skimage.filters import threshold_minimum, threshold_otsu
 from warps import image_warp_new as image_warp
 import json
 import pandas as pd
@@ -16,7 +16,7 @@ import time
 import gc
 import argparse
 
-def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
+def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32, border_points=False):
     nu_centroid = helpers.find_centroid([(x_, y_) for x_, y_ in zip(ix_n, iy_n)])
     nu_centroid = [nu_centroid[0], nu_centroid[1]]
     print(f"Nucleus centroid of the avg shape: {nu_centroid}")
@@ -38,17 +38,38 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
     cell_contour = np.stack([ix_c, iy_c]).T
     # print(nu_contour.shape, cell_contour.shape)
 
-    pts_avg = np.vstack(
-        [
-            np.asarray(nu_centroid),
-            helpers.realign_contour_startpoint(nu_contour),
-            helpers.realign_contour_startpoint(cell_contour),
-        ]
-    )
     # print(pts_avg.max(), pts_avg.min(), cell_contour[:,0].max(), cell_contour[:,1].max())
     shape_x, shape_y = (
         np.round(cell_contour[:, 0].max()).astype("int"),
         np.round(cell_contour[:, 1].max()).astype("int"),
+    )
+    if border_points:
+        (x_max, y_max) = (shape_x, shape_y)
+        border_anchors = [
+            [0, 0],
+            #[x_max // 2, 0],
+            [x_max, 0],
+            #[0, y_max // 2],
+            [0, y_max],
+            #[x_max // 2, y_max],
+            #[x_max, y_max // 2],
+            [x_max, y_max],
+        ]
+        pts_avg = np.vstack(
+            [
+                np.array(nu_centroid),
+                helpers.realign_contour_startpoint(nu_contour),
+                helpers.realign_contour_startpoint(cell_contour),
+                border_anchors,
+            ]
+        )
+    else:
+        pts_avg = np.vstack(
+            [
+                np.array(nu_centroid),
+                helpers.realign_contour_startpoint(nu_contour),
+                helpers.realign_contour_startpoint(cell_contour),
+            ]
     )
 
     return pts_avg, (shape_x, shape_y)
@@ -102,8 +123,8 @@ def main():
     shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_cell_nuclei"
     fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
     data_dir = f"{cfg.PROJECT_DIR}/cell_masks"
-    save_dir = f"{cfg.PROJECT_DIR}/morphed_protein_avg"
-    plot_dir = f"{cfg.PROJECT_DIR}/morphed_protein_avg_plots"
+    save_dir = f"{cfg.PROJECT_DIR}/warps_protein_avg"
+    plot_dir = f"{cfg.PROJECT_DIR}/warps_protein_avg_plots"
     n_landmarks = 64  # number of landmark points for each ring, so final n_points to compute dx, dy will be 2*n_landmarks+1
     print(save_dir, plot_dir)
     os.makedirs(save_dir, exist_ok=True)
@@ -129,7 +150,7 @@ def main():
     pc_cells = cells_assigned[PC]
 
     # merged_bins = [[0,1,2],[4,5,6],[8,9,10]]
-    merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
+    merged_bins = [[0], [3], [6]]
 
     org_percent = {}
     for i, bin_ in enumerate(merged_bins):
@@ -141,7 +162,6 @@ def main():
         org_percent[f"bin{i}"] = df_sl.sc_target.value_counts().to_dict()
 
     df = pd.DataFrame(org_percent)
-    print(df)
     avg_cell_per_bin = np.load(f"{shape_mode_path}/shapevar_{PC}_cell_nuclei.npz")
 
     with open(f"{fft_dir}/shift_error_meta_fft128.txt", "r") as F:
@@ -155,7 +175,7 @@ def main():
             ix_c = avg_cell_per_bin["mem"][bin_[0]][:n_coef]
             iy_c = avg_cell_per_bin["mem"][bin_[0]][n_coef:]
             pts_avg, (shape_x, shape_y) = avg_cell_landmarks(
-                ix_n, iy_n, ix_c, iy_c, n_landmarks=n_landmarks
+                ix_n, iy_n, ix_c, iy_c, n_landmarks=n_landmarks, border_points=False
             )
 
         ls = [pc_cells[b] for b in bin_]
@@ -175,7 +195,6 @@ def main():
             if not os.path.isdir(f"{plot_dir}/{PC}/{org}"):
                 os.makedirs(f"{plot_dir}/{PC}/{org}")
             ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
-            print(f"Found {len(ls_)}")
             # if os.path.exists(f"{save_dir}/{PC}/{org}_bin{bin_[0]}.png"):
             #    continue
             ls_ = [
@@ -238,17 +257,18 @@ def main():
                 )
                 # imwrite(f"{save_dir}/{PC}/{org}/{img_id}.png", (warped*255).astype(np.uint8))
                 try:
-                    bin_thres = threshold_minimum(warped)
+                    #bin_thres = threshold_minimum(warped)
+                    bin_thres = threshold_otsu(warped)
                 except:
                     bin_thres = 0
                 
-                binary_warped = warped > bin_thres
+                binary_warped = 1*(warped > bin_thres)
                 binary_warped = binary_warped.astype("float64")
                 # adding weighed contribution of this image
                 # print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype,  (warped / len(ls_)).max())
-                avg_img += warped / len(ls_)
+                avg_img += binary_warped / len(ls_)
 
-                if np.random.choice([True, False], p=[0.01, 0.99]):
+                if True: #np.random.choice([True, False], p=[0.01, 0.99]):
                     # Plot landmark points at morphing
                     fig, ax = plt.subplots(1, 5, figsize=(15, 30))
                     ax[0].imshow(nu_, alpha=0.3)
