@@ -150,6 +150,7 @@ if __name__ == "__main__":
     cells_assigned = json.load(f)
     #merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
     merged_bins = [[0], [3], [6]]
+    
     # Average organelles
     lines = []
     lines.append(["PC","Organelle", "bin","n_cells"])
@@ -172,9 +173,9 @@ if __name__ == "__main__":
                 if len(ls_) < 5:
                     print(f"{org} has less than 5 cells ({len(ls_)}) -> move on")
                     continue
-                if n0 > 500:
+                if n0 > 1000:
                     import random
-                    ls_ = random.sample(ls_, 500)
+                    ls_ = random.sample(ls_, 1000)
                 if intensity_sampling_concentric_ring:
                     intensities = get_average_intensities_cr(ls_)
                     np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
@@ -182,7 +183,7 @@ if __name__ == "__main__":
                     intensities = get_average_intensities_tsp(ls_)
                     intensities = (intensities*255).astype('uint8')
                     imwrite(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png", intensities)
-                print("Accumulated: ", intensities.max(), intensities.dtype)
+                print(f"PC{PC}_{org}_b{bin_[0]}.png {len(ls_)} cells. Accumulated: {intensities.max()}, {intensities.dtype}")
                 #print(org, intensities.sum(axis=1))
     df = pd.DataFrame(lines)
     df.to_csv(f"{avg_organelle_dir}/organelle_distr.csv", index=False)
