@@ -50,6 +50,24 @@ def load_intensities(ls_, sampled_intensity_dir, id_keep):
         intensities += [pilr.flatten()[id_keep]]
     return np.array(intensities)
 
+def get_mask(file_path=f"Avg_cell.npz", shape_=(336, 699)):
+    avgcell = np.load(file_path)
+    ix_c = avgcell["ix_c"]
+    iy_c = avgcell["iy_c"]
+    min_x = np.min(ix_c)
+    min_y = np.min(iy_c)
+    nu_centroid = [0,0]
+    nu_centroid[0] = -min_x
+    nu_centroid[1] = -min_y
+    ix_c -= min_x
+    iy_c -= min_y
+    from skimage.draw import polygon
+    img = np.zeros(shape_)
+    rr, cc = polygon(ix_c, iy_c, img.shape)
+    img[rr, cc] = 1
+    id_keep = np.where(img.flatten()==1)[0]
+    return id_keep
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cell_line", help="principle component", type=str)
@@ -72,21 +90,7 @@ if __name__ == "__main__":
         avg_organelle_dir = f"{project_dir}/warps_protein_avg_cell_pairwise" 
         sampled_intensity_dir = f"{project_dir}/warps" 
     
-    avgcell = np.load(f"{shape_mode_path}/Avg_cell.npz")
-    ix_c = avgcell["ix_c"]
-    iy_c = avgcell["iy_c"]
-    min_x = np.min(ix_c)
-    min_y = np.min(iy_c)
-    nu_centroid = [0,0]
-    nu_centroid[0] = -min_x
-    nu_centroid[1] = -min_y
-    ix_c -= min_x
-    iy_c -= min_y
-    from skimage.draw import polygon
-    img = np.zeros((336, 699))
-    rr, cc = polygon(ix_c, iy_c, img.shape)
-    img[rr, cc] = 1
-    id_keep = np.where(img.flatten()==1)[0]
+    id_keep = get_mask(file_path=f"{shape_mode_path}/Avg_cell.npz")
 
     os.makedirs(avg_organelle_dir, exist_ok=True)
     cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
@@ -136,7 +140,7 @@ if __name__ == "__main__":
                         cor_mat[i, j] = tmp[:n, n:].mean()
                         #cor_mat[j, i] = tmp[n:, :n].mean()
                         #cor_mat[j, j] = tmp[n:, n:].mean()
-                        print(tmp[:n, n:].mean(), tmp[n:, :n].mean(), tmp.min())
+                        print(tmp[:n, n:].mean(), tmp[n:, :n].min(), tmp.min())
 
                     cor_mat = pd.DataFrame(cor_mat, columns=cfg.ORGANELLES, index=cfg.ORGANELLES)
                     #print(cor_mat)
