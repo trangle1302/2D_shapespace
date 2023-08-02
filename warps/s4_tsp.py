@@ -157,7 +157,7 @@ def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_a
             cmap="Reds",
         )
         ax[4].set_title("midpoint to avg_shape")
-        fig.savefig(save_protein_path.replace(".png","_process.png"), bbox_inches="tight"        )
+        fig.savefig(save_protein_path.replace(".png","_process.png"), bbox_inches="tight")
         plt.close()
 
 def main():    
