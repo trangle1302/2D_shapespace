@@ -268,7 +268,7 @@ def main():
                 # print("Accumulated: ", avg_img.max(), avg_img.dtype, "Addition: ", warped.max(), warped.dtype,  (warped / len(ls_)).max())
                 avg_img += binary_warped / len(ls_)
 
-                if True: #np.random.choice([True, False], p=[0.01, 0.99]):
+                if np.random.choice([True, False], p=[0.1, 0.9]):
                     # Plot landmark points at morphing
                     fig, ax = plt.subplots(1, 5, figsize=(15, 30))
                     ax[0].imshow(nu_, alpha=0.3)
