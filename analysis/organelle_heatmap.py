@@ -73,7 +73,7 @@ def get_average_intensities_tsp(ls_): #warping
             #thres = np.percentile(pilr.ravel(), 90)
         except:
             thres = 0
-        pilr = (pilr > thres).astype("float64")
+        pilr = 1*(pilr > thres).astype("float64")
         intensities += pilr / n
     return intensities
 
@@ -109,7 +109,7 @@ def get_mask(file_path=f"Avg_cell.npz", shape_=(336, 699)):
     rr, cc = polygon(ix_c, iy_c, img.shape)
     img[rr, cc] = 1
     id_keep = np.where(img.flatten()==1)[0]
-    return id_keep
+    return id_keep, img
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -188,6 +188,7 @@ if __name__ == "__main__":
     df = pd.DataFrame(lines)
     df.to_csv(f"{avg_organelle_dir}/organelle_distr.csv", index=False)
     shape_ = imread(glob.glob(f"{avg_organelle_dir}/*.png")[0]).shape
+    id_keep, mask = get_mask(file_path=f"{shape_mode_path}/Avg_cell.npz", shape_=shape_)
     # Organelle heatmap through shapespace
     for PC in [1]:#np.arange(1,7):
         for i, bin_ in enumerate(merged_bins):
@@ -205,7 +206,6 @@ if __name__ == "__main__":
                             ch = np.zeros(shape_) #np.array([0])
                     images[org] = ch
             
-            id_keep = get_mask(file_path=f"{shape_mode_path}/Avg_cell.npz", shape_=ch.shape)
             ssim_scores = correlation(images, pearsonr, id_keep) #structural_similarity)
             ssim_df = pd.DataFrame(ssim_scores, columns=list(images.keys()))
             ssim_df.index = list(images.keys())
