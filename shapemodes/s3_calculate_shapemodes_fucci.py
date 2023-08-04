@@ -140,7 +140,7 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path="", fft_pat
         pm.plot_shape_variation(pc, dark=False, save_dir=shape_mode_path)
         pc_indexes_assigned, bin_links = pm.assign_cells(pc)
         cells_assigned[pc] = [list(b) for b in bin_links]
-        print(cells_assigned[pc][:3])
+        #print(cells_assigned[pc][:3])
     
         plotting.plot_example_cells(bin_links, 
                                     n_coef=n_coef, 
@@ -216,14 +216,14 @@ def main():
             shape_mode_path=shape_mode_path,
             fft_path=fft_path
         )
-
+        df_trans["matchid"] = df["matchid"] 
         # Shape modes of G1, G2/S, G2 cells:
         sc_stats = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv")
         sc_stats["matchid"] = sc_stats.ab_id + "/" + sc_stats.cell_id
-        print(sc_stats.matchid[:3])
+        #print(sc_stats.matchid[:3])
         
         df_trans = df_trans.merge(sc_stats, on="matchid")
-        df_trans.to_csv(f"{save_dir}/transformed_matrix.csv")
+        df_trans.to_csv(f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}/transformed_matrix.csv")
         plt.scatter(df_trans["PC1"], df_trans["PC2"], c=df_trans["pseudotime"], cmap='RdYlGn', alpha=0.1)    
         # Add colorbar
         cbar = plt.colorbar()
@@ -234,7 +234,7 @@ def main():
         plt.ylabel('PC2')
         plt.title('Scatter Plot with Colormap')
         plt.savefig(f"{shape_mode_path}/PC1vsPC2_pseudotime.png") 
-
+        
         cc_groups = sc_stats.GMM_cc_label.unique().tolist()
         for g in cc_groups:
             cells_in_phase = sc_stats[sc_stats.GMM_cc_label == g]
