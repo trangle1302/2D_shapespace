@@ -66,6 +66,11 @@ ORGANELLES = ["Nucleoplasm","Nucleoli","NucleoliFC","NuclearS","NuclearB","Nucle
               "IntermediateF","EndoplasmicR","ActinF",
               "Cytosol","Microtubules","PlasmaM"]
 
+ORGANELLES_FULLNAME = ["Nucleoplasm","Nucleoli","Nucleoli fibrillar center","Nuclear speckles","Nuclear bodies","Nuclear membrane",
+              "Aggresome","Golgi apparatus", "Vesicles","Peroxisomes","Endosomes","Mitochondria",
+              "Intermediate filaments","Endoplasmic reticulum","Actin filaments",
+              "Cytosol","Microtubules","Plasma membrane"]
+
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
 CELL_LINE = "U-2 OS"#"RT4"
 N_COEFS = 128
