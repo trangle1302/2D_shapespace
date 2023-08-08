@@ -162,7 +162,9 @@ if __name__ == "__main__":
                 ls = helpers.flatten_list(ls)
                 ls = [os.path.basename(l).replace(".npy", "") for l in ls]
                 df_sl = mappings[mappings.cell_idx.isin(ls)]
-                ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
+                #ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
+                ls_ = df_sl[df_sl.locations == org].cell_idx.to_list()
+
                 if len(ls_)==0:
                     print(f"{org}: Found {len(ls_)}, eg: {ls_[:3]}")
                     continue
