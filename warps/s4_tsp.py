@@ -69,7 +69,9 @@ def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_a
     #print(raw_protein_path, save_protein_path, img_id)
     if os.path.exists(save_protein_path):
         return 
-    if mappings[mappings.cell_idx==img_id].sc_target.values[0] in ["Negative","Multi-Location"]:
+    
+    if mappings[mappings.cell_idx==img_id].locations.values[0] not in cfg.ORGANELLES_FULLNAME:
+    #if mappings[mappings.cell_idx==img_id].sc_target.values[0] in ["Negative","Multi-Location"]:
         #mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
         return
     line_ = grep(img_id+".npy", shift_path)
