@@ -76,7 +76,7 @@ def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_a
     if line_ == []:
         print(f"{img_id} not found")
         return 
-    print(f"processing {img_id}")
+    #print(f"processing {img_id}")
     data_shifts = line_[0].strip().split(";") 
     ori_fft = [
         complex(s.replace("i", "j")) for s in data_[1:]
