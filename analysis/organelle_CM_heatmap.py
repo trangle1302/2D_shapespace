@@ -171,15 +171,18 @@ if __name__ == "__main__":
                     continue
                 n0 = len(ls_)
                 lines.append([f"PC{PC}", org, bin_[0], n0])
-                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
-                   continue
+                #if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
+                #   continue
                 sample_img = imread(f"{sampled_intensity_dir}/{ls_[0]}_protein.png")
-                intensities = np.zeros(sample_img.shape, dtype='float64')
+                intensities = np.zeros(sample_img.shape, dtype='uint8')
                 if intensity_warping:
                     for l in ls_:
                         img = imread(f"{sampled_intensity_dir}/{l}_protein.png")
                         (xM, yM) = center_of_mass(img)
-                        intensities[xM, yM] = 1/n0
+                        #print(xM, yM)
+                        intensities[round(xM), round(yM)] += 1
+                    intensities = intensities / intensities.max() # normalize the data to 0 - 1
+                    intensities = (255 * intensities).astype('uint8')
                     imwrite(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png", intensities)
                 print(f"PC{PC}_{org}_b{bin_[0]}.png {len(ls_)} cells. Accumulated: {intensities.max()}, {intensities.dtype}")
                 #print(org, intensities.sum(axis=1))
