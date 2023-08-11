@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from skimage.filters import threshold_minimum, threshold_otsu
 from skimage.metrics import structural_similarity
-from scipy.ndimage import center_of_mass()
+from scipy.ndimage import center_of_mass
 from scipy.stats import pearsonr
 import json
 from utils import helpers
@@ -175,7 +175,6 @@ if __name__ == "__main__":
                    continue
                 sample_img = imread(f"{sampled_intensity_dir}/{ls_[0]}_protein.png")
                 intensities = np.zeros(sample_img.shape, dtype='float64')
-                intensities = np.zeroes_like()
                 if intensity_warping:
                     for l in ls_:
                         img = imread(f"{sampled_intensity_dir}/{l}_protein.png")
