@@ -6,8 +6,8 @@ import json
 import numpy as np
 from collections import Counter
 import sys
-
 sys.path.append("..")
+import configs.config as cfg
 from utils import helpers
 import statsmodels.api as sm
 from scipy import stats
@@ -53,10 +53,9 @@ def corrdot(*args, **kwargs):
 
 def main():
     project_dir = f"/data/2Dshapespace/S-BIAD34"
-    sc_stats = pd.read_csv(f"{project_dir}/single_cell_statistics.csv")
+    sc_stats = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv")
     print(sc_stats.columns)
-    alignment = "fft_cell_major_axis_polarized"
-    shape_mode_path = f"{project_dir}/shapemode/{alignment}_cell_nuclei_nux4"
+    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "r")
     cells_assigned = json.load(f)
     print(cells_assigned.keys())
@@ -67,9 +66,9 @@ def main():
         sc_stats = sc_stats.merge(
             df_[[PC, "ab_id", "cell_id"]], on=["ab_id", "cell_id"]
         )
-    sc_stats.to_csv(f"{project_dir}/single_cell_statistics_pcs.csv")
+    sc_stats.to_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics_pcs.csv")
     tmp = sc_stats.corr(method="pearson")
-    tmp.to_csv(f"{project_dir}/single_cell_statistics_corr.csv")
+    tmp.to_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics_corr.csv")
     # Pseudotime correlation
     for PC in cells_assigned.keys():
         res = stats.linregress(sc_stats[PC], sc_stats.pseudotime)
@@ -107,7 +106,7 @@ def main():
     g.map_lower(sb.regplot, lowess=True, ci=False, line_kws={"color": "black"})
     g.map_diag(sb.distplot, kde_kws={"color": "black"})
     g.map_upper(corrdot)
-    g.savefig(f"{project_dir}/single_cell_statistics.png")
+    g.savefig(f"{cfg.PROJECT_DIR}/single_cell_statistics.png")
 
     # Meta data from the HPA, Antibody
     # ifimages = pd.read_csv("/data/kaggle-dataset/publicHPA_umap/ifimages_U2OS.csv")
