@@ -1191,3 +1191,29 @@ def scatter_hist(x, y, label, save_path):
     ax_xDist.legend()
     plt.savefig(save_path)
     plt.close()
+
+def scatter_hist_fucci(x, y, label, save_path):
+    import matplotlib.gridspec as gridspec
+    label_color = {'G1':'red', 'G1S':'yellow', 'G2':'green'}
+    (xmin, xmax) = (-35000,40000)
+    (ymin, ymax) = (-20000,20000)
+    gs = gridspec.GridSpec(3, 3)
+    ax_main = plt.subplot(gs[1:3, :2])
+    ax_main.set_xlim([xmin, xmax])
+    ax_main.set_ylim([ymin, ymax])
+    # Main scatter/hist2d plot
+    ax_main.scatter(x, y, alpha=0.01)#, bins=200)
+    ax_xDist = plt.subplot(gs[0, :2],sharex=ax_main)
+    ax_yDist = plt.subplot(gs[1:3, 2],sharey=ax_main)
+    for l_, c_ in label_color.items():
+        # Plot data histogram and Fitting a normal distribution to the data
+        class_data_x = x[label == l_]
+        ax_xDist.hist(class_data_x, bins=100, color=c_, alpha=0.2, label=l_)        
+        class_data_y = y[label == l_]
+        ax_yDist.hist(class_data_y, bins=100, color=c_, alpha=0.2, label=l_, orientation='horizontal')    
+        
+    ax_main.set(xlabel="PC3", ylabel="PC4")
+    #ax_yDist.legend()
+    ax_xDist.legend()
+    plt.savefig(save_path)
+    plt.close()
