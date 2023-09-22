@@ -1,12 +1,10 @@
-import os
 import skimage
 import imageio
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
 import glob
 import time
-
+import sys
+sys.path.append("..")
 
 def check_size(image, shape, d_type="uint16", max_val=65535):
     if image.shape != shape:
@@ -75,6 +73,8 @@ def get_sc_statistics_fucci(
                         mt_sum,
                         gmnn_sum,
                         cdt1_sum,
+                        region_n.axis_minor_length/region_n.axis_major_length, #aspect_ratio_nu,
+                        region_c.axis_minor_length/region_c.axis_major_length, #aspect_ratio_cell
                     ],
                 )
             )
@@ -116,10 +116,15 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, protein, cell_mask_path):
         mask_n = nuclei_mask[minr:maxr, minc:maxc].astype(np.uint8)
         mask_n[mask_n != region_n.label] = 0
         mask_n[mask_n == region_n.label] = 1
+
         # protein in the nucleus
         pr_nu = protein[minr:maxr, minc:maxc].copy()
         pr_nu[mask_n != 1] = 0
         pr_nu_sum = pr_nu.sum()
+        
+        # protein in nuclear periphery
+        #mask_n_dilated = skimage.morphology.dilation(mask_n, skimage.morphology.square(10))
+        #mask_periphery = mask_n_dilated - mask_n
 
         er_ = er[minr:maxr, minc:maxc].copy()
         er_[mask_n != 1] = 0
@@ -131,13 +136,15 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, protein, cell_mask_path):
                     [
                         ab_id,
                         img_id + "_" + str(cell_label),  # Identifier
-                        cell_area,
+                        cell_area,# Nucleus and cell area
                         nu_area,
-                        region_n.eccentricity,  # Nucleus and cell area
+                        region_n.eccentricity, # Nucleus eccentricity
                         pr_sum,
                         pr_nu_sum,  # protein total intensity in whole cell and nucleus region, pr_cytosol_mean = (pr_sum-pr_nu)/(cell_area-nu_area)
                         mt_sum,
                         er_sum,
+                        region_n.axis_minor_length/region_n.axis_major_length, #aspect_ratio_nu,
+                        region_c.axis_minor_length/region_c.axis_major_length, #aspect_ratio_cell
                     ],
                 )
             )
@@ -148,14 +155,16 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, protein, cell_mask_path):
 
 
 def main():
-    d = "/data/2Dshapespace/S-BIAD34"
-    cell_masks = glob.glob(f"{d}/cell_masks2/*/*_cellmask.png")
+    import configs.config as cfg
+    d = cfg.PROJECT_DIR
+    cell_masks = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*/*_cellmask.png")
     print(f"{len(cell_masks)} FOVs found with masks")
     s = time.time()
-    with open(f"{d}/single_cell_statistics.csv", "a") as f:
+    print(f'Saving to {cfg.PROJECT_DIR}/single_cell_statistics.csv')
+    with open(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv", "a") as f:
         # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
         f.write(
-            "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum\n"
+            "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,aspect_ratio_nu,aspect_ratio_cell\n"
         )
         for cell_mask_path in cell_masks:
             # Reading all channels and masks
