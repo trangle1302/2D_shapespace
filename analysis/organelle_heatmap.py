@@ -130,7 +130,7 @@ if __name__ == "__main__":
         avg_organelle_dir = f"{project_dir}/matrix_protein_avg"
         sampled_intensity_dir = f"{project_dir}/sampled_intensity_bin"
     if intensity_warping:
-        avg_organelle_dir = f"{project_dir}/warps_protein_avg_otsu" 
+        avg_organelle_dir = f"{project_dir}/warps_protein_avg_otsu_n50" 
         sampled_intensity_dir = f"{project_dir}/warps" 
     
     os.makedirs(avg_organelle_dir, exist_ok=True)
@@ -145,18 +145,18 @@ if __name__ == "__main__":
         mappings = unmerge_label(mappings)
         mappings.to_csv(cellline_meta, index=False)
         print(mappings.sc_target.value_counts())
-
+    print(mappings.sc_target.value_counts())
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "r")
     cells_assigned = json.load(f)
-    #merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
-    merged_bins = [[0], [3], [6]]
+    merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
+    #merged_bins = [[0], [3], [6]]
     
     # Average organelles
     lines = []
     lines.append(["PC","Organelle", "bin","n_cells"])
-    for PC in [1]:#np.arange(1,7):
+    for PC in np.arange(1,7):
         pc_cells = cells_assigned[f"PC{PC}"]
-        for org in cfg.ORGANELLES:
+        for org in cfg.ORGANELLES_FULLNAME:
             for i, bin_ in enumerate(merged_bins):
                 ls = [pc_cells[b] for b in bin_]
                 ls = helpers.flatten_list(ls)
@@ -172,12 +172,12 @@ if __name__ == "__main__":
                 lines.append([f"PC{PC}", org, bin_[0], n0])
                 if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
                    continue
-                if len(ls_) < 5:
+                if len(ls_) < 3:
                     print(f"{org} has less than 5 cells ({len(ls_)}) -> move on")
                     continue
-                if n0 > 1000:
+                if n0 > 50:
                     import random
-                    ls_ = random.sample(ls_, 1000)
+                    ls_ = random.sample(ls_, 50)
                 if intensity_sampling_concentric_ring:
                     intensities = get_average_intensities_cr(ls_)
                     np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
@@ -192,12 +192,12 @@ if __name__ == "__main__":
     shape_ = imread(glob.glob(f"{avg_organelle_dir}/*.png")[0]).shape
     id_keep, mask = get_mask(file_path=f"{shape_mode_path}/Avg_cell.npz", shape_=shape_)
     # Organelle heatmap through shapespace
-    for PC in [1]:#np.arange(1,7):
+    for PC in np.arange(1,7):
         for i, bin_ in enumerate(merged_bins):
             if len(bin_) == 1:
                 b = bin_[0]
                 images = {}
-                for org in cfg.ORGANELLES:
+                for org in cfg.ORGANELLES_FULLNAME:
                     if intensity_sampling_concentric_ring:
                         ch = np.load(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.npy")
                     if intensity_warping:
