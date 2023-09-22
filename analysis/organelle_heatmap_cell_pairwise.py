@@ -120,16 +120,18 @@ if __name__ == "__main__":
                 ls = [os.path.basename(l).replace(".npy", "") for l in ls]
                 df_sl = mappings[mappings.cell_idx.isin(ls)]
                 cor_mat = np.zeros((len(cfg.ORGANELLES), len(cfg.ORGANELLES)))
-                for i, org1 in enumerate(cfg.ORGANELLES):
-                    ls_i = df_sl[df_sl.sc_target == org1].cell_idx.to_list()
+                for i, org1 in enumerate(cfg.ORGANELLES_FULLNAME):
+                    #ls_i = df_sl[df_sl.sc_target == org1].cell_idx.to_list()
+                    ls_i = df_sl[df_sl.locations == org1].cell_idx.to_list()
                     if len(ls_i)<5:
                         continue
                     ls_ = (random.sample(ls_i, 100) if len(ls_i)>100 else ls_i)
                     intensities_1 = load_intensities(ls_, sampled_intensity_dir, id_keep)
                     n = len(ls_)
                     print(intensities_1.shape)
-                    for j, org2 in enumerate(cfg.ORGANELLES):
-                        ls_j = df_sl[df_sl.sc_target == org2].cell_idx.to_list()
+                    for j, org2 in enumerate(cfg.ORGANELLES_FULLNAME):
+                        #ls_j = df_sl[df_sl.sc_target == org2].cell_idx.to_list()
+                        ls_j = df_sl[df_sl.locations == org1].cell_idx.to_list()
                         print(f"{org1}: {len(ls_i)}, {org2}: {len(ls_j)}")
                         if len(ls_j)<5:
                             continue
