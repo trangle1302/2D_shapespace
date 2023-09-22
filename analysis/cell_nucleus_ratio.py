@@ -9,7 +9,6 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 import time
 
-
 def check_nucleus_cell_size(image_path, save_dir):
     nu_cell_array = np.load(image_path)
     nu_area = np.sum(nu_cell_array[1, :, :] > 0)
@@ -23,7 +22,6 @@ def check_nucleus_cell_size(image_path, save_dir):
             )
             + "\n"
         )
-
 
 def main():
     s = time.time()
@@ -41,7 +39,6 @@ def main():
         delayed(check_nucleus_cell_size)(i, save_dir) for i in inputs
     )
     print(f"Finished in {(time.time() - s)/60} min")
-
 
 if __name__ == "__main__":
     main()
