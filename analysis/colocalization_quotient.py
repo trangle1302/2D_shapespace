@@ -1,25 +1,24 @@
 import numpy as np
 
 def colocalization_quotient(image1, image2):
+    """ Calculate the colocalization quotient = portion of pixel overlap
+    """
     # Ensure both images have the same dimensions
     assert image1.shape == image2.shape, "Images must have the same dimensions."
-
     # Convert images to binary (0 or 1)
     image1_binary = (image1 > 0).astype(np.uint8)
     image2_binary = (image2 > 0).astype(np.uint8)
 
     # Calculate the number of colocalized pixels
     colocalized_pixels = np.sum(image1_binary & image2_binary)
-
     # Calculate the number of total pixels in channel 1
     total_pixels_channel1 = np.sum(image1_binary)
-
-    # Calculate the colocalization quotient
-    colocalization_quotient = colocalized_pixels / total_pixels_channel1
-
-    return colocalization_quotient
+    return colocalized_pixels / total_pixels_channel1
 
 def local_colocalization_quotient(image1, image2, window_size, stride):
+    """ Calculate the local colocalization quotient
+    Return a downscale maps of regional overlapping density
+    """
     # Ensure both images have the same dimensions
     assert image1.shape == image2.shape, "Images must have the same dimensions."
     height, width = image1.shape
