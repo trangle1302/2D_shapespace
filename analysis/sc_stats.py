@@ -6,6 +6,8 @@ import time
 import sys
 sys.path.append("..")
 import os
+from colocalization_quotient import colocalization_quotient
+from scipy.stats import pearsonr
 
 def check_size(image, shape, d_type="uint16", max_val=65535):
     if image.shape != shape:
@@ -131,6 +133,19 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, nu, protein, cell_id):
                     nu_sum,
                     region_n.axis_minor_length/region_n.axis_major_length, #aspect_ratio_nu,
                     region_c.axis_minor_length/region_c.axis_major_length, #aspect_ratio_cell
+                    colocalization_quotient(protein, nu),
+                    colocalization_quotient(protein, mt),
+                    colocalization_quotient(protein, er),
+                    colocalization_quotient(er, mt),
+                    colocalization_quotient(nu, mt),
+                    colocalization_quotient(nu, er),
+                    pearsonr(protein, nu)[0],
+                    pearsonr(protein, mt)[0],
+                    pearsonr(protein, er)[0],
+                    pearsonr(er, mt)[0],
+                    pearsonr(nu, mt)[0],
+                    pearsonr(nu, er)[0],
+                    
                 ],
             )
         )
@@ -151,7 +166,7 @@ def main():
         with open(save_path, "a") as f:
             # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
             f.write(
-                "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,aspect_ratio_nu,aspect_ratio_cell\n"
+                 "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,aspect_ratio_nu,aspect_ratio_cell\n"
             )
             for cell_mask_path in cell_masks:
                 # Reading all channels and masks
@@ -183,7 +198,11 @@ def main():
         with open(save_path, "a") as f:
             # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
             f.write(
-                "cell_id,cell_area,nu_area,nu_eccentricity,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,ER_cell_sum,DAPI_cell_sum,aspect_ratio_nu,aspect_ratio_cell\n"
+                "ab_id,cell_id,cell_area,nu_area,nu_eccentricity," +
+                "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
+                "aspect_ratio_nu,aspect_ratio_cell," +
+                "coloc_pro_nu,coloc_pro_mt,coloc_pro_er,coloc_er_mt,coloc_nu_mt,coloc_nu_er," +
+                "pearsonr_pro_nu,pearsonr_pro_mt,pearsonr_pro_er,pearsonr_er_mt,pearsonr_nu_mt,pearsonr_nu_er\n"
             )
             for sc_cell_pro in sc_cell_pros:
                 # Reading all channels and masks
