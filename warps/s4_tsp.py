@@ -6,7 +6,7 @@ from utils import plotting
 import matplotlib.pyplot as plt
 import numpy as np
 from utils import helpers
-from utils.helpers import grep
+from utils.helpers import grep, get_line
 import argparse
 import glob
 import subprocess
@@ -59,9 +59,14 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
 def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_avg, shape_x, shape_y):
     data_ = l_num.strip().split(",")
     if len(data_[1:]) != cfg.N_COEFS * 4:
+        if data_[0].contains('589_B4_3_'):
+            print(data_[0])
         return # continue
     sc_path = data_[0]
     img_id = os.path.basename(sc_path).replace(".npy","")
+    #print(mappings.cell_idx.tolist())
+    if img_id == '589_B4_3_7':
+        print(mappings[mappings.cell_idx==img_id].sc_target)
     if not img_id in mappings.cell_idx.tolist():
         return
     raw_protein_path = f"{data_dir}/{img_id}_protein.png"
@@ -69,11 +74,13 @@ def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_a
     #print(raw_protein_path, save_protein_path, img_id)
     if os.path.exists(save_protein_path):
         return 
-    
-    if mappings[mappings.cell_idx==img_id].locations.values[0] not in cfg.ORGANELLES_FULLNAME:
-    #if mappings[mappings.cell_idx==img_id].sc_target.values[0] in ["Negative","Multi-Location"]:
+    #print('Saving to file: ', save_protein_path) 
+    #print(mappings[mappings.cell_idx==img_id].sc_target.values[0])
+    #if mappings[mappings.cell_idx==img_id].locations.values[0] not in cfg.ORGANELLES_FULLNAME:
+    if mappings[mappings.cell_idx==img_id].sc_target.values[0] in ["Negative","Multi-Location"]:
         #mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
         return
+    #print(img_id)
     line_ = grep(img_id+".npy", shift_path)
     if line_ == []:
         print(f"{img_id} not found")
@@ -213,6 +220,8 @@ def main():
     n_processes = multiprocessing.cpu_count()
     chunk_size = count//n_processes
     print(f"processing {count - len(completed)} in {n_processes} cpu in chunk {chunk_size}")
+    #mappings = mappings[mappings.image_id == '589_B4_3']
+    #print(get_line(fft_path,'589_B4_3_7',mode='first').split(',')[:2])
     with open(fft_path, "r") as f:
         for l_num in tqdm(f, total=count):
             image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_avg, shape_x, shape_y) 
