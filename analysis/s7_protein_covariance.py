@@ -3,15 +3,11 @@ import sys
 sys.path.append("..")
 import numpy as np
 import pandas as pd
-from pathlib import Path
 import argparse
 from utils import helpers
 import glob
-import matplotlib.pyplot as plt
-from warps.parameterize import get_coordinates
+from skimage.filters import threshold_otsu
 import json
-import scipy.cluster.hierarchy as spc
-import seaborn as sns
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -42,7 +38,8 @@ if __name__ == "__main__":
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
     meta = []
-    merged_bins = [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9, 10]]
+    #merged_bins = [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9, 10]]
+    merged_bins = [[0, 1, 2], [3], [4, 5, 6]]
     PC = args.PC
     pc_cells = cells_assigned[f"PC{PC}"]
     if True:  # for PC, pc_cells in cells_assigned.items():
@@ -71,8 +68,8 @@ if __name__ == "__main__":
                 )
                 for _, row in df_sl.iterrows():
                     intensity = np.load(row.Link)
-                    dummy_threshold = intensity.max() // 3
-                    intensity = np.where(intensity > dummy_threshold, 1, 0)
+                    thres = threshold_otsu(intensity)
+                    intensity = np.where(intensity > thres, 1, 0)
                     intensities += [intensity.flatten()]
                     ensembl_ids += [row.ensembl_ids]
                 intensities = pd.DataFrame(intensities)
