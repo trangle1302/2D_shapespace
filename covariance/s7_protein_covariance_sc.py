@@ -8,19 +8,21 @@ from utils import helpers
 import glob
 from skimage.filters import threshold_otsu
 import json
+import scipy.cluster.hierarchy as spc
+import seaborn as sns
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--PC", help="shape mode", type=str)
     args = parser.parse_args()
     print(args.PC)
+
     import configs.config as cfg
-    
     log_dir = f"{cfg.PROJECT_DIR}/logs"
-    fftcoefs_dir = f"{cfg.PROJECT_DIR}/fftcoefs"
-    fft_path = os.path.join(fftcoefs_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
-    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}"
-    sampled_intensity_dir = f"{cfg.PROJECT_DIR}/sampled_intensity"
+    fft_path = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}/fftcoefs_{cfg.N_COEFS}.txt" 
+    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
+
+    sampled_intensity_dir = f"{cfg.PROJECT_DIR}/sampled_intensity_bin"
 
     mappings = pd.read_csv(cfg.META_PATH)
     id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
@@ -34,12 +36,11 @@ if __name__ == "__main__":
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json")
     cells_assigned = json.load(f)
     print(cells_assigned.keys())
-    save_dir = f"{cfg.PROJECT_DIR}/shapemode/covar"
+    save_dir = f"{cfg.PROJECT_DIR}/covar_sc"
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
     meta = []
-    #merged_bins = [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9, 10]]
-    merged_bins = [[0, 1, 2], [3], [4, 5, 6]]
+    merged_bins = [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9, 10]]
     PC = args.PC
     pc_cells = cells_assigned[f"PC{PC}"]
     if True:  # for PC, pc_cells in cells_assigned.items():
@@ -52,6 +53,8 @@ if __name__ == "__main__":
             else:
                 intensities = []
                 ensembl_ids = []
+                cell_ids = []
+                cell_labs = []
                 ls = [pc_cells[b] for b in bin_]
                 ls = helpers.flatten_list(ls)
                 ls = [
@@ -72,38 +75,33 @@ if __name__ == "__main__":
                     intensity = np.where(intensity > thres, 1, 0)
                     intensities += [intensity.flatten()]
                     ensembl_ids += [row.ensembl_ids]
+                    cell_ids += [row.Link]
+                    cell_labs += [row.target]
                 intensities = pd.DataFrame(intensities)
+                intensities["cell_ids"] = cell_ids
                 intensities["ensembl_ids"] = ensembl_ids
-                intensities = intensities.groupby("ensembl_ids").agg("mean")
-                intensities.to_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
-                """
-                #intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
-                covar_mat = np.corrcoef(np.array(intensities.drop(["ensembl_ids"], axis=1)))
-                covar_mat = pd.DataFrame(covar_mat)
-                covar_mat.column = ensembl_ids
-                covar_mat.index = ensembl_ids
-                covar_mat.to_csv(f"{save_dir}/{}.csv")
-                """
-
-                intensities.index = intensities.ensembl_ids
-                intensities = intensities.drop("ensembl_ids", axis=1)
-                intensities = intensities.transpose().astype("float32")
+                intensities["cell_labs"] = cell_labs
+                # intensities = intensities.groupby('ensembl_ids').agg("mean")
                 intensities.to_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
 
             """
             if os.path.exists(f"{save_dir}/PC{PC}_{i}.csv"):
                 covar_mat = pd.read_csv(f"{save_dir}/PC{PC}_{i}.csv")
             else:
+                intensities.index = intensities.ensembl_ids
+                intensities = intensities.drop(["ensembl_ids","cell_ids","cell_labs"],axis=1)
+                print(f"Current intensity matrix size and dtype: {intensities.shape}, {intensities.dtypes[:3]}")
+                print(intensities.max(), intensities.min())
+                if intensities.dtypes[0] == "float64" or intensities.dtypes[0] == "float32":
+                    intensities = intensities.astype("uint8")
+                intensities = intensities.transpose()
+                #intensities.to_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
                 covar_mat = intensities.corr()
                 covar_mat = covar_mat.astype("float32") 
                 covar_mat.to_csv(f"{save_dir}/PC{PC}_{i}.csv")
             print(covar_mat.shape)
             print(covar_mat.columns[:3])
-            
-            if "ensembl_ids" in covar_mat.column:
-                corr = covar_mat.drop("ensembl_ids", axis=1)#.values
-            else:
-                corr = covar_mat
+            corr = covar_mat.drop("ensembl_ids", axis=1)#.values
             print(corr.shape)
             
             pdist = spc.distance.pdist(corr)
@@ -127,7 +125,7 @@ if __name__ == "__main__":
             # Plot
             p = sns.clustermap(corr, method="complete", cmap='RdBu', annot=True, 
                annot_kws={"size": 3}, vmin=-1, vmax=1, figsize=(20,20))
-            p.savefig(f"{save_dir}/PC{PC}_{i}.png")
+            p.savefig(f"{save_dir}/PC{PC}_{i}.png", bbox_inches="tight")
             # covar matrix is symmetric, so getting row dendogram is the same as col dendogram
             dendogram = p.dendrogram_row.dendrogram
             Z = p.dendrogram_col.linkage
@@ -138,7 +136,5 @@ if __name__ == "__main__":
             with open(f"{save_dir}/PC{PC}_{i}_cluster_assignation2.json", "w", encoding='utf-8') as fp:
                 json.dump(dendogram, fp, cls=npEncoder)
             """
-            """
-    #np.corrcoef(xarr, yarr, rowvar=False) #row-wise correlation
-    #np.corrcoef(xarr, yarr, rowvar=False) #column-wise correlation
-    """
+    # np.corrcoef(xarr, yarr, rowvar=False) #row-wise correlation
+    # np.corrcoef(xarr, yarr, rowvar=False) #column-wise correlation
