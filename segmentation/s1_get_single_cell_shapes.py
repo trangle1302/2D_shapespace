@@ -13,8 +13,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import gzip
+import time
 import sys
-
 sys.path.append("..")
 from utils.helpers import (
     read_from_json,
@@ -23,8 +23,8 @@ from utils.helpers import (
     rgb_2_gray_unique,
     bbox_iou,
 )
-
 from utils.geojson_helpers import geojson_to_masks, plot_complete_mask
+from analysis.sc_stats import get_sc_statistics
 import requests
 from requests.auth import HTTPBasicAuth
 import io
@@ -64,6 +64,7 @@ def get_single_cell_mask(
     cell_mask,
     nuclei_mask,
     protein,
+    ref_channels,
     keep_cell_list,
     save_path,
     rm_border=True,
@@ -95,7 +96,7 @@ def get_single_cell_mask(
         mask[mask == region_c.label] = 1
         if clean_small_lines:  # erose and dilate to remove the small line
             mask = skimage.morphology.erosion(mask, skimage.morphology.square(5))
-            mask = skimage.morphology.dilation(mask, skimage.morphology.square(5))
+            mask = skimage.morphology.dilation(mask, skimage.morphology.square(7))
             # get new bbox
             minr_, minc_, maxr_, maxc_ = skimage.measure.regionprops(mask)[0].bbox
             mask = mask[minr_:maxr_, minc_:maxc_]
@@ -110,6 +111,9 @@ def get_single_cell_mask(
 
         pr = protein[minr:maxr, minc:maxc].copy()
         pr[mask != 1] = 0
+
+        ref = ref_channels[:,minr:maxr, minc:maxc].copy()
+        ref[mask !=1] = 0
 
         if plot:
             plt.figure(figsize=(10, 10))
@@ -130,11 +134,12 @@ def get_single_cell_mask(
             plt.savefig(f"{save_path}{region_c.label}.jpg", bbox_inches="tight")
             plt.close()
 
+        np.save(f"{save_path}{region_c.label}_ref.npy", ref)
         imageio.imwrite(f"{save_path}{region_c.label}_protein.png", pr)
         data = np.stack((mask, mask_n))
         np.save(f"{save_path}{region_c.label}.npy", data)
-        data = np.dstack((mask, np.zeros_like(mask), mask_n)) * 255
-        imageio.imwrite(f"{save_path}{region_c.label}.png", data)
+        #data = np.dstack((mask, np.zeros_like(mask), mask_n)) * 255
+        #imageio.imwrite(f"{save_path}{region_c.label}.png", data)
 
 
 def get_cell_nuclei_masks2(encoded_image_id, encoded_image_dir):
@@ -392,11 +397,22 @@ def process_img(
         protein = imageio.imread(
             f"{image_dir}/{img_id.split('_')[0]}/{img_id}_green.png"
         )
+        mt = imageio.imread(
+            f"{image_dir}/{img_id.split('_')[0]}/{img_id}_red.png"
+        )
+        er = imageio.imread(
+            f"{image_dir}/{img_id.split('_')[0]}/{img_id}_yellow.png"
+        )
+        nu = imageio.imread(
+            f"{image_dir}/{img_id.split('_')[0]}/{img_id}_blue.png"
+        )
+        ref = np.stack((mt, er, nu))
         save_path = f"{save_dir}/{img_id}_"
         get_single_cell_mask(
             cell_mask,
             nuclei_mask,
             protein,
+            ref,
             cell_idx,
             save_path,
             rm_border=True,
@@ -597,7 +613,7 @@ def publicHPA(cell_line="U-2 OS"):
     log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
-
+    '''
     # Load
     finished_imlist = []
     if os.path.exists(f"{log_dir}/images_done.pkl"):
@@ -608,6 +624,8 @@ def publicHPA(cell_line="U-2 OS"):
                 except EOFError:
                     break
     print(f"{len(finished_imlist)} images done, processing the rest ...")
+    '''
+    finished_imlist = []
     num_cores = multiprocessing.cpu_count() - 10  # save 1 core for some other processes
     ifimages = pd.read_csv(f"{base_url}/IF-image.csv")
     ifimages = ifimages[ifimages.atlas_name == cell_line]
@@ -619,6 +637,7 @@ def publicHPA(cell_line="U-2 OS"):
     imlist = list(imlist.difference(finished_imlist))
     print(f"...Processing {len(imlist)} ab x 5 img each with masks in {num_cores}")
     inputs = tqdm(imlist)
+    s = time.time()
     # processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cytooutline.png", nuclei_mask_extension = "cytooutline.png") for i in inputs)
     processed_list = Parallel(n_jobs=num_cores)(
         delayed(process_img)(
@@ -635,7 +654,14 @@ def publicHPA(cell_line="U-2 OS"):
     )
     with open(f"{log_dir}/processedlist.pkl", "wb") as f:
         pickle.dump(processed_list, f)
+    print(f"Finished in {(time.time() - s)/3600}h")
 
+    sc_stats_save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics.csv'
+    with open(sc_stats_save_path, "a") as f:
+            # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
+            f.write(
+                "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,aspect_ratio_nu,aspect_ratio_cell\n"
+            )
 
 def cellcycle():
     base_url = "/data/2Dshapespace/S-BIAD34/Files"
@@ -678,7 +704,6 @@ def cellcycle():
     ablist.sort()
     print(ablist[:5])
     inputs = tqdm(ablist)
-    import time
 
     s = time.time()
     # processed_list = Parallel(n_jobs=num_cores)(delayed(process_img_ccd)(i, mask_dir, save_dir, log_dir) for i in inputs)
