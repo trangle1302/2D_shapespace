@@ -228,13 +228,15 @@ def main():
         # Add colorbar
         cbar = plt.colorbar()
         cbar.set_label('Pseudotime')
-
         # Add labels and title
         plt.xlabel('PC1')
         plt.ylabel('PC2')
         plt.title('Scatter Plot with Colormap')
         plt.savefig(f"{shape_mode_path}/PC1vsPC2_pseudotime.png") 
-        
+        plt.scatter_hist_fucci(df_trans["PC1"], df_trans["PC2"], c=df_trans['GMM_cc_label'], f"{shape_mode_path}/PC1vsPC2.png")
+        plt.scatter_hist_fucci(df_trans["PC1"], df_trans["PC3"], c=df_trans['GMM_cc_label'], f"{shape_mode_path}/PC1vsPC3.png")
+        plt.scatter_hist_fucci(df_trans["PC3"], df_trans["PC4"], c=df_trans['GMM_cc_label'], f"{shape_mode_path}/PC3vsPC4.png")
+           
         cc_groups = sc_stats.GMM_cc_label.unique().tolist()
         for g in cc_groups:
             cells_in_phase = sc_stats[sc_stats.GMM_cc_label == g]
