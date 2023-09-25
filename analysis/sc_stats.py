@@ -139,12 +139,12 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, nu, protein, cell_id):
                     colocalization_quotient(er, mt),
                     colocalization_quotient(nu, mt),
                     colocalization_quotient(nu, er),
-                    pearsonr(protein, nu)[0],
-                    pearsonr(protein, mt)[0],
-                    pearsonr(protein, er)[0],
-                    pearsonr(er, mt)[0],
-                    pearsonr(nu, mt)[0],
-                    pearsonr(nu, er)[0],
+                    pearsonr(protein.flatten(), nu.flatten())[0],
+                    pearsonr(protein.flatten(), mt.flatten())[0],
+                    pearsonr(protein.flatten(), er.flatten())[0],
+                    pearsonr(er.flatten(), mt.flatten())[0],
+                    pearsonr(nu.flatten(), mt.flatten())[0],
+                    pearsonr(nu.flatten(), er.flatten())[0],
                     
                 ],
             )
@@ -213,7 +213,6 @@ def main():
                 ref = np.load(sc_cell_pro.replace("_protein.png", "_ref.npy")) #mt, er, nu
                 if ref.shape[2] == 3:
                     ref = np.transpose(ref, (2, 0, 1))
-                #print(ref.shape, protein.shape, cell_shape.shape)
                 line = get_sc_statistics(
                     cell_mask, nuclei_mask, ref[0,:,:], ref[1,:,:], ref[2,:,:], protein, os.path.basename(sc_cell_pro).replace("_protein.png","")
                 )
