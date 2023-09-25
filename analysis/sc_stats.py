@@ -78,6 +78,7 @@ def get_sc_statistics_fucci(
                         cdt1_sum,
                         region_n.axis_minor_length/region_n.axis_major_length, #aspect_ratio_nu,
                         region_c.axis_minor_length/region_c.axis_major_length, #aspect_ratio_cell
+                        colocalization_quotient(protein, mt),
                     ],
                 )
             )
@@ -166,7 +167,9 @@ def main():
         with open(save_path, "a") as f:
             # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
             f.write(
-                 "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,aspect_ratio_nu,aspect_ratio_cell\n"
+                 "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,"+
+                 "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
+                 "aspect_ratio_nu,aspect_ratio_cell,coloc_pro_mt\n"
             )
             for cell_mask_path in cell_masks:
                 # Reading all channels and masks
