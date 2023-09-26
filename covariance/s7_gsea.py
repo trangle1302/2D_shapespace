@@ -9,53 +9,17 @@ import json
 import gseapy
 import configs.config as cfg
 
-
-LABEL_TO_ALIAS = {
-    0: "Nucleoplasm",
-    1: "NuclearM",
-    2: "Nucleoli",
-    3: "NucleoliFC",
-    4: "NuclearS",
-    5: "NuclearB",
-    6: "EndoplasmicR",
-    7: "GolgiA",
-    8: "IntermediateF",
-    9: "ActinF",
-    10: "Microtubules",
-    11: "MitoticS",
-    12: "Centrosome",
-    13: "PlasmaM",
-    14: "Mitochondria",
-    15: "Aggresome",
-    16: "Cytosol",
-    17: "VesiclesPCP",
-    19: "Negative",
-    19: "Multi-Location",
-}
-
-all_locations = dict((v, k) for k, v in LABEL_TO_ALIAS.items())
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--org", help="Organelle class", type=str)
-    args = parser.parse_args()
-    print(args.org)
-    
+if __name__ == "__main__":    
     log_dir = f"{cfg.PROJECT_DIR}/logs"
     fftcoefs_dir = f"{cfg.PROJECT_DIR}/fftcoefs"
     fft_path = os.path.join(fftcoefs_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
-    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}"
+    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
     sampled_intensity_dir = f"{cfg.PROJECT_DIR}/sampled_intensity_bin"
     id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
 
-    mappings = pd.read_csv(cfg.META_PATH)
-    mappings["Link"] = [
-        f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy"
-        for id in mappings.id
-    ]
-    mappings = mappings[mappings.Link.isin(id_with_intensity)]
-    print(mappings.target.value_counts())
-    print(mappings.shape)
-
+    mappings = pd.read_csv(f"{cfg.PROJECT_DIR}/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border_splitVesiclesPCP.csv")
+    mappings["Link"] = [sampled_intensity_dir + "/"+ f.split("_",1)[1] + "_protein.npy" for f in mappings.id]
+    
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json")
     cells_assigned = json.load(f)
     print(cells_assigned.keys())
@@ -90,7 +54,7 @@ if __name__ == "__main__":
         """
         for i in range(3):
             f = open(
-                f"{cfg.PROJECT_DIR}/shapemode/covar/{PC}_{i}_cluster_assignation.json",
+                f"{cfg.PROJECT_DIR}/covar/{PC}_{i}_cluster_assignation.json",
                 "r",
             )
             clusters = json.load(f)
