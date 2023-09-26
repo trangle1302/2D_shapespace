@@ -130,7 +130,7 @@ if __name__ == "__main__":
         avg_organelle_dir = f"{project_dir}/matrix_protein_avg"
         sampled_intensity_dir = f"{project_dir}/sampled_intensity_bin"
     if intensity_warping:
-        avg_organelle_dir = f"{project_dir}/warps_protein_avg_otsu_n50" 
+        avg_organelle_dir = f"{project_dir}/warps_protein_avg_otsu" 
         sampled_intensity_dir = f"{project_dir}/warps" 
     
     os.makedirs(avg_organelle_dir, exist_ok=True)
@@ -175,9 +175,9 @@ if __name__ == "__main__":
                 if len(ls_) < 3:
                     print(f"{org} has less than 5 cells ({len(ls_)}) -> move on")
                     continue
-                if n0 > 50:
+                if n0 > 500:
                     import random
-                    ls_ = random.sample(ls_, 50)
+                    ls_ = random.sample(ls_, 500)
                 if intensity_sampling_concentric_ring:
                     intensities = get_average_intensities_cr(ls_)
                     np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
