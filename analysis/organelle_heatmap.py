@@ -145,7 +145,8 @@ if __name__ == "__main__":
         mappings = unmerge_label(mappings)
         mappings.to_csv(cellline_meta, index=False)
         print(mappings.sc_target.value_counts())
-    print(mappings.sc_target.value_counts())
+    #print(mappings.sc_target.value_counts())
+    print(mappings.columns, mappings.sc_target.value_counts())
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "r")
     cells_assigned = json.load(f)
     merged_bins = [[0], [1], [2], [3], [4], [5], [6]]
@@ -156,14 +157,14 @@ if __name__ == "__main__":
     lines.append(["PC","Organelle", "bin","n_cells"])
     for PC in np.arange(1,7):
         pc_cells = cells_assigned[f"PC{PC}"]
-        for org in cfg.ORGANELLES_FULLNAME:
+        for org in cfg.ORGANELLES:
             for i, bin_ in enumerate(merged_bins):
                 ls = [pc_cells[b] for b in bin_]
                 ls = helpers.flatten_list(ls)
                 ls = [os.path.basename(l).replace(".npy", "") for l in ls]
                 df_sl = mappings[mappings.cell_idx.isin(ls)]
-                #ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
-                ls_ = df_sl[df_sl.locations == org].cell_idx.to_list()
+                ls_ = df_sl[df_sl.sc_target == org].cell_idx.to_list()
+                #ls_ = df_sl[df_sl.locations == org].cell_idx.to_list()
 
                 if len(ls_)==0:
                     print(f"{org}: Found {len(ls_)}, eg: {ls_[:3]}")
