@@ -24,7 +24,6 @@ from utils.helpers import (
     bbox_iou,
 )
 from utils.geojson_helpers import geojson_to_masks, plot_complete_mask
-from analysis.sc_stats import get_sc_statistics
 import requests
 from requests.auth import HTTPBasicAuth
 import io
@@ -113,7 +112,7 @@ def get_single_cell_mask(
         pr[mask != 1] = 0
 
         ref = ref_channels[:,minr:maxr, minc:maxc].copy()
-        ref[mask !=1] = 0
+        ref[:, mask !=1] = 0
 
         if plot:
             plt.figure(figsize=(10, 10))
@@ -407,6 +406,7 @@ def process_img(
             f"{image_dir}/{img_id.split('_')[0]}/{img_id}_blue.png"
         )
         ref = np.stack((mt, er, nu))
+        #print(cell_mask.shape, nuclei_mask.shape, ref.shape)
         save_path = f"{save_dir}/{img_id}_"
         get_single_cell_mask(
             cell_mask,
@@ -636,6 +636,14 @@ def publicHPA(cell_line="U-2 OS"):
     print(f"...Found {len(imlist)} images with masks")
     imlist = list(imlist.difference(finished_imlist))
     print(f"...Processing {len(imlist)} ab x 5 img each with masks in {num_cores}")
+    '''
+    im_df = pd.read_csv(f"{mask_dir}.csv")
+    num_cores = 20
+    finished_imlist = set([f.rsplit("_",1)[0].rsplit("_",1)[0] for f in glob.glob(f"{save_dir}/*_protein.png")])
+    imlist = set([f.rsplit("_",1)[0].rsplit("_",1)[0] for f in glob.glob(f"{save_dir}/*_ref.npy")])
+    imlist = [os.path.basename(f) for f in imlist.intersection(finished_imlist)]
+    '''
+    print(len(imlist), imlist[:3])
     inputs = tqdm(imlist)
     s = time.time()
     # processed_list = Parallel(n_jobs=num_cores)(delayed(process_img)(i, im_df, mask_dir, image_dir, save_dir, log_dir, cell_mask_extension = "cytooutline.png", nuclei_mask_extension = "cytooutline.png") for i in inputs)
