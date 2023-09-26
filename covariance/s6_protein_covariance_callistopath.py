@@ -58,7 +58,6 @@ if __name__ == "__main__":
         for i, bin_ in enumerate(merged_bins):
             if i == 0:
                 continue
-            
             if os.path.exists(f"{save_dir}/PC{PC}_{i}.csv"):
                 covar_mat = pd.read_csv(f"{save_dir}/PC{PC}_{i}.csv")
             else:
@@ -108,7 +107,7 @@ if __name__ == "__main__":
                 covar_mat = covar_mat.astype("float32")
                 covar_mat.to_csv(f"{save_dir}/PC{PC}_{i}.csv")
             
-            covar_mat = covar_mat.drop(['Unnamed: 0','Unnamed: 0.1'], axis=1)
+            covar_mat = covar_mat[covar_mat.columns.drop(list(covar_mat.filter(regex='Unnamed:')))]
             corr = covar_mat.values
             pdist = spc.distance.pdist(corr)
             if pdist.dtype == "float64":
@@ -139,13 +138,14 @@ if __name__ == "__main__":
                     f"{save_dir}/PC{PC}_bin{i}_cluster{ii}.png", bbox_inches="tight"
                 )
                 plt.close()
-            # Plot
-            plt.figure()
-            p = sns.clustermap(covar_mat, method="ward", cmap='RdBu', annot=True, 
-               annot_kws={"size": 3}, vmin=covar_mat.min(), vmax=covar_mat.max(), figsize=(20,20))
-            plt.setp(p.get_xticklabels(), rotation=45, horizontalalignment='right')
-            p.savefig(f"{save_dir}/PC{PC}_{i}.png", bbox_inches="tight")
-            plt.close()
+            if False:
+                # Plot
+                plt.figure()
+                p = sns.clustermap(covar_mat, method="ward", cmap='RdBu', annot=True, 
+                annot_kws={"size": 3}, vmin=covar_mat.min(), vmax=covar_mat.max(), figsize=(20,20))
+                plt.setp(p.get_xticklabels(), rotation=45, horizontalalignment='right')
+                p.savefig(f"{save_dir}/PC{PC}_{i}.png", bbox_inches="tight")
+                plt.close()
             
             """
             # covar matrix is symmetric, so getting row dendogram is the same as col dendogram
