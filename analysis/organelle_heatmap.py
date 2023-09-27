@@ -135,7 +135,6 @@ if __name__ == "__main__":
     
     os.makedirs(avg_organelle_dir, exist_ok=True)
     cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
-    print(cellline_meta)
     if os.path.exists(cellline_meta):
         mappings = pd.read_csv(cellline_meta)
     else:
@@ -146,6 +145,8 @@ if __name__ == "__main__":
         mappings.to_csv(cellline_meta, index=False)
         print(mappings.sc_target.value_counts())
     #print(mappings.sc_target.value_counts())
+    mappings.loc[mappings.sc_target=="Cytoplasmic bodies","sc_target"]="CytoBodies"
+    mappings.loc[mappings.sc_target=="Lipid droplets","sc_target"]="LipidDrop"
     print(mappings.columns, mappings.sc_target.value_counts())
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "r")
     cells_assigned = json.load(f)
@@ -198,7 +199,7 @@ if __name__ == "__main__":
             if len(bin_) == 1:
                 b = bin_[0]
                 images = {}
-                for org in cfg.ORGANELLES_FULLNAME:
+                for org in cfg.ORGANELLES:
                     if intensity_sampling_concentric_ring:
                         ch = np.load(f"{avg_organelle_dir}/PC{PC}_{org}_b{b}.npy")
                     if intensity_warping:
