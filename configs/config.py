@@ -63,16 +63,18 @@ COLORS_MAP = {
 
 ORGANELLES = ["Nucleoplasm","Nucleoli","NucleoliFC","NuclearS","NuclearB","NuclearM",
               "Centrosome", "Aggresome","GolgiA", "Vesicles","Peroxisomes","Endosomes","Mitochondria",
+              "LipidDrop","CytoBodies",
               "IntermediateF","EndoplasmicR","ActinF",
               "Cytosol","Microtubules","PlasmaM"]
 
 ORGANELLES_FULLNAME = ["Nucleoplasm","Nucleoli","Nucleoli fibrillar center","Nuclear speckles","Nuclear bodies","Nuclear membrane",
               "Centrosome","Aggresome","Golgi apparatus", "Vesicles","Peroxisomes","Endosomes","Mitochondria",
+              "Lipid droplets","Cytoplasmic bodies",
               "Intermediate filaments","Endoplasmic reticulum","Actin filaments",
               "Cytosol","Microtubules","Plasma membrane"]
 
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
-CELL_LINE = "K-562"#"A-431" # "U-2 OS"#"RT4"
+CELL_LINE = "U2OS" #"U-251 MG" # "K-562" #"Hep-G2" #"U2OS" # #"K-562"#"A-431" # #"RT4"
 N_COEFS = 128
 N_SAMPLES = -1  # 5000
 N_CV = 1
