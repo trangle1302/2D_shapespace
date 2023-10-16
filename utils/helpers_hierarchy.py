@@ -97,7 +97,9 @@ def gseapy_clusters(linkage_matrix, gene_names, cutting_thresholds=[2,10,90,200]
                     )
                 tmp = enr.results
                 tmp = tmp[tmp['Adjusted P-value']<=0.1]
-                print(f"Distance threshold {threshold}, cluster {group_id}, n_members {len(gene_list)}, highest enrichr: {tmp.Term.values}")
+                terms = '|'.join(list(tmp.Term.values))
+                print(terms)
+                print(f"Distance threshold {threshold}, cluster {group_id}, n_members {len(gene_list)}, highest enrichr: {terms}")
             except:
                 print(f"Distance threshold {threshold}, cluster {group_id}, n_members {len(gene_list)}, enrichr fails")
         print(f"##################### Moving up the hierarchy")
