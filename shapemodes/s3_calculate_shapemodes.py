@@ -37,16 +37,13 @@ def main():
     
     n_samples = cfg.N_SAMPLES
     fft_dir = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
-    log_dir = f"{cfg.PROJECT_DIR}/logs"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
     n_coef = cfg.N_COEFS
     n_samples = cfg.N_SAMPLES
-    alignment = "fft_cell_major_axis_polarized"
 
     protein_dir = f"{cfg.PROJECT_DIR}/cell_masks"
     mappings = pd.read_csv(cfg.META_PATH)
     mappings = mappings[mappings["atlas_name"] == cfg.CELL_LINE]
-    # print(mappings.target.value_counts())
     print("Mapping file all: ", mappings.shape, mappings.columns)
     id_with_intensity = glob.glob(f"{protein_dir}/*.png")
     mappings["Link"] = [
@@ -200,12 +197,7 @@ def main():
             pm.plot_pc_hist(pc, save_dir=shape_mode_path)
 
             pc_indexes_assigned, bin_links = pm.assign_cells(pc)
-
-            # print(pc_indexes_assigned, len(pc_indexes_assigned))
-            # print(bin_links, len(bin_links))
-            # print([len(b) for b in bin_links])
             cells_assigned[pc] = [list(b) for b in bin_links]
-            # print(cells_assigned[pc][0][:3])
             """
             fig, ax = plt.subplots(n_, len(bin_links)) # (number of random cells, number of  bin)
             for b_index, b_ in enumerate(bin_links):
