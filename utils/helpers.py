@@ -544,3 +544,30 @@ def get_line(file_path, search_text="", mode="first"):
             if line.find(search_text) != -1:
                 l_results += [line]
         return l_results
+
+def factoring_data_into_tertiles(data_points):
+    n = len(data_points)
+    # Sort the data points in ascending order
+    sorted_data_points = sorted(data_points)
+    
+    # Divide the sorted data points into tertiles
+    tertile_1 = sorted_data_points[:n//3]
+    tertile_2 = sorted_data_points[n//3:2*n//3]
+    tertile_3 = sorted_data_points[2*n//3:]
+    
+    # Create a list of indexes for the first 3 tertiles
+    indexes_1 = []
+    indexes_2 = []
+    indexes_3 = []
+    for i, point in enumerate(data_points):
+        if point in tertile_1:
+            indexes_1.append(i)
+        elif point in tertile_2:
+            indexes_2.append(i)
+        elif point in tertile_3:
+            indexes_3.append(i)
+    
+    return indexes_1, indexes_2, indexes_3
+
+def get_items_from_list_by_index(input_list, indexes):
+    return list(map(lambda x:input_list[x],indexes))
