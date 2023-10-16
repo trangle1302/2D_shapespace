@@ -1099,15 +1099,25 @@ def _plot_protein_through_shape_variation_gif(
     plt.close()
 
 
-def plot_example_cells(
+def plot_example_cells_per_gene(
     bin_links, n_coef=128, cells_per_bin=5, shape_coef_path="", save_path=None
 ):
+    """
+    Parameters:
+        - bin_links: list of list, each list comprised of single cell paths from the same pc bin. All paths should be from the same gene.
+        - n_coef: number of fft coefficients
+        - cells_per_bin: number of example cells per bin
+        - shape_coef_path: fftcoefs path
+        - save_path: saving path
+    Return
+        None, figure saved in save_path 
+    """
     plt.figure()
     fig, ax = plt.subplots(
         cells_per_bin, len(bin_links), sharex=True, sharey=True
     )  # (number of random cells, number of  bin)
     for b_index, b_ in enumerate(bin_links):
-        cells_ = np.random.choice(b_, cells_per_bin)
+        cells_ = np.random.choice(b_, cells_per_bin) # replace: True by default, cells can be selected multiple times for display
         for i, c in enumerate(cells_):
             fft_coefs = get_line(shape_coef_path, search_text=c, mode="first")
             f_coef_n = fft_coefs.split(",")[1 : n_coef * 2 + 1]
@@ -1138,7 +1148,6 @@ def create_gif(image_paths, save_gif_path, duration=0.5):
     Return
         None, gif saved in save_gif_path 
     """
-    import imageio
     from PIL import Image
 
     images = []
