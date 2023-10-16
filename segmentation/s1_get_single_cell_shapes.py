@@ -625,7 +625,9 @@ def publicHPA(cell_line="U-2 OS"):
                     break
     print(f"{len(finished_imlist)} images done, processing the rest ...")
     '''
-    finished_imlist = []
+    #finished_imlist = []
+    finished_imlist = set([f.rsplit("_",1)[0].rsplit("_",1)[0] for f in glob.glob(f"{save_dir}/*_protein.png")])
+    
     num_cores = multiprocessing.cpu_count() - 10  # save 1 core for some other processes
     ifimages = pd.read_csv(f"{base_url}/IF-image.csv")
     ifimages = ifimages[ifimages.atlas_name == cell_line]
@@ -635,7 +637,7 @@ def publicHPA(cell_line="U-2 OS"):
     imlist = set(im_df.ID.unique()).intersection(set(ifimages.ID))
     print(f"...Found {len(imlist)} images with masks")
     imlist = list(imlist.difference(finished_imlist))
-    print(f"...Processing {len(imlist)} ab x 5 img each with masks in {num_cores}")
+    print(f"...Processing {len(imlist)} img each with masks in {num_cores}")
     '''
     im_df = pd.read_csv(f"{mask_dir}.csv")
     num_cores = 20
