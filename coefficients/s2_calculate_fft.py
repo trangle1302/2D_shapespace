@@ -160,11 +160,15 @@ if __name__ == "__main__":
         get_coef_fun = coefs.elliptical_fourier_coeffs
         inverse_func = coefs.backward_efd
 
-    if cfg.MODE == "cell_nuclei":
-        calculate_fft_hpa(cfg, get_coef_fun)
-        #calculate_fft_ccd(cfg, get_coef_fun)
-    elif cfg.MODE == "nuclei":
-        calculate_fft_hpa_nu(cfg, get_coef_fun)
-        #calculate_fft_ccd_nu(cfg, get_coef_fun)
+    if cfg.CELL_LINE == "S-BIAD34":    
+        if cfg.MODE == "cell_nuclei":
+            calculate_fft_ccd(cfg, get_coef_fun)
+        elif cfg.MODE == "nuclei":
+            calculate_fft_ccd_nu(cfg, get_coef_fun)
+    else:
+        if cfg.MODE == "cell_nuclei":
+            calculate_fft_hpa(cfg, get_coef_fun)
+        elif cfg.MODE == "nuclei":
+            calculate_fft_hpa_nu(cfg, get_coef_fun)
     print(f"Done in {np.round((time.time()-s_t)/3600,2)} h.")
     sys.exit(0)
