@@ -121,6 +121,38 @@ def align_nuclei_major_axis(data, protein_ch, plot=True):
         ax[3].imshow(protein_ch_)
     return nuclei_, cell_, 90 - theta
 
+def align_nuclei_major_axis_polarized(data, protein_ch, plot=True):
+    nuclei = data[1, :, :]
+    cell = data[0, :, :]
+    region = regionprops(nuclei)[0]
+    angle_in_degrees = (
+        region.orientation * (180 / np.pi) + 90
+    )  # radiant to degree conversion
+    theta = -angle_in_degrees
+    cell_ = rotate(cell, theta)
+    nuclei_ = rotate(nuclei, theta)
+    center_cell = center_of_mass(cell_)
+    center_nuclei = center_of_mass(nuclei_)
+    shape = nuclei_.shape
+    if center_cell[1] > center_nuclei[1]:  # Move 2 quadrant counter-clockwise
+        cell_ = rotate(cell_, 180)
+        nuclei_ = rotate(nuclei_, 180)
+        # theta += 180
+
+    # theta = theta % 360
+    protein_ch_ = rotate(protein_ch, theta)
+    if plot:
+        fig, ax = plt.subplots(1, 4, figsize=(8, 4))
+        ax[0].imshow(nuclei, alpha=0.5)
+        ax[0].imshow(cell, alpha=0.5)
+        ax[1].imshow(protein_ch)
+        ax[2].imshow(nuclei_, alpha=0.5)
+        ax[2].imshow(cell_, alpha=0.5)
+        center_ = center_of_mass(nuclei_)
+        ax[2].scatter(center_[1], center_[0])
+        ax[3].imshow(protein_ch_)
+    return nuclei_, cell_, theta
+
 
 def align_cell_major_axis_polarized(data, protein_ch, plot=True):
     nuclei = data[1, :, :]
