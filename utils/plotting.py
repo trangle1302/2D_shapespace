@@ -1111,12 +1111,13 @@ def _plot_protein_through_shape_variation_gif(
     plt.close()
 
 
-def plot_example_cells_per_gene(
+def plot_example_cells(
     bin_links, n_coef=128, cells_per_bin=5, shape_coef_path="", save_path=None
 ):
     """
     Parameters:
-        - bin_links: list of list, each list comprised of single cell paths from the same pc bin. All paths should be from the same gene.
+        - bin_links: list of list, each list comprised of single cell paths from the same pc bin. 
+        all paths can be from the same gene (to compare variation in the same experiment) or all genes (to compare general shapes)
         - n_coef: number of fft coefficients
         - cells_per_bin: number of example cells per bin
         - shape_coef_path: fftcoefs path <.../fftcoefs_{n_coef}.txt>
