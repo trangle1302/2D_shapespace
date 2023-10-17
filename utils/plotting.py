@@ -98,7 +98,10 @@ class PlotShapeModes:
         save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots",
     ):
         midpoint = self.midpoints.copy()
-        fcoef = self.pca.inverse_transform(midpoint)
+        try: # PCA
+            fcoef = self.pca.inverse_transform(midpoint)
+        except: # ICA
+            fcoef = self.pca.inverse_transform([midpoint])[0]
         if self.fourier_algo == "fft":
             if not self.complex:
                 real = fcoef[: len(fcoef) // 2]
@@ -269,7 +272,10 @@ class PlotShapeModes:
         for i, p in enumerate(self.stdpoints[pc_name]):
             cell_coef = self.midpoints.copy()
             cell_coef[pc_name] = p
-            fcoef = self.pca.inverse_transform(cell_coef)
+            try: # PCA
+                fcoef = self.pca.inverse_transform(cell_coef)
+            except: # ICA
+                fcoef = self.pca.inverse_transform([cell_coef])[0]
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
             if self.fourier_algo == "fft":
@@ -359,7 +365,10 @@ class PlotShapeModes:
         def update(p):
             cell_coef = self.midpoints.copy()
             cell_coef[pc_name] = p
-            fcoef = self.pca.inverse_transform(cell_coef)
+            try: # PCA
+                fcoef = self.pca.inverse_transform(cell_coef)
+            except: # ICA
+                fcoef = self.pca.inverse_transform([cell_coef])[0]
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
 
@@ -467,7 +476,10 @@ class PlotShapeModes:
             i = np.where(self.stdpoints[pc_name] == p)[0][0]
             cell_coef = self.midpoints.copy()
             cell_coef[pc_name] = p
-            fcoef = self.pca.inverse_transform(cell_coef)
+            try: # PCA
+                fcoef = self.pca.inverse_transform(cell_coef)
+            except: # ICA
+                fcoef = self.pca.inverse_transform([cell_coef])[0]
             if self.sc != None:
                 fcoef = self.sc.inverse_transform(fcoef)
 
@@ -1107,7 +1119,7 @@ def plot_example_cells_per_gene(
         - bin_links: list of list, each list comprised of single cell paths from the same pc bin. All paths should be from the same gene.
         - n_coef: number of fft coefficients
         - cells_per_bin: number of example cells per bin
-        - shape_coef_path: fftcoefs path
+        - shape_coef_path: fftcoefs path <.../fftcoefs_{n_coef}.txt>
         - save_path: saving path
     Return
         None, figure saved in save_path 
@@ -1203,7 +1215,7 @@ def scatter_hist(x, y, label, save_path):
 
 def scatter_hist_fucci(x, y, label, save_path):
     import matplotlib.gridspec as gridspec
-    label_color = {'G1':'red', 'G1S':'yellow', 'G2':'green'}
+    label_color = {'G1':'red', 'G1S':'orange', 'G2':'green'}
     (xmin, xmax) = (-35000,40000)
     (ymin, ymax) = (-20000,20000)
     gs = gridspec.GridSpec(3, 3)
