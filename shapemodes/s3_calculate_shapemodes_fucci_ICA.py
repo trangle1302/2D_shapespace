@@ -189,7 +189,7 @@ def main():
         plt.scatter_hist_fucci(df_trans["PC3"], df_trans["PC4"], df_trans['GMM_cc_label'], f"{shape_mode_path}/PC3vsPC4.png")
 
 if __name__ == "__main__":
-    memory_limit()  # Limitates maximun memory usage
+    #memory_limit()  # Limitates maximun memory usage
     try:
         main()
         sys.exit(0)
