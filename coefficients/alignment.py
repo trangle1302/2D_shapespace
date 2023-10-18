@@ -282,6 +282,8 @@ def get_coefs_im(im, save_dir, log_dir, align_method="", n_coef=32, func=None, p
     try:
         if align_method == "fft_nuclei_major_axis":
             nuclei_, cell_, theta = align_nuclei_major_axis(data, pro, plot=False)
+        elif align_method == "fft_nuclei_major_axis_polarized":
+            nuclei_, cell_, theta = align_nuclei_major_axis_polarized(data, pro, plot=False)
         elif align_method == "fft_cell_nuclei_centroid":
             nuclei_, cell_, theta = align_cell_nuclei_centroids(data, pro, plot=False)
         elif align_method == "fft_cell_major_axis":
