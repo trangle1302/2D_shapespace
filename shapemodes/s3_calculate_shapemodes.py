@@ -46,6 +46,7 @@ def main():
     mappings = mappings[mappings["atlas_name"] == cfg.CELL_LINE]
     print("Mapping file all: ", mappings.shape, mappings.columns)
     id_with_intensity = glob.glob(f"{protein_dir}/*.png")
+    print(id_with_intensity)
     mappings["Link"] = [
         f"{protein_dir}/{id.split('_',1)[1]}_protein.png" for id in mappings.id
     ]
@@ -92,7 +93,7 @@ def main():
             for k in lines.keys()
             if os.path.basename(k).split(".")[0] not in rm_cells
         }
-        print(len(lines))
+        print(len(lines), mappings.id)
         keep_cells = [cell_id.split("_", 1)[1] for cell_id in mappings.id]
         print(f"Removing border cells leftover: {len(keep_cells)}")
         lines = {
