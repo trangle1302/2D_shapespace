@@ -50,7 +50,7 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path="", fft_pat
             [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)],
             axis=1,
         )
-    n_pc = 10
+    n_pc = 20
     pca = FastICA(n_components=n_pc, random_state=0)
     matrix_of_features_transform = pca.fit_transform(df_)
     pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
@@ -184,9 +184,9 @@ def main():
         plt.ylabel('PC2')
         plt.title('Scatter Plot with Colormap')
         plt.savefig(f"{shape_mode_path}/PC1vsPC2_pseudotime.png") 
-        plt.scatter_hist_fucci(df_trans["PC1"], df_trans["PC2"], df_trans['GMM_cc_label'], f"{shape_mode_path}/PC1vsPC2.png")
-        plt.scatter_hist_fucci(df_trans["PC1"], df_trans["PC3"], df_trans['GMM_cc_label'], f"{shape_mode_path}/PC1vsPC3.png")
-        plt.scatter_hist_fucci(df_trans["PC3"], df_trans["PC4"], df_trans['GMM_cc_label'], f"{shape_mode_path}/PC3vsPC4.png")
+        plotting.scatter_hist_fucci(df_trans["PC1"], df_trans["PC2"], df_trans['GMM_cc_label'], f"{shape_mode_path}/PC1vsPC2.png")
+        plotting.scatter_hist_fucci(df_trans["PC1"], df_trans["PC3"], df_trans['GMM_cc_label'], f"{shape_mode_path}/PC1vsPC3.png")
+        plotting.scatter_hist_fucci(df_trans["PC3"], df_trans["PC4"], df_trans['GMM_cc_label'], f"{shape_mode_path}/PC3vsPC4.png")
 
 if __name__ == "__main__":
     #memory_limit()  # Limitates maximun memory usage
