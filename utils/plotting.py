@@ -152,7 +152,10 @@ class PlotShapeModes:
         save_dir="C:/Users/trang.le/Desktop/2D_shape_space/shapespace_plots",
     ):
         midpoint = self.midpoints.copy()
-        fcoef = self.pca.inverse_transform(midpoint)
+        try: # PCA
+            fcoef = self.pca.inverse_transform(midpoint)
+        except: # ICA
+            fcoef = self.pca.inverse_transform([midpoint])[0]
         if self.fourier_algo == "fft":
             if not self.complex:
                 real = fcoef[: len(fcoef) // 2]
