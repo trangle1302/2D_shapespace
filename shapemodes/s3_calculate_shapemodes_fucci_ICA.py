@@ -51,10 +51,10 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path="", fft_pat
             axis=1,
         )
     n_pc = 20
-    pca = FastICA(n_components=n_pc, random_state=0)
-    matrix_of_features_transform = pca.fit_transform(df_)
+    ica = FastICA(n_components=n_pc, random_state=0)
+    matrix_of_features_transform = ica.fit_transform(df_)
     pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
-    matrix_of_features_transform = pca.transform(df_)
+    matrix_of_features_transform = ica.transform(df_)
     df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
     df_trans.columns = pc_keep
     df_trans.index = df.index
@@ -64,10 +64,10 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path="", fft_pat
     plotting.plot_pc_density(df_trans["PC2"], df_trans["PC3"], save_path=f"{shape_mode_path}/PC2vsPC3_cell_density.png")
 
     # cheat to correct formatting
-    setattr(pca, 'explained_variance_ratio_', [0,0,0])
+    setattr(ica, 'explained_variance_ratio_', [0,0,0])
 
     pm = plotting.PlotShapeModes(
-        pca,
+        ica,
         df_trans,
         n_coef,
         pc_keep,
@@ -82,7 +82,6 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path="", fft_pat
     elif mode == "nuclei":
         pm.plot_avg_nucleus(dark=False, save_dir=shape_mode_path)
 
-    n_ = 10  # number of random cells to plot
     cells_assigned = dict()
     for pc in pc_keep:
         pm.plot_shape_variation_gif(pc, dark=False, save_dir=shape_mode_path)
