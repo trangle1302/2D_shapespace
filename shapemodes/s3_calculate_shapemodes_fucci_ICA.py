@@ -59,6 +59,14 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path="", fft_pat
     df_trans.columns = pc_keep
     df_trans.index = df.index
     
+    # Rank IC by Fraction of Explained Variance
+    A_ = pca.mixing_   
+    variance_explained = np.sum(A_**2, axis=0)
+    variance_explained /= variance_explained.sum()
+    variance_order = np.argsort(variance_explained)
+    sort_pc = sorted(pc_keep, key=lambda x: variance_order.index(pc_keep.index(x)))
+    print(sort_pc)
+    
     # Cell density on major PC
     plotting.plot_pc_density(df_trans["PC1"], df_trans["PC2"], save_path=f"{shape_mode_path}/PC1vsPC2_cell_density.png")
     plotting.plot_pc_density(df_trans["PC2"], df_trans["PC3"], save_path=f"{shape_mode_path}/PC2vsPC3_cell_density.png")
@@ -97,6 +105,7 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path="", fft_pat
                                     cells_per_bin=5, 
                                     shape_coef_path=fft_path, 
                                     save_path=f"{shape_mode_path}/{pc}_example_cells.png")
+
 
     with open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "w") as fp:
         json.dump(cells_assigned, fp)
@@ -181,12 +190,6 @@ def main():
         # Add labels and title
         plt.xlabel('PC1')
         plt.ylabel('PC2')
-        plt.title('Scatter Plot with Colormap')
-        plt.savefig(f"{shape_mode_path}/PC1vsPC2_pseudotime.png") 
-        plotting.scatter_hist_fucci(df_trans["PC1"], df_trans["PC2"], df_trans['GMM_cc_label'], f"{shape_mode_path}/PC1vsPC2.png")
-        plotting.scatter_hist_fucci(df_trans["PC1"], df_trans["PC3"], df_trans['GMM_cc_label'], f"{shape_mode_path}/PC1vsPC3.png")
-        plotting.scatter_hist_fucci(df_trans["PC3"], df_trans["PC4"], df_trans['GMM_cc_label'], f"{shape_mode_path}/PC3vsPC4.png")
-
 if __name__ == "__main__":
     #memory_limit()  # Limitates maximun memory usage
     try:
