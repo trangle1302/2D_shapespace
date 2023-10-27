@@ -77,7 +77,7 @@ def gseapy_clusters(linkage_matrix, gene_names, cutting_thresholds=[2,10,90,200]
     for threshold in cutting_thresholds:
         idx = shc.fcluster(linkage_matrix, threshold, "distance")
         print(f"Cluster flatten to {len(np.unique(idx))} clusters")
-        for group_id in np.unique(idx):
+        for group_id in np.unique(idx)[:3]:
             gene_list = gene_names[idx==group_id]
             gene_list = [g.split(",")[0] for g in gene_list]
             try:
@@ -91,14 +91,13 @@ def gseapy_clusters(linkage_matrix, gene_names, cutting_thresholds=[2,10,90,200]
                             #'KEGG_2021_Human',
                             'CORUM'
                         ],
-                        outdir=f"{save_path}_{threshold}_{group_id}",
+                        #outdir=f"{save_path}_{threshold}_{group_id}",
                         cutoff=0.1, # Only affects the output figure, not the final output file
-                        format="pdf",
+                        #format="pdf",
                     )
                 tmp = enr.results
                 tmp = tmp[tmp['Adjusted P-value']<=0.1]
                 terms = '|'.join(list(tmp.Term.values))
-                print(terms)
                 print(f"Distance threshold {threshold}, cluster {group_id}, n_members {len(gene_list)}, highest enrichr: {terms}")
             except:
                 print(f"Distance threshold {threshold}, cluster {group_id}, n_members {len(gene_list)}, enrichr fails")
