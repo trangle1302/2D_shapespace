@@ -5,9 +5,10 @@ import glob
 import time
 import sys
 sys.path.append("..")
-import os
 from colocalization_quotient import colocalization_quotient
 from scipy.stats import pearsonr
+import pandas as pd
+import tqdm
 
 def check_size(image, shape, d_type="uint16", max_val=65535):
     if image.shape != shape:
@@ -154,6 +155,108 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, nu, protein, cell_id):
     )
     return line
 
+def get_sc_statistics_HPA(cell_mask, nuclei_mask, mt, er, nu, protein):
+    remove_size = 100
+    clean_small_lines = True
+    # Remove nuclei touching the border:
+    nuclei_mask = skimage.segmentation.clear_border(nuclei_mask)
+    keep_value = np.unique(nuclei_mask)
+    borderedcellmask = np.array(
+        [[x_ in keep_value for x_ in x] for x in cell_mask]
+    ).astype("uint8")
+    cell_mask = cell_mask * borderedcellmask
+    assert set(np.unique(nuclei_mask)) == set(np.unique(cell_mask))
+    lines = []
+    for region_c, region_n in zip(
+        skimage.measure.regionprops(cell_mask), skimage.measure.regionprops(nuclei_mask)
+    ):  
+        assert region_c.label == region_n.label
+        if region_c.area < remove_size:
+            continue
+        # draw rectangle around segmented cell and
+        # apply a binary mask to the selected region, to eliminate signals from surrounding cell
+        minr, minc, maxr, maxc = region_c.bbox
+
+        # get cell mask
+        mask = cell_mask[minr:maxr, minc:maxc].astype(np.uint8)
+        mask[mask != region_c.label] = 0
+        mask[mask == region_c.label] = 1
+        if clean_small_lines:  # erose and dilate to remove the small line
+            mask = skimage.morphology.erosion(mask, skimage.morphology.square(5))
+            mask = skimage.morphology.dilation(mask, skimage.morphology.square(7))
+            # get new bbox
+            minr_, minc_, maxr_, maxc_ = skimage.measure.regionprops(mask)[0].bbox
+            mask = mask[minr_:maxr_, minc_:maxc_]
+            minr += minr_
+            minc += minc_
+            maxr = minr + (maxr_ - minr_)
+            maxc = minc + (maxc_ - minc_)
+
+        cell_area = mask.sum()
+        mt_ = mt[minr:maxr, minc:maxc].copy()
+        mt_[mask != 1] = 0
+        mt_sum = mt_.sum()
+        
+        er_ = er[minr:maxr, minc:maxc].copy()
+        er_[mask != 1] = 0
+        er_sum = er.sum()
+        # get protein in the whole cell area
+        pr = protein[minr:maxr, minc:maxc].copy()
+        pr[mask != 1] = 0
+        pr_sum = pr.sum()
+
+        # get nuclei mask
+        nu_area = region_n.area
+        minr, minc, maxr, maxc = region_n.bbox
+        mask_n = nuclei_mask[minr:maxr, minc:maxc].astype(np.uint8)
+        mask_n[mask_n != region_n.label] = 0
+        mask_n[mask_n == region_n.label] = 1
+
+        # protein in the nucleus         
+        pr = protein[minr:maxr, minc:maxc].copy()
+        pr[mask_n != 1] = 0
+        pr_nu_sum = pr.sum()
+
+        nu_ = nu[minr:maxr, minc:maxc].copy()
+        nu_[mask_n != 1] = 0
+        nu_sum = pr.sum()
+
+        line = (
+            ",".join(
+                map(
+                    str,
+                    [
+                        region_n.label,  # Identifier
+                        cell_area,# Nucleus and cell area
+                        nu_area,
+                        region_n.eccentricity, # Nucleus eccentricity
+                        pr_sum,
+                        pr_nu_sum,  # protein total intensity in whole cell and nucleus region, pr_cytosol_mean = (pr_sum-pr_nu)/(cell_area-nu_area)
+                        mt_sum, #mt_mean = mt_sum / cell_area
+                        er_sum,
+                        nu_sum, # DAPI intensity
+                        region_n.axis_minor_length/region_n.axis_major_length, #aspect_ratio_nu,
+                        region_c.axis_minor_length/region_c.axis_major_length, #aspect_ratio_cell
+                        colocalization_quotient(protein, nu),
+                        colocalization_quotient(protein, mt),
+                        colocalization_quotient(protein, er),
+                        colocalization_quotient(er, mt),
+                        colocalization_quotient(nu, mt),
+                        colocalization_quotient(nu, er),
+                        pearsonr(protein.flatten(), nu.flatten())[0],
+                        pearsonr(protein.flatten(), mt.flatten())[0],
+                        pearsonr(protein.flatten(), er.flatten())[0],
+                        pearsonr(er.flatten(), mt.flatten())[0],
+                        pearsonr(nu.flatten(), mt.flatten())[0],
+                        pearsonr(nu.flatten(), er.flatten())[0],
+                        
+                    ],
+                )
+            )
+            + "\n"
+        )        
+        lines += [line]
+    return lines
 
 def main():
     import configs.config as cfg
@@ -193,7 +296,7 @@ def main():
                 )
                 f.writelines(lines)
         print(f"Finished in {(time.time()-s)/3600}h")
-    else:
+    if False:
         sc_cell_pros = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*_protein.png")
         print(sc_cell_pros[:3])
         print(f"Processing {len(sc_cell_pros)} single cells, saving to {save_path}")
@@ -220,6 +323,50 @@ def main():
                     cell_mask, nuclei_mask, ref[0,:,:], ref[1,:,:], ref[2,:,:], protein, os.path.basename(sc_cell_pro).replace("_protein.png","")
                 )
                 f.write(line)
+        print(f"Finished in {(time.time()-s)/3600}h")
+    else:
+        image_dir = "/data/HPA-IF-images"
+        mask_dir = "/data/kaggle-dataset/PUBLICHPA/mask/test"
+        cell_mask_extension = "cellmask.png"
+        nuclei_mask_extension = "nucleimask.png"
+        
+        ifimages = pd.read_csv(f"{image_dir}/IF-image.csv")
+        ifimages = ifimages[ifimages.atlas_name == cfg.CELL_LINE]
+        ifimages["ID"] = [f.split("/")[-1][:-1] for f in ifimages.filename]
+        im_df = pd.read_csv(f"{mask_dir}.csv")
+        imlist = set(im_df.ID.unique()).intersection(set(ifimages.ID))
+        print(f"Found {len(imlist)} FOV")
+        s = time.time()
+        print(f'Saving to {cfg.PROJECT_DIR}/single_cell_statistics.csv')
+        with open(save_path, "a") as f:
+            # Save sum quantities and cell+nuclseus area, the mean quantities per compartment can be calculated afterwards
+            f.write(
+                "cell_id,cell_area,nu_area,nu_eccentricity," +
+                "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
+                "aspect_ratio_nu,aspect_ratio_cell," +
+                "coloc_pro_nu,coloc_pro_mt,coloc_pro_er,coloc_er_mt,coloc_nu_mt,coloc_nu_er," +
+                "pearsonr_pro_nu,pearsonr_pro_mt,pearsonr_pro_er,pearsonr_er_mt,pearsonr_nu_mt,pearsonr_nu_er\n"
+            )
+            for img_id in tqdm.tqdm(imlist, total=len(imlist)):
+                cell_mask = imageio.imread(f"{mask_dir}/{img_id}_{cell_mask_extension}")
+                nuclei_mask = imageio.imread(f"{mask_dir}/{img_id}_{nuclei_mask_extension}")
+                protein = imageio.imread(
+                    f"{image_dir}/{img_id.split('_')[0]}/{img_id}_green.png"
+                )
+                mt = imageio.imread(
+                    f"{image_dir}/{img_id.split('_')[0]}/{img_id}_red.png"
+                )
+                er = imageio.imread(
+                    f"{image_dir}/{img_id.split('_')[0]}/{img_id}_yellow.png"
+                )
+                nu = imageio.imread(
+                    f"{image_dir}/{img_id.split('_')[0]}/{img_id}_blue.png"
+                )
+
+                lines = get_sc_statistics_HPA(
+                    cell_mask, nuclei_mask, mt, er, nu, protein
+                )
+                f.writelines(lines)
         print(f"Finished in {(time.time()-s)/3600}h")
 
 if __name__ == "__main__":
