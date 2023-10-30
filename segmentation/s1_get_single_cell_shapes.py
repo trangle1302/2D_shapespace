@@ -709,13 +709,10 @@ def cellcycle():
     # process_img_ccd(abid, mask_dir, save_dir, log_dir)
     # done = pd.read_pickle(f'{log_dir}/images_done.pkl')
     # ablist = list(set(ablist).difference(set(done))))
-    print(ablist[:5])
     ablist.sort()
-    print(ablist[:5])
     inputs = tqdm(ablist)
 
     s = time.time()
-    # processed_list = Parallel(n_jobs=num_cores)(delayed(process_img_ccd)(i, mask_dir, save_dir, log_dir) for i in inputs)
     processed_list = Parallel(n_jobs=num_cores)(
         delayed(process_img_ccd2)(i, mask_dir, save_dir, log_dir) for i in inputs
     )
