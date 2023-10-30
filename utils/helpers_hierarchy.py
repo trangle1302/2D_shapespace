@@ -102,3 +102,18 @@ def gseapy_clusters(linkage_matrix, gene_names, cutting_thresholds=[2,10,90,200]
             except:
                 print(f"Distance threshold {threshold}, cluster {group_id}, n_members {len(gene_list)}, enrichr fails")
         print(f"##################### Moving up the hierarchy")
+
+def factorize_into_quantiles(data, column_name, n):
+    # Calculate quantiles
+    quantiles = [data[column_name].quantile(q) for q in [i / n for i in range(1, n)]]
+    # Create an empty list to store the lists for each quantile
+    quantile_lists = []
+    # Iterate through the quantiles and create lists for each quantile
+    for i in range(n):
+        if i == 0:
+            quantile_lists.append(list(data['Unnamed: 0'][data[column_name] <= quantiles[i]]))
+        elif i == n - 1:
+            quantile_lists.append(list(data['Unnamed: 0'][data[column_name] > quantiles[i - 1]]))
+        else:
+            quantile_lists.append(list(data['Unnamed: 0'][(data[column_name] > quantiles[i - 1]) & (data[column_name] <= quantiles[i])]))
+    return quantile_lists
