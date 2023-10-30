@@ -523,7 +523,7 @@ def process_img_ccd2(
     cell_mask_extension="cytomask.png",
     nuclei_mask_extension="nucleimask.png",
 ):
-    # for resegmentation of cell and nuclei masks with transfer learning from cellpose2
+    # for segmentation of cell and nuclei masks with transfer learning from cellpose2
     data_dir = os.path.join(mask_dir, ab_id)
     save_dir = os.path.join(save_dir, ab_id)
     if not os.path.isdir(save_dir):
@@ -678,8 +678,7 @@ def cellcycle():
     image_dir = "/data/2Dshapespace/S-BIAD34/Files"
     mask_dir = "/data/2Dshapespace/S-BIAD34/Files"
 
-    cell_line = "U-2 OS"
-    save_dir = "/data/2Dshapespace/S-BIAD34/cell_masks2"
+    save_dir = "/data/2Dshapespace/S-BIAD34/cell_masks"
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
 
