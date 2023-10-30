@@ -12,6 +12,21 @@ import seaborn as sns
 from skimage.filters import threshold_otsu
 import time
 
+def plot_clustermap(intensities, reduced=True, save_path="./clustermap.png"):
+    if reduced:
+        from sklearn.decomposition import PCA
+        pca = PCA(n_components=500)
+        intensities_reduced = pca.fit_transfomred(intensities.transpose())
+        print(f"Percent variance kept: {pca.explained_variance_ratio_.sum()}")
+    else:
+        intensities_reduced = intensities
+    plt.figure()
+    p = sns.clustermap(intensities_reduced, method="ward", cmap='RdBu', annot=True, 
+    annot_kws={"size": 3}, vmin=-1, vmax=1, figsize=(20,20))
+    plt.setp(p.get_xticklabels(), rotation=45, horizontalalignment='right')
+    p.savefig(save_path, bbox_inches="tight")
+    plt.close()    
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--PC", help="shape mode", type=str)
@@ -56,8 +71,6 @@ if __name__ == "__main__":
         intensities_pcX = []
         counts = []
         for i, bin_ in enumerate(merged_bins):
-            if i == 0:
-                continue
             if os.path.exists(f"{save_dir}/PC{PC}_{i}.csv"):
                 covar_mat = pd.read_csv(f"{save_dir}/PC{PC}_{i}.csv")
             else:
@@ -90,6 +103,7 @@ if __name__ == "__main__":
                     intensities["ensembl_ids"] = ensembl_ids
                     intensities = intensities.groupby("ensembl_ids").agg("mean")
                     intensities.to_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
+                    
                     """
                     #intensities_pcX += [np.nanmean(intensities, axis=0).reshape(intensity.shape)]
                     covar_mat = np.corrcoef(np.array(intensities.drop(["ensembl_ids"], axis=1)))
@@ -106,13 +120,16 @@ if __name__ == "__main__":
                 covar_mat = intensities.corr()
                 covar_mat = covar_mat.astype("float32")
                 covar_mat.to_csv(f"{save_dir}/PC{PC}_{i}.csv")
-            
+
+            plot_clustermap(intensities, reduced=True, save_path=f"{save_dir}/PC{PC}_{i}.png") 
             covar_mat = covar_mat[covar_mat.columns.drop(list(covar_mat.filter(regex='Unnamed:')))]
+            # Covar is the matrix of gene by gene correlation
             corr = covar_mat.values
+            # Calculate pairwise distances between observations in n-dimensional space
             pdist = spc.distance.pdist(corr)
             if pdist.dtype == "float64":
                 pdist = pdist.astype("float32")
-            linkage = spc.linkage(pdist, method="ward")
+            linkage = spc.linkage(pdist, method="ward") #  input y may be either a 1-D condensed distance matrix or a 2-D array of observation vectors.
             print(f"Assigning clusters by distance threshold { 0.3 * pdist.max()}, max distance {pdist.max()}")
             idx = spc.fcluster(linkage, 0.3 * pdist.max(), "distance")
             cluster_assignation = {
@@ -122,30 +139,24 @@ if __name__ == "__main__":
             with open(f"{save_dir}/PC{PC}_{i}_cluster_assignation.json", "w") as fp:
                 json.dump(cluster_assignation, fp)
 
+            min_d = np.min(covar_mat)
+            max_d = np.max(covar_mat)
             for ii in np.unique(idx):
                 tmp=covar_mat.iloc[np.where(idx == ii)[0], np.where(idx == ii)[0]]
                 #print(tmp.shape, tmp)
                 print(covar_mat.columns[np.where(idx == ii)[0]])
-                print(covar_mat.max(),covar_mat.min(),covar_mat.mean())
                 plt.figure()
                 p = sns.heatmap(
                     tmp,
                     cmap="RdBu",
-                    vmin=covar_mat.min(),
-                    vmax=covar_mat.max(),
+                    #vmin=min_d,
+                    #vmax=max_d,
                 )
                 plt.savefig(
                     f"{save_dir}/PC{PC}_bin{i}_cluster{ii}.png", bbox_inches="tight"
                 )
                 plt.close()
-            if False:
-                # Plot
-                plt.figure()
-                p = sns.clustermap(covar_mat, method="ward", cmap='RdBu', annot=True, 
-                annot_kws={"size": 3}, vmin=covar_mat.min(), vmax=covar_mat.max(), figsize=(20,20))
-                plt.setp(p.get_xticklabels(), rotation=45, horizontalalignment='right')
-                p.savefig(f"{save_dir}/PC{PC}_{i}.png", bbox_inches="tight")
-                plt.close()
+
             
             """
             # covar matrix is symmetric, so getting row dendogram is the same as col dendogram
