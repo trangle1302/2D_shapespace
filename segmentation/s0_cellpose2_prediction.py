@@ -122,7 +122,8 @@ def predict(model_path, files, plot_dir, diameter=0):
                     plt.close()
                     # io.imsave(f'{plot_dir}/{name[:-4]}_{model_name}mask.png',masks[i])
             for m, f in zip(masks, file_names):
-                io.imsave(f.replace("w1.tif", f"{model_name}mask.png"), m)
+                last_pattern = f.split("_")[-1]
+                io.imsave(f.replace(last_pattern, f"{model_name}mask.png"), m)
             pbar.update(end_ - start_)
 
 
@@ -142,15 +143,18 @@ if __name__ == "__main__":
             files=files,
             plot_dir=f"{base_dir}/resegmentation/QCs/nuclei",
         )
+    # standardize extension to .tif
+    files =  natsorted(glob(f'{base_dir}/Files/*/*.TIF'))
+    for f in files:
+        os.rename(f,f.replace('.TIF','.tif'))
 
     if True:
-        # files_finished = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
-        # files_finished = [f.replace('nucleimask.png','w1.tif') for f in files_finished]
-        # print(f'Found {len(files_finished)} FOVs with nucleimasks.png done')
+        files_finished = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
+        files_finished = [f.replace('nucleimask.png','w1.tif') for f in files_finished]
+        print(f'Found {len(files_finished)} FOVs with nucleimasks.png done')
         files = natsorted(glob(f"{base_dir}/Files/*/*w1.tif"))
-        # files = [f for f in files if f not in files_finished]
+        files = [f for f in files if f not in files_finished]
         print(f"========== Segmenting {len(files)} fovs ==========")
-
         print(f"==========> Segmenting nucleus")
         os.makedirs(f"{base_dir}/resegmentation/QCs/nuclei", exist_ok=True)
         predict(
@@ -159,9 +163,12 @@ if __name__ == "__main__":
             plot_dir=f"{base_dir}/resegmentation/QCs/nuclei",
         )
 
-    if False:
+    if True:
+        files_finished = natsorted(glob(f"{base_dir}/Files/*/*cytomask.png"))
+        files_finished = [f.replace('cytomask.png','w1.tif') for f in files_finished]
         files = natsorted(glob(f"{base_dir}/Files/*/*nucleimask.png"))
         files = [f.replace("nucleimask.png", "w1.tif") for f in files]
+        files = [f for f in files if f not in files_finished]
         print(f"========== Segmenting {len(files)} fovs ==========")
         print(f"==========> Segmenting cells")
         os.makedirs(f"{base_dir}/resegmentation/QCs/cell", exist_ok=True)
