@@ -63,9 +63,9 @@ def get_single_cell_mask(
     cell_mask,
     nuclei_mask,
     protein,
-    ref_channels,
-    keep_cell_list,
-    save_path,
+    ref_channels = None,
+    keep_cell_list = [1,1,2],
+    save_path = '',
     rm_border=True,
     remove_size=100,
     plot=False,
@@ -111,8 +111,10 @@ def get_single_cell_mask(
         pr = protein[minr:maxr, minc:maxc].copy()
         pr[mask != 1] = 0
 
-        ref = ref_channels[:,minr:maxr, minc:maxc].copy()
-        ref[:, mask !=1] = 0
+        if ref_channels is not None:
+            ref = ref_channels[:,minr:maxr, minc:maxc].copy()
+            ref[:, mask !=1] = 0
+            np.save(f"{save_path}{region_c.label}_ref.npy", ref)
 
         if plot:
             plt.figure(figsize=(10, 10))
@@ -133,7 +135,6 @@ def get_single_cell_mask(
             plt.savefig(f"{save_path}{region_c.label}.jpg", bbox_inches="tight")
             plt.close()
 
-        np.save(f"{save_path}{region_c.label}_ref.npy", ref)
         imageio.imwrite(f"{save_path}{region_c.label}_protein.png", pr)
         data = np.stack((mask, mask_n))
         np.save(f"{save_path}{region_c.label}.npy", data)
@@ -587,8 +588,8 @@ def process_img_ccd2(
                 cell_mask,
                 nuclei_mask,
                 protein,
-                cell_idx,
-                save_path,
+                keep_cell_list=cell_idx,
+                save_path = save_path,
                 rm_border=True,
                 remove_size=20,
                 plot=False,
@@ -674,6 +675,9 @@ def publicHPA(cell_line="U-2 OS"):
             )
 
 def cellcycle():
+    """ 
+    Function to process cell cycle data from https://www.ebi.ac.uk/biostudies/BioImages/studies/S-BIAD34
+    """
     base_url = "/data/2Dshapespace/S-BIAD34/Files"
     image_dir = "/data/2Dshapespace/S-BIAD34/Files"
     mask_dir = "/data/2Dshapespace/S-BIAD34/Files"
@@ -726,5 +730,5 @@ if __name__ == "__main__":
     import configs.config as cfg
 
     # pilot_U2OS_kaggle2021test()
-    publicHPA(cell_line=cfg.CELL_LINE)
-    # cellcycle()
+    # publicHPA(cell_line=cfg.CELL_LINE)
+    cellcycle()
