@@ -10,18 +10,21 @@ from tqdm import tqdm
 import time
 
 def check_nucleus_cell_size(image_path, save_dir):
-    nu_cell_array = np.load(image_path)
-    nu_area = np.sum(nu_cell_array[1, :, :] > 0)
-    cell_area = np.sum(nu_cell_array[0, :, :] > 0)
-    cell_nu_ratio = cell_area / nu_area
-    image_name = os.path.basename(image_path).split(".")[0]
-    with open(f"{save_dir}/cell_nu_ratio.txt", "a") as f:
-        f.write(
-            ",".join(
-                map(str, [image_path, image_name, nu_area, cell_area, cell_nu_ratio])
+    try:
+        nu_cell_array = np.load(image_path)
+        nu_area = np.sum(nu_cell_array[1, :, :] > 0)
+        cell_area = np.sum(nu_cell_array[0, :, :] > 0)
+        cell_nu_ratio = cell_area / nu_area
+        image_name = os.path.basename(image_path).split(".")[0]
+        with open(f"{save_dir}/cell_nu_ratio.txt", "a") as f:
+            f.write(
+                ",".join(
+                    map(str, [image_path, image_name, nu_area, cell_area, cell_nu_ratio])
+                )
+                + "\n"
             )
-            + "\n"
-        )
+    except:
+        print(f"Error in {image_path}")
 
 def main():
     s = time.time()
@@ -29,6 +32,7 @@ def main():
     mask_dir = f"{cfg.PROJECT_DIR}/cell_masks"
     save_dir = cfg.PROJECT_DIR
     imlist = glob.glob(f"{mask_dir}/*.npy")
+    imlist = [f for f in imlist if 'ref' not in f]
     if len(imlist) == 0:
         imlist = glob.glob(f"{mask_dir}/*/*.npy")
     print(f"{len(imlist)} cells found")
