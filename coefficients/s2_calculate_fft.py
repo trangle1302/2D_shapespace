@@ -20,8 +20,8 @@ def calculate_fft_hpa(cfg, get_coef_fun):
     log_dir = f"{cfg.PROJECT_DIR}/logs"
 
     imlist = glob.glob(f"{mask_dir}/*.npy")
-    imlist = [im for im in imlist if os.path.getsize(im) > 0]
-
+    imlist = [im for im in imlist if (os.path.getsize(im) > 0) & ('ref' not in im)]
+    
     num_cores = (
         multiprocessing.cpu_count() - 10
     )  # save 10 core for some other processes
