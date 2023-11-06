@@ -46,7 +46,7 @@ def main():
     mappings = mappings[mappings["atlas_name"] == cfg.CELL_LINE]
     print("Mapping file all: ", mappings.shape, mappings.columns)
     id_with_intensity = glob.glob(f"{protein_dir}/*.png")
-    print(id_with_intensity)
+    #print(id_with_intensity)
     mappings["Link"] = [
         f"{protein_dir}/{id.split('_',1)[1]}_protein.png" for id in mappings.id
     ]
@@ -81,9 +81,12 @@ def main():
                         continue
                     # data_dict = {data_dict[0]:data_dict[1:]}
                     lines[data_[0]] = data_[1:]
+        try:
+            cell_nu_ratio = pd.read_csv(f"{cfg.PROJECT_DIR}/cell_nu_ratio.txt")
+            cell_nu_ratio.columns = ["path", "name", "nu_area", "cell_area", "ratio"]
+        except:
+            cell_nu_ratio = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv")
 
-        cell_nu_ratio = pd.read_csv(f"{cfg.PROJECT_DIR}/cell_nu_ratio.txt")
-        cell_nu_ratio.columns = ["path", "name", "nu_area", "cell_area", "ratio"]
         rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].name.to_list()
         print(
             f"Large cell-nu ratio cells to remove: {len(rm_cells)}"
@@ -93,7 +96,7 @@ def main():
             for k in lines.keys()
             if os.path.basename(k).split(".")[0] not in rm_cells
         }
-        print(len(lines), mappings.id)
+        #print(len(lines), mappings.id)
         keep_cells = [cell_id.split("_", 1)[1] for cell_id in mappings.id]
         print(f"Removing border cells leftover: {len(keep_cells)}")
         lines = {
