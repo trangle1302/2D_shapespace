@@ -1219,10 +1219,10 @@ def scatter_hist(x, y, label, save_path):
 def plot_histogram_with_fitted_line(x, labels, save_path):
     import configs.config_all as cfg
     colors = cfg.COLORS
-    unique_labels = np.unique(label)
+    unique_labels = np.unique(labels)
     cell_lines = cfg.CELL_LINE
     from scipy.stats import norm
-
+    fig = plt.figure(figsize=(8,8))
     for label in unique_labels:
         data = np.array([x[i] for i in range(len(x)) if labels[i] == label])
 
@@ -1236,13 +1236,14 @@ def plot_histogram_with_fitted_line(x, labels, save_path):
         p = norm.pdf(x_values, mu, std)
 
         # Plot the PDF
-        plt.plot(x_values, p, color=colors[label] linewidth=2, label=f'Fitted {cell_lines[label]} (mean={mu:.2f}, std={std:.2f})')
+        plt.plot(x_values, p, color=colors[label], linewidth=2, label=f'Fitted {cell_lines[label]} (mean={mu:.2f}, std={std:.2f})')
 
         plt.xlabel('Values')
         plt.ylabel('Frequency')
         plt.legend()
         plt.grid(False)
         plt.savefig(save_path, transparent=True)
+        plt.close()
 
 def scatter_hist_fucci(x, y, label, save_path):
     import matplotlib.gridspec as gridspec
