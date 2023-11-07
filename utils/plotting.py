@@ -1175,7 +1175,6 @@ def create_gif(image_paths, save_gif_path, duration=0.5):
 
 def scatter_hist(x, y, label, save_path):
     import matplotlib.gridspec as gridspec
-    from scipy.stats import norm
     import configs.config_all as cfg
     colors = cfg.COLORS
     unique_labels = np.unique(label)
@@ -1216,6 +1215,32 @@ def scatter_hist(x, y, label, save_path):
     ax_xDist.legend()
     plt.savefig(save_path)
     plt.close()
+
+def plot_histogram_with_fitted_line(x, labels, save_path):
+    from scipy.stats import norm
+    unique_labels = np.unique(labels)
+
+    for label in unique_labels:
+        data = np.array([x[i] for i in range(len(x)) if labels[i] == label])
+
+        plt.figure(figsize=(8, 4))
+        plt.hist(data, bins=20, density=True, alpha=0.5, label=f'Label {label}')
+
+        # Fit a normal distribution to the data
+        mu, std = norm.fit(data)
+        xmin, xmax = plt.xlim()
+        x_values = np.linspace(xmin, xmax, 100)
+        p = norm.pdf(x_values, mu, std)
+
+        # Plot the PDF
+        plt.plot(x_values, p, 'k', linewidth=2, label=f'Fitted line (mean={mu:.2f}, std={std:.2f})')
+
+        plt.xlabel('Values')
+        plt.ylabel('Frequency')
+        plt.title(f'Histogram and Fitted Line for Label {label}')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(save_path)
 
 def scatter_hist_fucci(x, y, label, save_path):
     import matplotlib.gridspec as gridspec
