@@ -45,6 +45,9 @@ def load_fft(cfg, project_dir, cell_line, mappings):
 
     with open(fft_path) as f:
         count = sum(1 for _ in f)
+    if (n_samples != -1) & (n_samples > count):
+        n_samples = count
+
     for i in range(cfg.N_CV):
         with open(fft_path, "r") as file:
             lines = {}
@@ -82,12 +85,13 @@ def main():
 
         cell_nu_ratio = pd.read_csv(f"{project_dir}/cell_nu_ratio.txt")
         cell_nu_ratio.columns = ["path", "name", "nu_area", "cell_area", "ratio"]
-        rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].name.to_list()
-        lines = {
-            k: lines[k]
-            for k in lines.keys()
-            if os.path.basename(k).split(".")[0] not in rm_cells
-        }
+        if cell_line != "BJ":
+            rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].name.to_list()
+            lines = {
+                k: lines[k]
+                for k in lines.keys()
+                if os.path.basename(k).split(".")[0] not in rm_cells
+            }
         keep_cells = [cell_id.split("_", 1)[1] for cell_id in mappings.id]
         #print(f"Removing border cells leftover: {len(keep_cells)}")
         lines = {
@@ -171,6 +175,11 @@ def main():
     
     # Cell line distributions on PC1 vs PC2
     plotting.scatter_hist(df_trans["PC1"], df_trans["PC2"], labels, save_path=f"{shape_mode_path}/PC1vsPC2_scatter_hist.png")
+
+    # Cell line distributions on PC2 vs PC3
+    for pc in pc_keep:
+        plotting.plot_histogram_with_fitted_line(df_trans[pc], labels, save_path=f"{shape_mode_path}/{pc}_scatter_hist.png")
+        
     pm = plotting.PlotShapeModes(
         pca,
         df_trans,
