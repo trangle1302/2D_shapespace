@@ -66,9 +66,9 @@ ORGANELLES = ["Nucleoplasm","Nucleoli","NucleoliFC","NuclearS","NuclearB","Nucle
               "Cytosol","PlasmaM","Microtubules"]
 
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
-CELL_LINE = ["BJ", "U-2 OS","A-431","U-251 MG", "MCF7", "HEK_293","RT4", "HEL", "K-562"]
+CELL_LINE = ["BJ", "U2OS","A-431","U-251_MG", "Hep-G2", "MCF7", "HEK_293","RT4", "HEL", "K-562"]
 N_COEFS = 128
-N_SAMPLES = 5000
+N_SAMPLES = 10000
 N_CV = 1
 MODE = "cell_nuclei" 
 ALIGNMENT = "fft_cell_major_axis_polarized" 
