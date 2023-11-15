@@ -220,7 +220,7 @@ def main():
         # Shape modes of G1, G2/S, G2 cells:
         sc_stats = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv")
         sc_stats["matchid"] = sc_stats.ab_id + "/" + sc_stats.cell_id
-        #print(sc_stats.matchid[:3])
+        print(sc_stats.matchid[:3], df.matchid[:3])
         
         df_trans = df_trans.merge(sc_stats, on="matchid")
         df_trans.to_csv(f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}/transformed_matrix.csv")
