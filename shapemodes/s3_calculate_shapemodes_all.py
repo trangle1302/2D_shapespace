@@ -130,6 +130,7 @@ def main():
                 ],
                 axis=1,
             )
+            print(df.shape, df_.shape)
             pca = PCA()  # IncrementalPCA(whiten=True) #PCA()
             pca.fit(df_)
             plotting.display_scree_plot(pca, save_dir=shape_mode_path)

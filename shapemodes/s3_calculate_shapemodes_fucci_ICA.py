@@ -52,15 +52,14 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path="", fft_pat
         )
     n_pc = 5#20
     ica = FastICA(n_components=n_pc, random_state=0)
-    matrix_of_features_transform = pca.fit_transform(df_)
+    matrix_of_features_transform = ica.fit_transform(df_)
     pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
-    matrix_of_features_transform = ica.transform(df_)
     df_trans = pd.DataFrame(data=matrix_of_features_transform.copy())
     df_trans.columns = pc_keep
     df_trans.index = df.index
     
     # Rank IC by Fraction of Explained Variance
-    A_ = pca.mixing_   
+    A_ = ica.mixing_   
     variance_explained = np.sum(A_**2, axis=0)
     variance_explained /= variance_explained.sum()
     #variance_order = np.argsort(variance_explained)
