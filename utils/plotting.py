@@ -1219,14 +1219,15 @@ def scatter_hist(x, y, label, save_path):
 def plot_histogram_with_fitted_line(x, labels, save_path):
     import configs.config_all as cfg
     colors = cfg.COLORS
-    unique_labels = np.unique(labels)
     cell_lines = cfg.CELL_LINE
     from scipy.stats import norm
-    fig = plt.figure(figsize=(8,8))
+    # remove outliers for more zoomed in figure
+    # x, labels = remove_outliers(x, labels, z_threshold=8)
+    # print('After outlier removal size: ', len(x), len(labels))
+    unique_labels = np.unique(labels)
+    fig = plt.figure(figsize=(8,6))
     for label in unique_labels:
         data = np.array([x[i] for i in range(len(x)) if labels[i] == label])
-
-        plt.figure(figsize=(8, 4))
         plt.hist(data, bins=50, color=colors[label], density=True, alpha=0.5, label=cell_lines[label])
 
         # Fit a normal distribution to the data
@@ -1237,13 +1238,23 @@ def plot_histogram_with_fitted_line(x, labels, save_path):
 
         # Plot the PDF
         plt.plot(x_values, p, color=colors[label], linewidth=2, label=f'Fitted {cell_lines[label]} (mean={mu:.2f}, std={std:.2f})')
+    plt.xlim([-80000, 120000])
+    plt.xlabel('Values')
+    plt.ylabel('Frequency')
+    plt.legend(bbox_to_anchor=(1,1), loc="upper left", framealpha=0)
+    plt.grid(False)
+    plt.savefig(save_path, transparent=True)
+    plt.close()
 
-        plt.xlabel('Values')
-        plt.ylabel('Frequency')
-        plt.legend()
-        plt.grid(False)
-        plt.savefig(save_path, transparent=True)
-        plt.close()
+def remove_outliers(arr, labels, z_threshold=5):
+    # Calculate the z-scores for each element in the array
+    z_scores = np.abs((arr - np.mean(arr)) / np.std(arr))
+    # Find indices of elements that are not outliers based on z-scores
+    valid_indices = np.where(z_scores <= z_threshold)[0]
+    # Create new arrays without outliers
+    arr_without_outliers = arr[valid_indices]
+    labels_without_outliers = [labels[i] for i in valid_indices]
+    return arr_without_outliers, labels_without_outliers
 
 def scatter_hist_fucci(x, y, label, save_path):
     import matplotlib.gridspec as gridspec
