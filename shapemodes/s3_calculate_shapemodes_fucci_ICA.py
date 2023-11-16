@@ -164,7 +164,7 @@ def main():
             df = df.iloc[:, : (df.shape[1] // 2)]
         print(cfg.CELL_LINE, cfg.ALIGNMENT, cfg.MODE, df.shape)
         df["matchid"] = [
-            k.replace("/data/2Dshapespace/S-BIAD34/cell_masks2/", "").replace(
+            k.replace("/data/2Dshapespace/S-BIAD34/cell_masks/", "").replace(
                 ".npy", ""
             )
             for k in df.index
