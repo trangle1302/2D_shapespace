@@ -179,7 +179,7 @@ def main():
 
     # Cell line distributions on PC2 vs PC3
     for pc in pc_keep:
-        plotting.plot_histogram_with_fitted_line(df_trans[pc], labels, save_path=f"{shape_mode_path}/{pc}_scatter_hist.png")
+        plotting.plot_histogram_with_fitted_line(df_trans[pc], labels, show_data=False, save_path=f"{shape_mode_path}/{pc}_scatter_hist.png")
         
     pm = plotting.PlotShapeModes(
         pca,
