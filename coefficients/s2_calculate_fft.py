@@ -76,7 +76,7 @@ def calculate_fft_hpa_nu(cfg, get_coef_fun):
 
 
 def calculate_fft_ccd(cfg, get_coef_fun):
-    sc_mask_dir = f"{cfg.PROJECT_DIR}/cell_masks2"
+    sc_mask_dir = f"{cfg.PROJECT_DIR}/cell_masks"
     save_path = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
