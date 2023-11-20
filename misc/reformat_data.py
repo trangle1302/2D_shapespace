@@ -38,10 +38,10 @@ for i, row in exp_meta.iterrows():
         os.mkdir(f"{download_data_dir}/{ab}")
     plate = row.WellPlate.split('_')[1]
     well = row.well
-    print(plate)
+    #print(plate)
     if len(plate) == 8:
         patterns = [well, plate[4:]]
-        print(patterns)
+        #print(patterns)
         file_list = find_files_with_patterns(raw_data_dir, patterns)
         print(f"Found {len(file_list)} files")
         for fullpath in file_list:
