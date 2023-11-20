@@ -122,7 +122,7 @@ def plot_moving_averages(df,ab, PC, feature_name, mv_window = 20):
 
 if __name__ == "__main__":
 
-    df = pd.read_csv(f"{cfg.PROJECT_DIR}/shapemodes/{cfg.ALIGNMENT}_{cfg.MODE}_ICA/transformed_matrix.csv")
+    df = pd.read_csv(f"{cfg.PROJECT_DIR}/shapemodes/{cfg.ALIGNMENT}_{cfg.MODE}_ICA_5components/transformed_matrix.csv")
     df = df.drop('Unnamed: 0', axis=1)
     df['Protein_nu_mean'] = df['Protein_nu_sum']/df['nu_area']
     df['Protein_cyt_mean'] = (df['Protein_cell_sum']- df['Protein_nu_sum'])/(df['cell_area']- df['nu_area'])
