@@ -108,12 +108,18 @@ def factorize_into_quantiles(data, column_name, n):
     quantiles = [data[column_name].quantile(q) for q in [i / n for i in range(1, n)]]
     # Create an empty list to store the lists for each quantile
     quantile_lists = []
+    data['groups'] = 0
     # Iterate through the quantiles and create lists for each quantile
     for i in range(n):
         if i == 0:
             quantile_lists.append(list(data['Unnamed: 0'][data[column_name] <= quantiles[i]]))
+            data.loc[data[column_name] <= quantiles[i],'groups'] = i
         elif i == n - 1:
             quantile_lists.append(list(data['Unnamed: 0'][data[column_name] > quantiles[i - 1]]))
+            data.loc[data[column_name] > quantiles[i - 1],'groups'] = i
         else:
             quantile_lists.append(list(data['Unnamed: 0'][(data[column_name] > quantiles[i - 1]) & (data[column_name] <= quantiles[i])]))
-    return quantile_lists
+            data.loc[(data[column_name] > quantiles[i - 1]) & (data[column_name] <= quantiles[i]),'groups'] = i
+    return quantile_lists, quantiles, data
+
+
