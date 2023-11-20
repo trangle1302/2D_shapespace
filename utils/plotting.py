@@ -1213,10 +1213,10 @@ def scatter_hist(x, y, label, save_path):
     ax_main.set(xlabel="PC1", ylabel="PC2")
     #ax_yDist.legend()
     ax_xDist.legend()
-    plt.savefig(save_path)
+    plt.savefig(save_path, transparent=True)
     plt.close()
 
-def plot_histogram_with_fitted_line(x, labels, save_path):
+def plot_histogram_with_fitted_line(x, labels, show_data=True, save_path = "histogram.png"):
     import configs.config_all as cfg
     colors = cfg.COLORS
     cell_lines = cfg.CELL_LINE
@@ -1228,12 +1228,13 @@ def plot_histogram_with_fitted_line(x, labels, save_path):
     fig = plt.figure(figsize=(8,6))
     for label in unique_labels:
         data = np.array([x[i] for i in range(len(x)) if labels[i] == label])
-        plt.hist(data, bins=50, color=colors[label], density=True, alpha=0.5, label=cell_lines[label])
+        if show_data:
+            plt.hist(data, bins=50, color=colors[label], density=True, alpha=0.5, label=cell_lines[label])
 
         # Fit a normal distribution to the data
         mu, std = norm.fit(data)
         xmin, xmax = plt.xlim()
-        x_values = np.linspace(xmin, xmax, 100)
+        x_values = np.linspace(xmin, xmax, 10000)
         p = norm.pdf(x_values, mu, std)
 
         # Plot the PDF
