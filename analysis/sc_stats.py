@@ -262,18 +262,21 @@ def main():
     import configs.config as cfg
     d = cfg.PROJECT_DIR
     save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics.csv'
+    tmp = pd.read_csv(save_path,error_bad_lines=False)
+    finished_list = list(set(["_".join(f.split('_')[:-1]) for f in tmp.cell_id]))
     if cfg.CELL_LINE=='S-BIAD34':
         cell_masks = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*/*_cellmask.png")
+        cell_masks = [f for f in cell_masks if f.split('/')[-1].replace("_cellmask.png", "") not in finished_list]
         print(f"{len(cell_masks)} FOVs found with masks")
         s = time.time()
         print(f'Saving to {cfg.PROJECT_DIR}/single_cell_statistics.csv')
         with open(save_path, "a") as f:
             # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
-            f.write(
-                 "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,"+
-                 "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
-                 "aspect_ratio_nu,aspect_ratio_cell,coloc_pro_mt\n"
-            )
+            # f.write(
+            #     "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,"+
+            #     "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
+            #     "aspect_ratio_nu,aspect_ratio_cell,coloc_pro_mt\n"
+            # )
             for cell_mask_path in cell_masks:
                 # Reading all channels and masks
                 cell_mask = imageio.imread(cell_mask_path)
