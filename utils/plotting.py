@@ -1,5 +1,4 @@
 import sys
-
 sys.path.append("..")
 import numpy as np
 import matplotlib.pyplot as plt
@@ -1176,6 +1175,7 @@ def create_gif(image_paths, save_gif_path, duration=0.5):
 def scatter_hist(x, y, label, save_path):
     import matplotlib.gridspec as gridspec
     import configs.config_all as cfg
+    from scipy.stats import norm
     colors = cfg.COLORS
     unique_labels = np.unique(label)
     cell_lines = cfg.CELL_LINE
@@ -1190,29 +1190,29 @@ def scatter_hist(x, y, label, save_path):
     ax_yDist = plt.subplot(gs[1:3, 2],sharey=ax_main)
     for i_ in unique_labels:
         # Plot data histogram and Fitting a normal distribution to the data
-        class_data_x = x[label == i_]
-        ax_xDist.hist(class_data_x, bins=50, color=colors[i_], alpha=0.2, label=cell_lines[i_])        
-        #mu, std = norm.fit(class_data_x)
-        #xmin, xmax = ax_xDist.get_xlim()
-        #x_range = np.linspace(xmin, xmax, 100)
-        #fitted_line = norm.pdf(x_range, mu, std) * len(class_data_x)
-        #ax_xDist.plot(x_range, fitted_line, color=colors[i_], linestyle='--', linewidth=2)
+        class_data_x = np.array(x[label == i_])
+        ax_xDist.hist(class_data_x, bins=100, density=True, color=colors[i_], alpha=0.2, label=cell_lines[i_])        
+        mu, std = norm.fit(class_data_x)
+        xmin, xmax = np.min(x), np.max(x) # ax_xDist.get_xlim()
+        x_range = np.linspace(xmin, xmax, 10000)
+        fitted_line = norm.pdf(x_range, mu, std) #* len(class_data_x)
+        ax_xDist.plot(x_range, fitted_line, color=colors[i_], linewidth=2)
         
         # Plot data histogram and Fitting a normal distribution to the data
-        class_data_y = y[label == i_]
-        ax_yDist.hist(class_data_y, bins=50, color=colors[i_], alpha=0.2, label=cell_lines[i_], orientation='horizontal')    
+        class_data_y = np.array(y[label == i_])
+        ax_yDist.hist(class_data_y, bins=100, density=True, color=colors[i_], alpha=0.2, label=cell_lines[i_], orientation='horizontal')    
         
-        #mu, std = norm.fit(class_data_y)
-        #xmin, xmax = ax_xDist.get_xlim()
-        #y_range = np.linspace(ymin, ymax, 100)
-        #fitted_line = norm.pdf(y_range, mu, std) * len(class_data_y)
-        #ax_yDist.plot(y_range, fitted_line, color=colors[i_], linestyle='--', linewidth=2) 
+        mu, std = norm.fit(class_data_y)
+        xmin, xmax = np.min(y), np.max(y) # ax_yDist.get_xlim()
+        y_range = np.linspace(xmin, xmax, 10000)
+        fitted_line = norm.pdf(y_range, mu, std) #* len(class_data_y)
+        ax_yDist.plot(fitted_line, y_range, color=colors[i_], linewidth=2) 
 
         # Main scatter plot
         ax_main.scatter(class_data_x, class_data_y,marker='.', color=colors[i_], alpha=0.1)
     ax_main.set(xlabel="PC1", ylabel="PC2")
     #ax_yDist.legend()
-    ax_xDist.legend()
+    ax_xDist.legend(bbox_to_anchor=(1,1), loc="upper left", framealpha=0)
     plt.savefig(save_path, transparent=True)
     plt.close()
 
