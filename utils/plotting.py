@@ -1229,16 +1229,16 @@ def plot_histogram_with_fitted_line(x, labels, show_data=True, save_path = "hist
     for label in unique_labels:
         data = np.array([x[i] for i in range(len(x)) if labels[i] == label])
         if show_data:
-            plt.hist(data, bins=50, color=colors[label], density=True, alpha=0.5, label=cell_lines[label])
+            plt.hist(data, bins=500, color=colors[label], density=True, alpha=0.5, label=cell_lines[label])
 
         # Fit a normal distribution to the data
         mu, std = norm.fit(data)
-        xmin, xmax = plt.xlim()
+        xmin, xmax = np.min(x), np.max(x) # plt.xlim()
         x_values = np.linspace(xmin, xmax, 10000)
         p = norm.pdf(x_values, mu, std)
 
         # Plot the PDF
-        plt.plot(x_values, p, color=colors[label], linewidth=2, label=f'Fitted {cell_lines[label]} (mean={mu:.2f}, std={std:.2f})')
+        plt.plot(x_values, p, color=colors[label], linewidth=2, label=f'{cell_lines[label]} fitted (mean={mu:.2f}, std={std:.2f})')
     plt.xlim([-80000, 120000])
     plt.xlabel('Values')
     plt.ylabel('Frequency')
