@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from utils.helpers import equidistance
 
 def main():
-    fig, ax = plt.subplots(1, len(cfg.CELL_LINE), figsize=(20,15), sharex=True, sharey=True)
+    fig, ax = plt.subplots(1, len(cfg.CELL_LINE), figsize=(25,15), sharex=True, sharey=True)
     plt.subplots_adjust(wspace=0, hspace=0)    
     for j, cell_line in enumerate(cfg.CELL_LINE):        
         cell_line = cell_line.replace(" ","_")
