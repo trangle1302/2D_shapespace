@@ -4,7 +4,7 @@ sys.path.append("..")
 from shapemodes import dimreduction
 from coefficients import coefs
 from utils import plotting
-from sklearn.decomposition import PCA,FastICA
+from sklearn.decomposition import FastICA
 from pathlib import Path
 import pandas as pd
 import numpy as np
