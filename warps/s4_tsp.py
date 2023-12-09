@@ -45,7 +45,7 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
         [
             np.asarray(nu_centroid),
             helpers.realign_contour_startpoint(nu_contour),
-            helpers.realign_contour_startpoint(cell_contour),
+            helpers.realign_contour_startpoint(cell_contour, nearest_p=nu_centroid),
         ]
     )
     # print(pts_avg.max(), pts_avg.min(), cell_contour[:,0].max(), cell_contour[:,1].max())
