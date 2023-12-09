@@ -57,9 +57,9 @@ def find_landmarks(nuclei, cell, n_points=32, border_points=False):
         ]
         landmarks = np.vstack(
             [
-                np.array(nu_centroid),np.array(nu_centroid),
+                np.array(nu_centroid),
                 helpers.realign_contour_startpoint(nu_contour),
-                helpers.realign_contour_startpoint(cell_contour, nearest_p=None),
+                helpers.realign_contour_startpoint(cell_contour, nearest_p=nu_centroid),
                 border_anchors,
             ]
         )
@@ -68,14 +68,14 @@ def find_landmarks(nuclei, cell, n_points=32, border_points=False):
             [
                 np.array(nu_centroid),
                 helpers.realign_contour_startpoint(nu_contour),
-                helpers.realign_contour_startpoint(cell_contour, nearest_p=None),
+                helpers.realign_contour_startpoint(cell_contour, nearest_p=nu_centroid),
             ]
         )
     return landmarks
 
 
 def warp_image(pts_from, pts_to, img):
-    tps_f = tps.ThinPlateSpline(alpha=0.1)  # 0 Regularization
+    tps_f = tps.ThinPlateSpline(alpha=0.5)  # 0 Regularization
     tps_f.fit(pts_to, pts_from)
     x, y = img.shape
     # x, y = np.mgrid[x_min:x_max:x_steps*1j, y_min:y_max:y_steps*1j]
