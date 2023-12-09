@@ -36,17 +36,17 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
     iy_c -= min_y
 
     if len(ix_n) != n_landmarks:
-        ix_n, iy_n = helpers.equidistance(ix_n, iy_n, n_points=n_landmarks)
-        ix_c, iy_c = helpers.equidistance(ix_c, iy_c, n_points=n_landmarks * 2)
-    nu_contour = np.stack([ix_n, iy_n]).T
-    cell_contour = np.stack([ix_c, iy_c]).T
+        ix_n, iy_n = helpers.equidistance(ix_n, iy_n, n_points=n_landmarks + 1)
+        ix_c, iy_c = helpers.equidistance(ix_c, iy_c, n_points=n_landmarks * 2 + 1)
+    nu_contour = np.stack([ix_n, iy_n]).T[:-1]
+    cell_contour = np.stack([ix_c, iy_c]).T[:-1]
     # print(nu_contour.shape, cell_contour.shape)
 
     pts_avg = np.vstack(
         [
             np.asarray(nu_centroid),
             helpers.realign_contour_startpoint(nu_contour),
-            helpers.realign_contour_startpoint(cell_contour),
+            helpers.realign_contour_startpoint(cell_contour, nearest_p=nu_centroid),
         ]
     )
     # print(pts_avg.max(), pts_avg.min(), cell_contour[:,0].max(), cell_contour[:,1].max())
