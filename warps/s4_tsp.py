@@ -16,6 +16,7 @@ from joblib import Parallel, delayed
 from warps import image_warp_new as image_warp
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
+from skimage.filters import threshold_otsu
 from imageio.v2 import imread,imwrite
 from tqdm import tqdm
 
@@ -132,10 +133,15 @@ def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_a
     warped = image_warp.warp_image(pts_convex, pts_avg, warped1)
     warped = (warped*255).astype('uint8')
     #print(warped.max())
-    imwrite(save_protein_path, warped)
+    # Remove small artifact noise
+    thres = threshold_otsu(warped)
+    mask = 1*(warped > thres)
+    warped_ = (warped*mask).astype('uint8')
+    #print(warped.dtype, warped_.dtype)
+    imwrite(save_protein_path, warped_)
     if np.random.choice([True, False], p=[0.01, 0.99]):
         # Plot landmark points at morphing
-        fig, ax = plt.subplots(1, 5, figsize=(15, 30))
+        fig, ax = plt.subplots(1, 6, figsize=(15, 30))
         ax[0].imshow(nu_, alpha=0.3)
         ax[0].imshow(cell_, alpha=0.3)
         ax[0].set_title("original shape")
@@ -146,6 +152,7 @@ def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_a
         ax[2].scatter(
             pts_ori[:, 1],
             pts_ori[:, 0],
+            s=1,
             c=np.arange(len(pts_ori)),
             cmap="Reds",
         )
@@ -154,6 +161,7 @@ def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_a
         ax[3].scatter(
             pts_convex[:, 1],
             pts_convex[:, 0],
+            s=1,
             c=np.arange(len(pts_ori)),
             cmap="Reds",
         )
@@ -162,10 +170,12 @@ def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_a
         ax[4].scatter(
             pts_avg[:, 1],
             pts_avg[:, 0],
+            s=1,
             c=np.arange(len(pts_ori)),
             cmap="Reds",
         )
         ax[4].set_title("midpoint to avg_shape")
+        ax[5].imshow(warped_)
         fig.savefig(save_protein_path.replace(".png","_process.png"), bbox_inches="tight")
         plt.close()
 
