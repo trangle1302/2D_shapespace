@@ -16,7 +16,7 @@ from joblib import Parallel, delayed
 from warps import image_warp_new as image_warp
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
-from imageio.v2 import imread,imwrite
+from imageio import imread,imwrite
 from tqdm import tqdm
 
 def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
@@ -35,10 +35,10 @@ def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
     iy_c -= min_y
 
     if len(ix_n) != n_landmarks:
-        ix_n, iy_n = helpers.equidistance(ix_n, iy_n, n_points=n_landmarks)
-        ix_c, iy_c = helpers.equidistance(ix_c, iy_c, n_points=n_landmarks * 2)
-    nu_contour = np.stack([ix_n, iy_n]).T
-    cell_contour = np.stack([ix_c, iy_c]).T
+        ix_n, iy_n = helpers.equidistance(ix_n, iy_n, n_points=n_landmarks + 1)
+        ix_c, iy_c = helpers.equidistance(ix_c, iy_c, n_points=n_landmarks * 2 + 1)
+    nu_contour = np.stack([ix_n, iy_n]).T[:-1]
+    cell_contour = np.stack([ix_c, iy_c]).T[:-1]
     # print(nu_contour.shape, cell_contour.shape)
 
     pts_avg = np.vstack(
