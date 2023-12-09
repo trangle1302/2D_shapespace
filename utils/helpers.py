@@ -510,11 +510,14 @@ def bbox_iou(boxA, boxB):
     return iou
 
 
-def realign_contour_startpoint(xy):
-    centroid = find_centroid(xy)
+def realign_contour_startpoint(xy, nearest_p=None):
     x = np.array([p[0] for p in xy])
     y = np.array([p[1] for p in xy])
-    _, val = find_nearest(y[np.where(x > centroid[0])], centroid[1])
+    if nearest_p is None:
+        centroid = find_centroid(xy)
+        _, val = find_nearest(y[np.where(x > centroid[0])], centroid[1])
+    else:        
+        _, val = find_nearest(y[np.where(x > nearest_p[0])], nearest_p[1])
     if len(np.where(y == val)[0]) > 1:
         largest_x = x.min()
         current_idx = None
