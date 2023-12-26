@@ -9,6 +9,7 @@ from colocalization_quotient import colocalization_quotient
 from scipy.stats import pearsonr
 import pandas as pd
 import tqdm
+import os
 
 def check_size(image, shape, d_type="uint16", max_val=65535):
     if image.shape != shape:
@@ -89,6 +90,8 @@ def get_sc_statistics_fucci(
     return lines
 
 def get_sc_statistics(cell_mask, nuclei_mask, mt, er, nu, protein, cell_id):
+    """ Function to extract single cell statistics from single cell masks
+    """
     regions_c = skimage.measure.regionprops(cell_mask)
     regions_n = skimage.measure.regionprops(nuclei_mask)
     assert len(regions_n) == len(regions_n)
@@ -156,6 +159,8 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, nu, protein, cell_id):
     return line
 
 def get_sc_statistics_HPA(cell_mask, nuclei_mask, mt, er, nu, protein):
+    """ Function to extract single cell statistics from full mask
+    """
     remove_size = 100
     clean_small_lines = True
     # Remove nuclei touching the border:
@@ -192,7 +197,7 @@ def get_sc_statistics_HPA(cell_mask, nuclei_mask, mt, er, nu, protein):
             maxr = minr + (maxr_ - minr_)
             maxc = minc + (maxc_ - minc_)
 
-        cell_area = mask.sum()
+        cell_area = region_c.area
         mt_ = mt[minr:maxr, minc:maxc].copy()
         mt_[mask != 1] = 0
         mt_sum = mt_.sum()
@@ -262,10 +267,11 @@ def main():
     import configs.config as cfg
     d = cfg.PROJECT_DIR
     save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics.csv'
-    tmp = pd.read_csv(save_path,error_bad_lines=False)
-    finished_list = list(set(["_".join(f.split('_')[:-1]) for f in tmp.cell_id]))
+    full_FOV_masks = False
     if cfg.CELL_LINE=='S-BIAD34':
         cell_masks = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*/*_cellmask.png")
+        #tmp = pd.read_csv(save_path,error_bad_lines=False)
+        #finished_list = list(set(["_".join(f.split('_')[:-1]) for f in tmp.cell_id]))
         cell_masks = [f for f in cell_masks if f.split('/')[-1].replace("_cellmask.png", "") not in finished_list]
         print(f"{len(cell_masks)} FOVs found with masks")
         s = time.time()
@@ -299,7 +305,7 @@ def main():
                 )
                 f.writelines(lines)
         print(f"Finished in {(time.time()-s)/3600}h")
-    if False:
+    if not full_FOV_masks:
         sc_cell_pros = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*_protein.png")
         print(sc_cell_pros[:3])
         print(f"Processing {len(sc_cell_pros)} single cells, saving to {save_path}")
@@ -307,7 +313,7 @@ def main():
         with open(save_path, "a") as f:
             # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
             f.write(
-                "ab_id,cell_id,cell_area,nu_area,nu_eccentricity," +
+                "cell_id,cell_area,nu_area,nu_eccentricity," +
                 "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
                 "aspect_ratio_nu,aspect_ratio_cell," +
                 "coloc_pro_nu,coloc_pro_mt,coloc_pro_er,coloc_er_mt,coloc_nu_mt,coloc_nu_er," +
@@ -316,8 +322,8 @@ def main():
             for sc_cell_pro in sc_cell_pros:
                 # Reading all channels and masks
                 cell_shape = np.load(sc_cell_pro.replace("_protein.png", ".npy"))
-                cell_mask = cell_shape[1, :, :]
-                nuclei_mask = cell_shape[0, :, :]
+                cell_mask = cell_shape[0, :, :]
+                nuclei_mask = cell_shape[1, :, :]
                 protein = imageio.imread(sc_cell_pro)
                 ref = np.load(sc_cell_pro.replace("_protein.png", "_ref.npy")) #mt, er, nu
                 if ref.shape[2] == 3:
