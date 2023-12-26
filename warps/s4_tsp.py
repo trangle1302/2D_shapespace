@@ -17,7 +17,7 @@ from warps import image_warp_new as image_warp
 from scipy.ndimage import center_of_mass, rotate
 from skimage.transform import resize
 from skimage.filters import threshold_otsu
-from imageio.v2 import imread,imwrite
+from imageio import imread,imwrite
 from tqdm import tqdm
 
 def avg_cell_landmarks(ix_n, iy_n, ix_c, iy_c, n_landmarks=32):
@@ -73,8 +73,8 @@ def image_warping(l_num, cfg, shift_path, data_dir, protein_dir, mappings, pts_a
     raw_protein_path = f"{data_dir}/{img_id}_protein.png"
     save_protein_path = f"{protein_dir}/{img_id}_protein.png"
     #print(raw_protein_path, save_protein_path, img_id)
-    if os.path.exists(save_protein_path):
-        return 
+    #if os.path.exists(save_protein_path):
+    #    return 
     #print('Saving to file: ', save_protein_path) 
     #print(mappings[mappings.cell_idx==img_id].sc_target.values[0])
     #if mappings[mappings.cell_idx==img_id].locations.values[0] not in cfg.ORGANELLES_FULLNAME:

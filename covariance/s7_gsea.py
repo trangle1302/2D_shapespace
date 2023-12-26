@@ -34,6 +34,7 @@ if __name__ == "__main__":
         "GO_Molecular_Function_2021",
         "WikiPathway_2021_Human",
         "KEGG_2021_Human",
+        "CORUM"
     ]
 
     for PC, pc_cells in cells_assigned.items():
@@ -53,30 +54,32 @@ if __name__ == "__main__":
             print(enr)#.results.head(5))
         """
         for i in range(3):
-            f = open(
-                f"{cfg.PROJECT_DIR}/covar/{PC}_{i}_cluster_assignation.json",
-                "r",
-            )
-            clusters = json.load(f)
-            for cluster in np.unique(clusters["assignation"]):
-                gene_list = np.array(clusters["ensembl_ids"])[
-                    np.where(np.array(clusters["assignation"]) == cluster)[0].astype(
-                        "uint"
-                    )
-                ]
-                gene_list = [g.split(",")[0] for g in gene_list]
-                print(gene_list[:10])
-                print(f"PC{PC}-bin{i}: Number of gene: {len(gene_list)}")
-                enr = gseapy.enrichr(
-                    gene_list=list(gene_list),
-                    gene_sets=databases,
-                    organism="human",
-                    outdir=f"{save_dir}/{PC}_{i}",
-                    background="hsapiens_gene_ensembl",
-                    cutoff=0.1,
-                    format="pdf",
+            try:
+                f = open(
+                    f"{cfg.PROJECT_DIR}/covar/{PC}_{i}_cluster_assignation.json",
+                    "r",
                 )
-                print(enr.results.head(5))
-
+                clusters = json.load(f)
+                for cluster in np.unique(clusters["assignation"]):
+                    gene_list = np.array(clusters["ensembl_ids"])[
+                        np.where(np.array(clusters["assignation"]) == cluster)[0].astype(
+                            "uint"
+                        )
+                    ]
+                    gene_list = [g.split(",")[0] for g in gene_list]
+                    print(gene_list[:10])
+                    print(f"PC{PC}-bin{i}: Number of gene: {len(gene_list)}")
+                    enr = gseapy.enrichr(
+                        gene_list=list(gene_list),
+                        gene_sets=databases,
+                        organism="human",
+                        outdir=f"{save_dir}/{PC}_{i}",
+                        background="hsapiens_gene_ensembl",
+                        cutoff=0.1,
+                        format="pdf",
+                    )
+                    print(PC, i, enr.results.head(5))
+            except:
+                print(f"Can't find {cfg.PROJECT_DIR}/covar/{PC}_{i}_cluster_assignation.json")
     # np.corrcoef(xarr, yarr, rowvar=False) #row-wise correlation
     # np.corrcoef(xarr, yarr) #column-wise correlation
