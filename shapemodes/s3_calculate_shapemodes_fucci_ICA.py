@@ -50,7 +50,7 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path="", fft_pat
             [pd.DataFrame(np.matrix(df).real), pd.DataFrame(np.matrix(df).imag)],
             axis=1,
         )
-    n_pc = 5#20
+    n_pc = 10#20
     ica = FastICA(n_components=n_pc, random_state=0)
     matrix_of_features_transform = ica.fit_transform(df_)
     pc_keep = [f"PC{c}" for c in range(1, 1 + n_pc)]
@@ -70,7 +70,7 @@ def calculate_shapemode(df, n_coef, mode, fun="fft", shape_mode_path="", fft_pat
     # Extract the sorted items from the original list
     #sorted_pc = [item for item, _ in sorted_pairs]
     #sort_pc = sorted(pc_keep, key=lambda x: variance_order.index(pc_keep.index(x)))
-    print('PC ordered by variance: ',pc_order, sorted_pairs)
+    print('PC ordered by variance: ', pc_order, sorted_pairs)
     
     # Cell density on major PC
     plotting.plot_pc_density(df_trans["PC1"], df_trans["PC2"], save_path=f"{shape_mode_path}/PC1vsPC2_cell_density.png")
@@ -171,7 +171,7 @@ def main():
         ]
 
         df_ = df.drop(columns=["matchid"])
-        shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}_ICA_5components"
+        shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}_ICA_10components"
         df_trans = calculate_shapemode(
             df_,
             cfg.N_COEFS,
