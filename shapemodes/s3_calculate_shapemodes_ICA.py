@@ -91,6 +91,7 @@ def main():
         except:
             cell_nu_ratio = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv")
             cell_nu_ratio["ratio"] = cell_nu_ratio.cell_area/cell_nu_ratio.nu_area
+            cell_nu_ratio["image_name"] = cell_nu_ratio.cell_id
 
         rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].image_name.to_list()
         print(
@@ -184,8 +185,9 @@ def main():
         plotting.plot_pc_density(df_trans["PC1"], df_trans["PC2"], save_path=f"{shape_mode_path}/PC1vsPC2_cell_density.png")
         plotting.plot_pc_density(df_trans["PC2"], df_trans["PC3"], save_path=f"{shape_mode_path}/PC2vsPC3_cell_density.png")
 
+        setattr(ica, 'explained_variance_ratio_', [0,0,0])
         pm = plotting.PlotShapeModes(
-            pca,
+            ica,
             df_trans,
             n_coef,
             pc_keep,

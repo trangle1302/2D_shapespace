@@ -41,14 +41,14 @@ def find_landmarks(nuclei, cell, n_points=32, border_points=False):
     if len(cell_contour) > 1:
         cell_contour = np.vstack(cell_contour)
         x, y = helpers.equidistance(
-            cell_contour[:, 0], cell_contour[:, 1], n_points=n_points
+            cell_contour[:, 0], cell_contour[:, 1], n_points=n_points*2
         )
     else:
         x, y = helpers.equidistance(
-            cell_contour[0][:, 0], cell_contour[0][:, 1], n_points=n_points
+            cell_contour[0][:, 0], cell_contour[0][:, 1], n_points=n_points*2
         )
 
-    cell_contour = np.array([[x[i], y[i]] for i in range(n_points)])
+    cell_contour = np.array([[x[i], y[i]] for i in range(n_points*2)])
 
     if border_points:
         (x_max, y_max) = cell.shape

@@ -22,14 +22,15 @@ if __name__ == "__main__":
     shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}"
     sampled_intensity_dir = f"{cfg.PROJECT_DIR}/sampled_intensity_bin"
 
-    mappings = pd.read_csv(cfg.META_PATH)
+    mappings = pd.read_csv(f"{cfg.PROJECT_DIR}/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border_splitVesiclesPCP.csv")
     id_with_intensity = glob.glob(f"{sampled_intensity_dir}/*.npy")
+    print(mappings, len(id_with_intensity))
     mappings["Link"] = [
         f"{sampled_intensity_dir}/{id.split('_',1)[1]}_protein.npy"
         for id in mappings.id
     ]
     mappings = mappings[mappings.Link.isin(id_with_intensity)]
-    print(mappings.target.value_counts())
+    print(mappings.target.value_counts(), mappings)
 
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json")
     cells_assigned = json.load(f)
