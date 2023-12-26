@@ -172,8 +172,8 @@ if __name__ == "__main__":
                     continue
                 n0 = len(ls_)
                 lines.append([f"PC{PC}", org, bin_[0], n0])
-                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
-                   continue
+                #if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
+                #   continue
                 if len(ls_) < 3:
                     print(f"{org} has less than 5 cells ({len(ls_)}) -> move on")
                     continue
