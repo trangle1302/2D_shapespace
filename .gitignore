@@ -69,3 +69,6 @@ slurm-*
 
 # snakemake log
 .snakemake/*
+
+# intermediate plots
+*.png
