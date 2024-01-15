@@ -113,14 +113,18 @@ def get_mask(file_path=f"Avg_cell.npz", shape_=(336, 699)):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cell_line", help="principle component", type=str)
+    parser.add_argument("--cell_line", help="Cell Line", type=str)
     args = parser.parse_args()
     intensity_sampling_concentric_ring = False
     intensity_warping = True
     import configs.config as cfg
     
-    cell_line = args.cell_line #cfg.CELL_LINE #args.cell_line
-    project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line) #cfg.PROJECT_DIR#os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
+    # If not specified, use the cell line in config file
+    if args.cell_line is None:
+        cell_line = cfg.CELL_LINE
+    else:
+        cell_line = args.cell_line
+    project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
 
     log_dir = f"{project_dir}/logs"
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
