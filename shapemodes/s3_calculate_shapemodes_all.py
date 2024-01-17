@@ -27,22 +27,12 @@ def get_memory():
                 free_memory += int(sline[1])
     return free_memory
 
-def load_fft(cfg, project_dir, cell_line, mappings):
+def load_fft(cfg, project_dir):
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
     fft_path = os.path.join(fft_dir, f"fftcoefs_{cfg.N_COEFS}.txt")
     n_coef = cfg.N_COEFS
     n_samples = cfg.N_SAMPLES
-
-    protein_dir = f"{project_dir}/cell_masks"
-    mappings_ = mappings[mappings["atlas_name"] == cell_line]
-    # print(mappings.target.value_counts())
-    print("Mapping file all: ", mappings_.shape, mappings_.columns)
-    id_with_intensity = glob.glob(f"{protein_dir}/*.png")
-    mappings_["Link"] = [
-        f"{protein_dir}/{id.split('_',1)[1]}_protein.png" for id in mappings_.id
-    ]
-    mappings_ = mappings_[mappings_.Link.isin(id_with_intensity)]
-
+    
     with open(fft_path) as f:
         count = sum(1 for _ in f)
     if (n_samples != -1) & (n_samples > count):
@@ -81,7 +71,7 @@ def main():
     labels = []
     for idx, cell_line in enumerate(cfg.CELL_LINE):
         project_dir = f"{cfg.PROJECT_DIR}/{cell_line.replace(' ','_')}"
-        lines = load_fft(cfg, project_dir, cell_line, mappings)
+        lines = load_fft(cfg, project_dir)
 
         cell_nu_ratio = pd.read_csv(f"{project_dir}/cell_nu_ratio.txt")
         cell_nu_ratio.columns = ["path", "name", "nu_area", "cell_area", "ratio"]
