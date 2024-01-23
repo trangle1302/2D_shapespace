@@ -16,6 +16,21 @@ def check_size(image, shape, d_type="uint16", max_val=65535):
         image = (skimage.transform.resize(image, shape) * max_val).astype(d_type)
     return image
 
+def rescale_intensity(image, min_val=0, max_val=65535):
+    dtype = image.dtype
+    maxmax = (65535 if dtype == "uint16" else (255 if dtype == "uint8" else 1))
+    normed = (image - min_val) / (max_val - min_val)
+    return (normed*maxmax).astype(dtype)
+
+def compute_quantiles(image_paths, quantiles=[1, 99]):
+    results = []
+    for img in image_paths:
+        try:
+            image = imageio.imread(img)
+            results += [np.percentile(image, quantiles)]
+        except:
+            print(f"Error reading {img}")
+    return np.array(results)
 
 def get_sc_statistics_fucci(
     cell_mask, nuclei_mask, mt, gmnn, cdt1, protein, cell_mask_path
@@ -150,7 +165,6 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, nu, protein, cell_id):
                     pearsonr(er.flatten(), mt.flatten())[0],
                     pearsonr(nu.flatten(), mt.flatten())[0],
                     pearsonr(nu.flatten(), er.flatten())[0],
-                    
                 ],
             )
         )
@@ -266,73 +280,92 @@ def get_sc_statistics_HPA(cell_mask, nuclei_mask, mt, er, nu, protein):
 def main():
     import configs.config as cfg
     d = cfg.PROJECT_DIR
-    save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics.csv'
-    full_FOV_masks = False
+    save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics_rescale_intensity_well99.csv'
+    full_FOV_masks = True
     if cfg.CELL_LINE=='S-BIAD34':
-        cell_masks = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*/*_cellmask.png")
-        #tmp = pd.read_csv(save_path,error_bad_lines=False)
-        #finished_list = list(set(["_".join(f.split('_')[:-1]) for f in tmp.cell_id]))
-        cell_masks = [f for f in cell_masks if f.split('/')[-1].replace("_cellmask.png", "") not in finished_list]
-        print(f"{len(cell_masks)} FOVs found with masks")
-        s = time.time()
-        print(f'Saving to {cfg.PROJECT_DIR}/single_cell_statistics.csv')
-        with open(save_path, "a") as f:
-            # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
-            # f.write(
-            #     "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,"+
-            #     "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
-            #     "aspect_ratio_nu,aspect_ratio_cell,coloc_pro_mt\n"
-            # )
-            for cell_mask_path in cell_masks:
-                # Reading all channels and masks
-                cell_mask = imageio.imread(cell_mask_path)
-                nuclei_mask = imageio.imread(
-                    cell_mask_path.replace("cellmask", "nucleimask")
+        if full_FOV_masks:
+            s = time.time()
+            antibodies = os.listdir(f"{d}/cell_masks")
+            print(f'Saving to {save_path}')
+            for antibody in tqdm.tqdm(antibodies):
+                try: 
+                    max_vals = {}
+                    for ch in ['w1', 'w2', 'w3', 'w4_Rescaled']:
+                        chs = glob.glob(f"{d}/Files/{antibody}/*_{ch}.tif")
+                        if len(chs) == 0:
+                            continue
+                        quantiles = np.array(compute_quantiles(chs, quantiles=[0, 99]))
+                        # set xx percentile of a well as max value for all images
+                        max_val = quantiles[:, 1].max()
+                        max_vals[ch] = max_val
+                        #print(f"Max value for {antibody}-{ch} is {max_val}")
+                    cell_masks = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/{antibody}/*_cellmask.png")
+                    
+                    #print(f"{antibody}: {len(cell_masks)} FOVs found with masks")
+                
+                    
+                    with open(save_path, "a") as f:
+                        # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
+                        # f.write(
+                        #     "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,"+
+                        #     "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
+                        #     "aspect_ratio_nu,aspect_ratio_cell,coloc_pro_mt\n"
+                        # )
+                        for cell_mask_path in cell_masks:
+                            # Reading all channels and masks
+                            cell_mask = imageio.imread(cell_mask_path)
+                            nuclei_mask = imageio.imread(
+                                cell_mask_path.replace("cellmask", "nucleimask")
+                            )
+                            ab_id = cell_mask_path.split("/")[-2]
+                            img_id = cell_mask_path.split("/")[-1].replace("_cellmask.png", "")
+                            mt = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w1.tif")
+                            mt = check_size(mt, cell_mask.shape)
+                            mt = rescale_intensity(mt, max_val=max_vals['w1'])
+                            gmnn = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w2.tif")
+                            gmnn = check_size(gmnn, cell_mask.shape)
+                            gmnn = rescale_intensity(gmnn, min_val=0, max_val=255)
+                            cdt1 = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w3.tif")
+                            cdt1 = check_size(cdt1, cell_mask.shape)
+                            cdt1 = rescale_intensity(cdt1, max_val=max_vals['w3'])
+                            protein = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w4_Rescaled.tif")
+                            protein = check_size(protein, cell_mask.shape)
+                            protein = rescale_intensity(protein, max_val=max_vals['w4_Rescaled'])
+                            lines = get_sc_statistics_fucci(
+                                cell_mask, nuclei_mask, mt, gmnn, cdt1, protein, cell_mask_path
+                            )
+                            f.writelines(lines)
+                except Exception as e:
+                    print(f"Error processing {antibody}: {e}")
+            print(f"Finished in {(time.time()-s)/3600}h")
+        else:
+            sc_cell_pros = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*_protein.png")
+            print(sc_cell_pros[:3])
+            print(f"Processing {len(sc_cell_pros)} single cells, saving to {save_path}")
+            s = time.time()
+            with open(save_path, "a") as f:
+                # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
+                f.write(
+                    "cell_id,cell_area,nu_area,nu_eccentricity," +
+                    "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
+                    "aspect_ratio_nu,aspect_ratio_cell," +
+                    "coloc_pro_nu,coloc_pro_mt,coloc_pro_er,coloc_er_mt,coloc_nu_mt,coloc_nu_er," +
+                    "pearsonr_pro_nu,pearsonr_pro_mt,pearsonr_pro_er,pearsonr_er_mt,pearsonr_nu_mt,pearsonr_nu_er\n"
                 )
-                ab_id = cell_mask_path.split("/")[-2]
-                img_id = cell_mask_path.split("/")[-1].replace("_cellmask.png", "")
-                mt = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w1.tif")
-                mt = check_size(mt, cell_mask.shape)
-                gmnn = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w2.tif")
-                gmnn = check_size(gmnn, cell_mask.shape)
-                cdt1 = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w3.tif")
-                cdt1 = check_size(cdt1, cell_mask.shape)
-                protein = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w4_Rescaled.tif")
-                protein = check_size(protein, cell_mask.shape)
-
-                lines = get_sc_statistics_fucci(
-                    cell_mask, nuclei_mask, mt, gmnn, cdt1, protein, cell_mask_path
-                )
-                f.writelines(lines)
-        print(f"Finished in {(time.time()-s)/3600}h")
-    if not full_FOV_masks:
-        sc_cell_pros = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*_protein.png")
-        print(sc_cell_pros[:3])
-        print(f"Processing {len(sc_cell_pros)} single cells, saving to {save_path}")
-        s = time.time()
-        with open(save_path, "a") as f:
-            # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
-            f.write(
-                "cell_id,cell_area,nu_area,nu_eccentricity," +
-                "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
-                "aspect_ratio_nu,aspect_ratio_cell," +
-                "coloc_pro_nu,coloc_pro_mt,coloc_pro_er,coloc_er_mt,coloc_nu_mt,coloc_nu_er," +
-                "pearsonr_pro_nu,pearsonr_pro_mt,pearsonr_pro_er,pearsonr_er_mt,pearsonr_nu_mt,pearsonr_nu_er\n"
-            )
-            for sc_cell_pro in sc_cell_pros:
-                # Reading all channels and masks
-                cell_shape = np.load(sc_cell_pro.replace("_protein.png", ".npy"))
-                cell_mask = cell_shape[0, :, :]
-                nuclei_mask = cell_shape[1, :, :]
-                protein = imageio.imread(sc_cell_pro)
-                ref = np.load(sc_cell_pro.replace("_protein.png", "_ref.npy")) #mt, er, nu
-                if ref.shape[2] == 3:
-                    ref = np.transpose(ref, (2, 0, 1))
-                line = get_sc_statistics(
-                    cell_mask, nuclei_mask, ref[0,:,:], ref[1,:,:], ref[2,:,:], protein, os.path.basename(sc_cell_pro).replace("_protein.png","")
-                )
-                f.write(line)
-        print(f"Finished in {(time.time()-s)/3600}h")
+                for sc_cell_pro in sc_cell_pros:
+                    # Reading all channels and masks
+                    cell_shape = np.load(sc_cell_pro.replace("_protein.png", ".npy"))
+                    cell_mask = cell_shape[0, :, :]
+                    nuclei_mask = cell_shape[1, :, :]
+                    protein = imageio.imread(sc_cell_pro)
+                    ref = np.load(sc_cell_pro.replace("_protein.png", "_ref.npy")) #mt, er, nu
+                    if ref.shape[2] == 3:
+                        ref = np.transpose(ref, (2, 0, 1))
+                    line = get_sc_statistics(
+                        cell_mask, nuclei_mask, ref[0,:,:], ref[1,:,:], ref[2,:,:], protein, os.path.basename(sc_cell_pro).replace("_protein.png","")
+                    )
+                    f.write(line)
+            print(f"Finished in {(time.time()-s)/3600}h")
     else:
         image_dir = "/data/HPA-IF-images"
         mask_dir = "/data/kaggle-dataset/PUBLICHPA/mask/test"
