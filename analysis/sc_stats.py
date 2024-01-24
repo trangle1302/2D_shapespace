@@ -284,33 +284,32 @@ def main():
     full_FOV_masks = True
     if cfg.CELL_LINE=='S-BIAD34':
         if full_FOV_masks:
-            s = time.time()
-            antibodies = os.listdir(f"{d}/cell_masks")
-            print(f'Saving to {save_path}')
-            for antibody in tqdm.tqdm(antibodies):
-                try: 
-                    max_vals = {}
-                    for ch in ['w1', 'w2', 'w3', 'w4_Rescaled']:
-                        chs = glob.glob(f"{d}/Files/{antibody}/*_{ch}.tif")
-                        if len(chs) == 0:
-                            continue
-                        quantiles = np.array(compute_quantiles(chs, quantiles=[0, 99]))
-                        # set xx percentile of a well as max value for all images
-                        max_val = quantiles[:, 1].max()
-                        max_vals[ch] = max_val
-                        #print(f"Max value for {antibody}-{ch} is {max_val}")
-                    cell_masks = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/{antibody}/*_cellmask.png")
+            with open(save_path, "a") as f:
+            # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
+                f.write(
+                    "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,"+
+                    "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
+                    "aspect_ratio_nu,aspect_ratio_cell,coloc_pro_mt\n"
+                )
+                s = time.time()
+                antibodies = os.listdir(f"{d}/cell_masks")
+                print(f'Saving to {save_path}')
+                for antibody in tqdm.tqdm(antibodies):
+                    try: 
+                        max_vals = {}
+                        for ch in ['w1', 'w2', 'w3', 'w4_Rescaled']:
+                            chs = glob.glob(f"{d}/Files/{antibody}/*_{ch}.tif")
+                            if len(chs) == 0:
+                                continue
+                            quantiles = np.array(compute_quantiles(chs, quantiles=[0, 99]))
+                            # set xx percentile of a well as max value for all images
+                            max_val = quantiles[:, 1].max()
+                            max_vals[ch] = max_val
+                            #print(f"Max value for {antibody}-{ch} is {max_val}")
+                        cell_masks = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/{antibody}/*_cellmask.png")
+                        
+                        #print(f"{antibody}: {len(cell_masks)} FOVs found with masks")
                     
-                    #print(f"{antibody}: {len(cell_masks)} FOVs found with masks")
-                
-                    
-                    with open(save_path, "a") as f:
-                        # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
-                        # f.write(
-                        #     "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,"+
-                        #     "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
-                        #     "aspect_ratio_nu,aspect_ratio_cell,coloc_pro_mt\n"
-                        # )
                         for cell_mask_path in cell_masks:
                             # Reading all channels and masks
                             cell_mask = imageio.imread(cell_mask_path)
@@ -324,7 +323,7 @@ def main():
                             mt = rescale_intensity(mt, max_val=max_vals['w1'])
                             gmnn = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w2.tif")
                             gmnn = check_size(gmnn, cell_mask.shape)
-                            gmnn = rescale_intensity(gmnn, min_val=0, max_val=255)
+                            gmnn = rescale_intensity(gmnn, max_val=max_vals['w2'])
                             cdt1 = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w3.tif")
                             cdt1 = check_size(cdt1, cell_mask.shape)
                             cdt1 = rescale_intensity(cdt1, max_val=max_vals['w3'])
@@ -335,8 +334,8 @@ def main():
                                 cell_mask, nuclei_mask, mt, gmnn, cdt1, protein, cell_mask_path
                             )
                             f.writelines(lines)
-                except Exception as e:
-                    print(f"Error processing {antibody}: {e}")
+                    except Exception as e:
+                        print(f"Error processing {antibody}: {e}")
             print(f"Finished in {(time.time()-s)/3600}h")
         else:
             sc_cell_pros = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*_protein.png")
