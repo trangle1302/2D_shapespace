@@ -20,15 +20,21 @@ def sample_intensity(l_num, cfg, args, shift_path, data_dir, protein_dir, mappin
     if len(data_[1:]) != cfg.N_COEFS * 4:
         return # continue
     sc_path = data_[0]
-    img_id = os.path.basename(sc_path).replace(".npy","")
-    if not img_id in mappings.cell_idx.tolist():
-        return
-    if mappings[mappings.cell_idx==img_id].sc_target.values[0] in ["Negative","Multi-Location"]:
-        #mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
-        return 
-    raw_protein_path = f"{data_dir}/{img_id}_protein.png"
-    save_protein_path = f"{protein_dir}/{img_id}_protein.npy"
-    #print(raw_protein_path, save_protein_path, img_id)
+    if args.cell_line == "S-BIAD34":
+        antibody = sc_path.split('/')[-2]
+        img_id = os.path.basename(sc_path).replace(".npy","")
+        raw_protein_path = f"{data_dir}/{antibody}/{img_id}_protein.png"
+        save_protein_path = f"{protein_dir}/{antibody}_{img_id}_protein.npy"
+    else:
+        img_id = os.path.basename(sc_path).replace(".npy","")
+        if not img_id in mappings.cell_idx.tolist():
+            return
+        if mappings[mappings.cell_idx==img_id].sc_target.values[0] in ["Negative","Multi-Location"]:
+            #mappings.cell_idx.str.contains(img_id).sum() == 0: # Only single label cell
+            return 
+        raw_protein_path = f"{data_dir}/{img_id}_protein.png"
+        save_protein_path = f"{protein_dir}/{img_id}_protein.npy"
+    print(sc_path, raw_protein_path, save_protein_path, img_id)
     if os.path.exists(save_protein_path):
         return 
     line_ = grep(img_id+".npy", shift_path)
@@ -48,7 +54,10 @@ def sample_intensity(l_num, cfg, args, shift_path, data_dir, protein_dir, mappin
             (float(data_shifts[2].split(",")[1].strip(")"))),
         )
     #print(mappings[mappings.cell_idx==img_id].sc_target.values)
-    shifts["sc_label"] = mappings[mappings.cell_idx==img_id].sc_target.values[0]
+    if args.cell_line == "S-BIAD34":
+        shifts["sc_label"] = mappings[mappings.antibody==antibody].locations.values[0]
+    else:
+        shifts["sc_label"] = mappings[mappings.cell_idx==img_id].sc_target.values[0]
     
     if True:
         intensity = plotting.get_protein_intensity(
@@ -94,13 +103,18 @@ def main():
     cell_line = args.cell_line
     project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
     data_dir = f"{project_dir}/cell_masks"
-    protein_dir = f"{project_dir}/sampled_intensity_bin2"
+    protein_dir = f"{project_dir}/sampled_intensity_bin"
     if not os.path.exists(protein_dir):
         os.makedirs(protein_dir)
     
-    cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
-    mappings = pd.read_csv(cellline_meta)
+    if args.cell_line == "S-BIAD34":
+        mappings = pd.read_csv('/data/HPA-IF-images/IF-image.csv')
+        mappings = mappings[mappings.atlas_name=='U2OS']
+    else:
+        cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
+        mappings = pd.read_csv(cellline_meta)
     #mappings = mappings[~mappings.sc_target.isin(["Negative","Multi-Location"])]
+    print(mappings.columns)
     #print(mappings.sc_target.value_counts(), mappings.cell_idx)
     log_dir = f"{project_dir}/logs"
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
