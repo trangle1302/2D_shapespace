@@ -9,6 +9,16 @@ from s3_calculate_shapemodes_all import load_fft
 import configs.config as cfg
 import matplotlib.pyplot as plt
 
+from ot.dr import wda, fda
+
+def n_nearest_neighbors():
+    df = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics_pcs.csv")
+    df['cc_groups'] = [('G1' if v<0.35 else ('G2' if v>0.6 else 'S')) for v in df.pseudotime]
+    for (antibody, cc_phase), df_ in df.groupby(['ab_id','cc_groups']):
+        print(antibody, cc_phase, df_.shape)
+        
+    return cell_idx
+
 if __name__ == "__main__":
     project_dir = f"{cfg.PROJECT_DIR}" # /data/2Dshapespace/S-BIAD34
     load_raw_fft = False
@@ -86,3 +96,32 @@ if __name__ == "__main__":
         c = [d[i]  for i in y_train]
         plt.scatter(df_trans[:,0],df_trans[:,1], c=c)
         plt.savefig('lda.png')
+
+
+        # FDA (Fisher Discriminant Analysis), when n==2, FDA is the same as LDA
+        p = 2
+        Pfda, projfda = fda(np.matrix(X_train), y_train, p)
+
+        # WDA (Wasserstein Discriminant Analysis)p = 2
+        reg = 1e0
+        k = 10
+        maxiter = 100
+        P0 = np.random.randn(X_train.shape[1], p)
+        P0 /= np.sqrt(np.sum(P0**2, 0, keepdims=True))
+        Pwda, projwda = wda(np.matrix(X_train), y_train, p, reg, k, maxiter=maxiter, P0=P0)
+                
+        X_train_proj_wda = projwda(X_train)
+        X_train_proj_fda = projfda(X_train)
+
+        plt.figure(2)
+        plt.subplot(2, 2, 1)
+        plt.scatter(X_train_proj_fda[:, 0], X_train_proj_fda[:, 1], c=y_train, marker='+', label='Projected samples')
+        plt.legend(loc=0)
+        plt.title('Projected training samples FDA')
+
+        plt.subplot(2, 2, 3)
+        plt.legend(loc=0)
+        plt.scatter(X_train_proj_wda[:, 0], X_train_proj_wda[:, 1], c=y_train, marker='+', label='Projected samples')
+        plt.title('Projected training samples WDA')
+        plt.tight_layout()
+        plt.savefig('fda_wda.png')
