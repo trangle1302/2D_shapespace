@@ -67,8 +67,6 @@ if __name__ == "__main__":
         mappings.to_csv(cellline_meta, index=False)
         print(mappings.sc_target.value_counts())
     #print(mappings.sc_target.value_counts())
-    mappings.loc[mappings.sc_target=="Cytoplasmic bodies","sc_target"]="CytoBodies"
-    mappings.loc[mappings.sc_target=="Lipid droplets","sc_target"]="LipidDrop"
     print(mappings.columns, mappings.sc_target.value_counts())
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "r")
     cells_assigned = json.load(f)
