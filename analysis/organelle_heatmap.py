@@ -57,6 +57,9 @@ def unmerge_label(
         else:
             mappings_df.loc[i, "sc_locations"] = r.target
             mappings_df.loc[i, "sc_target"] = r.target
+    # Shorten names
+    mappings_df.loc[mappings_df.sc_target=="Cytoplasmic bodies","sc_target"]="CytoBodies"
+    mappings_df.loc[mappings_df.sc_target=="Lipid droplets","sc_target"]="LipidDrop"
     return mappings_df
 
 def get_average_intensities_tsp(ls_, sampled_intensity_dir=""): #warping
