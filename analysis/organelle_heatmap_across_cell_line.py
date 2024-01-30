@@ -13,6 +13,7 @@ from utils import helpers
 import argparse
 from imageio import imread, imwrite
 import glob
+from organelle_heatmap import unmerge_label, get_mask, get_average_intensities_cr, get_average_intensities_tsp
 
 def correlation(value_dict, method_func, mask):
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
@@ -32,99 +33,16 @@ def correlation(value_dict, method_func, mask):
                     (cor_mat[i, j],_) = method_func(v1.flatten(), v2.flatten())
     return cor_mat
 
-def unmerge_label(
-    mappings_df,
-    merged_label="VesiclesPCP",
-    subcomponents=[
-        "Lipid droplets",
-        "Endosomes",
-        "Lysosomes",
-        "Peroxisomes",
-        "Vesicles",
-        "Cytoplasmic bodies",
-    ],
-):
-    mappings_df["sc_locations"] = ""
-    mappings_df["sc_target"] = ""
-    for i, r in mappings_df.iterrows():
-        if r.target == merged_label:
-            sc_l = [l for l in r.locations.split(",") if l in subcomponents]
-            mappings_df.loc[i, "sc_locations"] = ",".join(sc_l)
-            if len(sc_l) > 1:
-                mappings_df.loc[i, "sc_target"] = "Multi-Location"
-            else:
-                mappings_df.loc[i, "sc_target"] = sc_l[0]
-        else:
-            mappings_df.loc[i, "sc_locations"] = r.target
-            mappings_df.loc[i, "sc_target"] = r.target
-    return mappings_df
-
-def get_average_intensities_tsp(ls_, sampled_intensity_dir=""): #warping
-    n = len(ls_)
-    sample_img = imread(f"{sampled_intensity_dir}/{ls_[0]}_protein.png")
-    intensities = np.zeros(sample_img.shape)
-    for img_id in ls_:
-        try:
-            pilr = imread(f"{sampled_intensity_dir}/{img_id}_protein.png")
-        except:
-            print(f"{sampled_intensity_dir}/{img_id}_protein.png reading err")
-        try:
-            thres = threshold_otsu(pilr)
-            #thres = np.percentile(pilr.ravel(), 90)
-        except:
-            thres = 0
-        pilr = 1*(pilr > thres).astype("float64")
-        intensities += pilr / n
-    return intensities
-
-def get_average_intensities_cr(ls_, sampled_intensity_dir=""): #concentric rings
-    n = len(ls_)
-    intensities = np.zeros((31,256))
-    for img_id in ls_:
-        try:
-            pilr = np.load(f"{sampled_intensity_dir}/{img_id}_protein.npy")
-        except:
-            print(f"{sampled_intensity_dir}/{img_id}_protein.npy reading err")
-        try:
-            thres = threshold_otsu(pilr)
-        except:
-            thres = 0
-        pilr = (pilr > thres).astype("float64")
-        intensities += pilr / n
-    return intensities
-
-def get_mask(file_path=f"Avg_cell.npz", shape_=(336, 699)):
-    avgcell = np.load(file_path)
-    ix_c = avgcell["ix_c"]
-    iy_c = avgcell["iy_c"]
-    min_x = np.min(ix_c)
-    min_y = np.min(iy_c)
-    nu_centroid = [0,0]
-    nu_centroid[0] = -min_x
-    nu_centroid[1] = -min_y
-    ix_c -= min_x
-    iy_c -= min_y
-    from skimage.draw import polygon
-    img = np.zeros(shape_)
-    rr, cc = polygon(ix_c, iy_c, img.shape)
-    img[rr, cc] = 1
-    id_keep = np.where(img.flatten()==1)[0]
-    return id_keep, img
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cell_line", help="Cell Line", type=str)
+    parser.add_argument("--cell_line", help="principle component", type=str)
     args = parser.parse_args()
     intensity_sampling_concentric_ring = False
     intensity_warping = True
     import configs.config as cfg
     
-    # If not specified, use the cell line in config file
-    if args.cell_line is None:
-        cell_line = cfg.CELL_LINE
-    else:
-        cell_line = args.cell_line
-    project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
+    cell_line = args.cell_line #cfg.CELL_LINE #args.cell_line
+    project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line) #cfg.PROJECT_DIR#os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
 
     log_dir = f"{project_dir}/logs"
     fft_dir = f"{project_dir}/fftcoefs/{cfg.ALIGNMENT}"
@@ -176,10 +94,10 @@ if __name__ == "__main__":
                     continue
                 n0 = len(ls_)
                 lines.append([f"PC{PC}", org, bin_[0], n0])
-                #if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
-                #   continue
+                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
+                   continue
                 if len(ls_) < 3:
-                    print(f"{org} has less than 5 cells ({len(ls_)}) -> move on")
+                    print(f"{org} has less than 3 cells ({len(ls_)}) -> move on")
                     continue
                 if n0 > 500:
                     import random
