@@ -347,6 +347,7 @@ def main():
             s = time.time()
             import multiprocessing
             from joblib import Parallel, delayed
+            import psutil
             def run_1_img(img_id, cfg, image_dir, mask_dir):
                 save_path = f"{cfg.PROJECT_DIR}/cell_masks/{img_id}_sc_statistics.csv"
                 with open(save_path, "a") as f:
@@ -370,6 +371,9 @@ def main():
                     )
                     f.writelines(lines)
             n_processes = multiprocessing.cpu_count() - 15
+            p = psutil.Process(os.getpid())
+            print(n_processes, p)
+            p.cpu_affinity(range(n_processes))
             processed_list = Parallel(n_jobs=n_processes)(
                         delayed(run_1_img)(img_id, cfg, image_dir, mask_dir)
                         for img_id in tqdm.tqdm(imlist, total=len(imlist)))
