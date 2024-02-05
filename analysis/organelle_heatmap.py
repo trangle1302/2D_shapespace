@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from skimage.filters import threshold_minimum, threshold_otsu
 from skimage.metrics import structural_similarity
+from skimage.transform import resize
 from scipy.stats import pearsonr
 import json
 from utils import helpers
@@ -14,11 +15,11 @@ import argparse
 from imageio import imread, imwrite
 import glob
 
-def correlation(value_dict, method_func, mask):
+def correlation(value_dict, method_func, mask=None):
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
     for i, (k1, v1) in enumerate(value_dict.items()):
         for j, (k2, v2) in enumerate(value_dict.items()):
-            if True:
+            if mask!=None:
                 v1_ = (np.zeros_like(mask) if v1.max()==0 else v1.flatten()[mask])
                 v2_ = (np.zeros_like(mask) if v2.max()==0 else v2.flatten()[mask])
                 try:
@@ -177,14 +178,13 @@ if __name__ == "__main__":
                     continue
                 n0 = len(ls_)
                 lines.append([f"PC{PC}", org, bin_[0], n0])
-                #if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
-                #   continue
+                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
+                   continue
                 if len(ls_) < 3:
                     print(f"{org} has less than 5 cells ({len(ls_)}) -> move on")
                     continue
                 if n0 > 500:
-                    import random
-                    ls_ = random.sample(ls_, 500)
+                    ls_ = np.random.choice(ls_, 500, replace=False)
                 if intensity_sampling_concentric_ring:
                     intensities = get_average_intensities_cr(ls_, sampled_intensity_dir=sampled_intensity_dir)
                     np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
