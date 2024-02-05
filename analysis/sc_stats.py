@@ -118,8 +118,9 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, nu, protein, cell_id):
     cell_area = region_c.area
 
     # protein in the whole cell area
-    protein[cell_mask != 1] = 0
-    pr_sum = protein.sum()
+    pr = protein.copy()
+    pr[cell_mask != 1] = 0
+    pr_sum = pr.sum()
     mt[cell_mask != 1] = 0
     mt_sum = mt.sum() 
 
@@ -128,14 +129,16 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, nu, protein, cell_id):
     # protein in the nucleus 
     nu[nuclei_mask != 1] = 0
     nu_sum = nu.sum()
-    protein[nuclei_mask != 1] = 0
-    pr_nu_sum = protein.sum()
+    pr = protein.copy()
+    pr[nuclei_mask != 1] = 0
+    pr_nu_sum = pr.sum()
     er[nuclei_mask != 1] = 0
     er_sum = er.sum()
     
     # protein in nuclear periphery
     #mask_n_dilated = skimage.morphology.dilation(mask_n, skimage.morphology.square(10))
     #mask_periphery = mask_n_dilated - mask_n
+    #protein[mask_periphery != 1] = 0
 
     line = (
         ",".join(
@@ -172,7 +175,7 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, nu, protein, cell_id):
     )
     return line
 
-def get_sc_statistics_HPA(cell_mask, nuclei_mask, mt, er, nu, protein):
+def get_sc_statistics_HPA(cell_mask, nuclei_mask, mt, er, nu, protein, img_id):
     """ Function to extract single cell statistics from full mask
     """
     remove_size = 100
@@ -212,17 +215,10 @@ def get_sc_statistics_HPA(cell_mask, nuclei_mask, mt, er, nu, protein):
             maxc = minc + (maxc_ - minc_)
 
         cell_area = region_c.area
-        mt_ = mt[minr:maxr, minc:maxc].copy()
-        mt_[mask != 1] = 0
-        mt_sum = mt_.sum()
-        
-        er_ = er[minr:maxr, minc:maxc].copy()
-        er_[mask != 1] = 0
-        er_sum = er.sum()
+        mt_sum = np.sum(mt[minr:maxr, minc:maxc] * mask)
+        er_sum = np.sum(er[minr:maxr, minc:maxc] * mask)
         # get protein in the whole cell area
-        pr = protein[minr:maxr, minc:maxc].copy()
-        pr[mask != 1] = 0
-        pr_sum = pr.sum()
+        pr_sum = np.sum(protein[minr:maxr, minc:maxc] * mask)
 
         # get nuclei mask
         nu_area = region_n.area
@@ -231,20 +227,16 @@ def get_sc_statistics_HPA(cell_mask, nuclei_mask, mt, er, nu, protein):
         mask_n[mask_n != region_n.label] = 0
         mask_n[mask_n == region_n.label] = 1
 
-        # protein in the nucleus         
-        pr = protein[minr:maxr, minc:maxc].copy()
-        pr[mask_n != 1] = 0
-        pr_nu_sum = pr.sum()
-
-        nu_ = nu[minr:maxr, minc:maxc].copy()
-        nu_[mask_n != 1] = 0
-        nu_sum = pr.sum()
+        # protein in the nucleus     
+        pr_nu_sum = np.sum(protein[minr:maxr, minc:maxc] * mask_n)    
+        nu_sum = np.sum(nu[minr:maxr, minc:maxc] * mask_n)
 
         line = (
             ",".join(
                 map(
                     str,
                     [
+                        img_id,  # Identifier
                         region_n.label,  # Identifier
                         cell_area,# Nucleus and cell area
                         nu_area,
@@ -267,8 +259,7 @@ def get_sc_statistics_HPA(cell_mask, nuclei_mask, mt, er, nu, protein):
                         pearsonr(protein.flatten(), er.flatten())[0],
                         pearsonr(er.flatten(), mt.flatten())[0],
                         pearsonr(nu.flatten(), mt.flatten())[0],
-                        pearsonr(nu.flatten(), er.flatten())[0],
-                        
+                        pearsonr(nu.flatten(), er.flatten())[0],                        
                     ],
                 )
             )
@@ -280,10 +271,11 @@ def get_sc_statistics_HPA(cell_mask, nuclei_mask, mt, er, nu, protein):
 def main():
     import configs.config as cfg
     d = cfg.PROJECT_DIR
-    save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics_rescale_intensity_well99.csv'
+    #save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics_rescale_intensity_well99.csv'
+    save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics.csv'
     full_FOV_masks = True
-    if cfg.CELL_LINE=='S-BIAD34':
-        if full_FOV_masks:
+    if full_FOV_masks:
+        if cfg.CELL_LINE=='S-BIAD34':
             with open(save_path, "a") as f:
             # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
                 f.write(
@@ -337,50 +329,58 @@ def main():
                     except Exception as e:
                         print(f"Error processing {antibody}: {e}")
             print(f"Finished in {(time.time()-s)/3600}h")
-        else:
-            sc_cell_pros = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*_protein.png")
-            print(sc_cell_pros[:3])
-            print(f"Processing {len(sc_cell_pros)} single cells, saving to {save_path}")
+        else: # Other HPA cell lines
+            image_dir = "/data/HPA-IF-images"
+            mask_dir = "/data/kaggle-dataset/PUBLICHPA/mask/test"
+            cell_mask_extension = "cellmask.png"
+            nuclei_mask_extension = "nucleimask.png"
+            
+            ifimages = pd.read_csv(f"{image_dir}/IF-image.csv")
+            ifimages = ifimages[ifimages.atlas_name == cfg.CELL_LINE]
+            ifimages["ID"] = [f.split("/")[-1][:-1] for f in ifimages.filename]
+            im_df = pd.read_csv(f"{mask_dir}.csv")
+            imlist = set(im_df.ID.unique()).intersection(set(ifimages.ID))
+            imlist_done = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*_sc_statistics.csv")
+            imlist_done = [os.path.basename(im).replace("_sc_statistics.csv","") for im in imlist_done]
+            imlist = list(set(imlist).difference(set(imlist_done)))
+            print(f"Found {len(imlist)} FOV todo, {len(imlist_done)} done")
             s = time.time()
-            with open(save_path, "a") as f:
-                # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
-                f.write(
-                    "cell_id,cell_area,nu_area,nu_eccentricity," +
-                    "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
-                    "aspect_ratio_nu,aspect_ratio_cell," +
-                    "coloc_pro_nu,coloc_pro_mt,coloc_pro_er,coloc_er_mt,coloc_nu_mt,coloc_nu_er," +
-                    "pearsonr_pro_nu,pearsonr_pro_mt,pearsonr_pro_er,pearsonr_er_mt,pearsonr_nu_mt,pearsonr_nu_er\n"
-                )
-                for sc_cell_pro in sc_cell_pros:
-                    # Reading all channels and masks
-                    cell_shape = np.load(sc_cell_pro.replace("_protein.png", ".npy"))
-                    cell_mask = cell_shape[0, :, :]
-                    nuclei_mask = cell_shape[1, :, :]
-                    protein = imageio.imread(sc_cell_pro)
-                    ref = np.load(sc_cell_pro.replace("_protein.png", "_ref.npy")) #mt, er, nu
-                    if ref.shape[2] == 3:
-                        ref = np.transpose(ref, (2, 0, 1))
-                    line = get_sc_statistics(
-                        cell_mask, nuclei_mask, ref[0,:,:], ref[1,:,:], ref[2,:,:], protein, os.path.basename(sc_cell_pro).replace("_protein.png","")
+            import multiprocessing
+            from joblib import Parallel, delayed
+            def run_1_img(img_id, cfg, image_dir, mask_dir):
+                save_path = f"{cfg.PROJECT_DIR}/cell_masks/{img_id}_sc_statistics.csv"
+                with open(save_path, "a") as f:
+                    # Save sum quantities and cell+nuclseus area, the mean quantities per compartment can be calculated afterwards
+                    f.write(
+                        "image_id,cell_id,cell_area,nu_area,nu_eccentricity," +
+                        "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
+                        "aspect_ratio_nu,aspect_ratio_cell," +
+                        "coloc_pro_nu,coloc_pro_mt,coloc_pro_er,coloc_er_mt,coloc_nu_mt,coloc_nu_er," +
+                        "pearsonr_pro_nu,pearsonr_pro_mt,pearsonr_pro_er,pearsonr_er_mt,pearsonr_nu_mt,pearsonr_nu_er\n"
+                    )                
+                    cell_mask = imageio.imread(f"{mask_dir}/{img_id}_{cell_mask_extension}")
+                    nuclei_mask = imageio.imread(f"{mask_dir}/{img_id}_{nuclei_mask_extension}")
+                    protein = imageio.imread(f"{image_dir}/{img_id.split('_')[0]}/{img_id}_green.png")
+                    mt = imageio.imread(f"{image_dir}/{img_id.split('_')[0]}/{img_id}_red.png")
+                    er = imageio.imread(f"{image_dir}/{img_id.split('_')[0]}/{img_id}_yellow.png")
+                    nu = imageio.imread(f"{image_dir}/{img_id.split('_')[0]}/{img_id}_blue.png")
+
+                    lines = get_sc_statistics_HPA(
+                        cell_mask, nuclei_mask, mt, er, nu, protein, img_id
                     )
-                    f.write(line)
+                    f.writelines(lines)
+            n_processes = multiprocessing.cpu_count() - 15
+            processed_list = Parallel(n_jobs=n_processes)(
+                        delayed(run_1_img)(img_id, cfg, image_dir, mask_dir)
+                        for img_id in tqdm.tqdm(imlist, total=len(imlist)))
             print(f"Finished in {(time.time()-s)/3600}h")
     else:
-        image_dir = "/data/HPA-IF-images"
-        mask_dir = "/data/kaggle-dataset/PUBLICHPA/mask/test"
-        cell_mask_extension = "cellmask.png"
-        nuclei_mask_extension = "nucleimask.png"
-        
-        ifimages = pd.read_csv(f"{image_dir}/IF-image.csv")
-        ifimages = ifimages[ifimages.atlas_name == cfg.CELL_LINE]
-        ifimages["ID"] = [f.split("/")[-1][:-1] for f in ifimages.filename]
-        im_df = pd.read_csv(f"{mask_dir}.csv")
-        imlist = set(im_df.ID.unique()).intersection(set(ifimages.ID))
-        print(f"Found {len(imlist)} FOV")
+        sc_cell_pros = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*_protein.png")
+        print(sc_cell_pros[:3])
+        print(f"Processing {len(sc_cell_pros)} single cells, saving to {save_path}")
         s = time.time()
-        print(f'Saving to {cfg.PROJECT_DIR}/single_cell_statistics.csv')
         with open(save_path, "a") as f:
-            # Save sum quantities and cell+nuclseus area, the mean quantities per compartment can be calculated afterwards
+            # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
             f.write(
                 "cell_id,cell_area,nu_area,nu_eccentricity," +
                 "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
@@ -388,26 +388,19 @@ def main():
                 "coloc_pro_nu,coloc_pro_mt,coloc_pro_er,coloc_er_mt,coloc_nu_mt,coloc_nu_er," +
                 "pearsonr_pro_nu,pearsonr_pro_mt,pearsonr_pro_er,pearsonr_er_mt,pearsonr_nu_mt,pearsonr_nu_er\n"
             )
-            for img_id in tqdm.tqdm(imlist, total=len(imlist)):
-                cell_mask = imageio.imread(f"{mask_dir}/{img_id}_{cell_mask_extension}")
-                nuclei_mask = imageio.imread(f"{mask_dir}/{img_id}_{nuclei_mask_extension}")
-                protein = imageio.imread(
-                    f"{image_dir}/{img_id.split('_')[0]}/{img_id}_green.png"
+            for sc_cell_pro in sc_cell_pros:
+                # Reading all channels and masks
+                cell_shape = np.load(sc_cell_pro.replace("_protein.png", ".npy"))
+                cell_mask = cell_shape[0, :, :]
+                nuclei_mask = cell_shape[1, :, :]
+                protein = imageio.imread(sc_cell_pro)
+                ref = np.load(sc_cell_pro.replace("_protein.png", "_ref.npy")) #mt, er, nu
+                if ref.shape[2] == 3:
+                    ref = np.transpose(ref, (2, 0, 1))
+                line = get_sc_statistics(
+                    cell_mask, nuclei_mask, ref[0,:,:], ref[1,:,:], ref[2,:,:], protein, os.path.basename(sc_cell_pro).replace("_protein.png","")
                 )
-                mt = imageio.imread(
-                    f"{image_dir}/{img_id.split('_')[0]}/{img_id}_red.png"
-                )
-                er = imageio.imread(
-                    f"{image_dir}/{img_id.split('_')[0]}/{img_id}_yellow.png"
-                )
-                nu = imageio.imread(
-                    f"{image_dir}/{img_id.split('_')[0]}/{img_id}_blue.png"
-                )
-
-                lines = get_sc_statistics_HPA(
-                    cell_mask, nuclei_mask, mt, er, nu, protein
-                )
-                f.writelines(lines)
+                f.write(line)
         print(f"Finished in {(time.time()-s)/3600}h")
 
 if __name__ == "__main__":
