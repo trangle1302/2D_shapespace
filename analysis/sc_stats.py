@@ -370,7 +370,7 @@ def main():
                         cell_mask, nuclei_mask, mt, er, nu, protein, img_id
                     )
                     f.writelines(lines)
-            n_processes = multiprocessing.cpu_count() - 15
+            n_processes = multiprocessing.cpu_count() - 12
             p = psutil.Process(os.getpid())
             print(n_processes, p)
             p.cpu_affinity(range(n_processes))
@@ -378,6 +378,19 @@ def main():
                         delayed(run_1_img)(img_id, cfg, image_dir, mask_dir)
                         for img_id in tqdm.tqdm(imlist, total=len(imlist)))
             print(f"Finished in {(time.time()-s)/3600}h")
+
+            # Concat all csvs
+            ls = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*.csv")
+            dfs = []
+            for l in ls:
+                try: 
+                    df=pd.read_csv(l)
+                    dfs += [df]
+                except: 
+                    print(f'Error in {l}')
+            dfs = pd.concat(dfs, axis=0)
+            dfs.to_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv", index=False)
+
     else:
         sc_cell_pros = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/*_protein.png")
         print(sc_cell_pros[:3])
