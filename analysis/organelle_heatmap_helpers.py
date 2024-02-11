@@ -10,6 +10,39 @@ from scipy.stats import pearsonr
 import numpy as np
 from organelle_heatmap import get_mask, get_average_intensities_cr, get_average_intensities_tsp, correlation
 import configs.config as cfg
+from scipy.stats import wasserstein_distance
+
+def sliced_wasserstein(X, Y, num_proj=100, return_minmax = False):
+    dim = X.shape[1]
+    ests = []
+    for _ in range(num_proj):
+        # sample uniformly from the unit sphere
+        dir = np.random.randn(dim)
+        dir /= np.linalg.norm(dir)
+
+        # project the data
+        X_proj = X @ dir
+        Y_proj = Y @ dir
+
+        # compute 1d wasserstein, which is fast
+        ests.append(wasserstein_distance(X_proj, Y_proj))
+        
+    dim = X.shape[0]
+    for _ in range(num_proj):
+        # sample uniformly from the unit sphere
+        dir = np.random.randn(dim)
+        dir /= np.linalg.norm(dir)
+
+        # project the data
+        X_proj = X.T @ dir
+        Y_proj = Y.T @ dir
+
+        # compute 1d wasserstein, which is fast
+        ests.append(wasserstein_distance(X_proj, Y_proj))
+    if return_minmax:
+        return np.mean(ests), np.max(ests), np.min(ests)
+    else:
+        return np.mean(ests)
 
 def custom_heatmap(data, row_labels, col_labels, ax=None,
             cbar_kw=None, cbarlabel="", **kwargs):
@@ -107,11 +140,13 @@ def get_heatmap(mappings0, cells_assigned, pc_name="PC1", pathway_group = 'Glyco
         sampled_intensity_dir = f"{project_dir}/sampled_intensity_bin"
     if intensity_warping:
         sampled_intensity_dir = f"{project_dir}/warps" 
+    mappings_ = mappings0[mappings0.sc_target != "Negative"]
     #mappings_ = mappings0[mappings0.PathwayGroup == pathway_group]
     mappings_ = mappings0[mappings0.Pathway == pathway_group]
     merged_bins = [[0,1,2], [3], [4,5,6]]
     shape_ = (31, 256) if intensity_sampling_concentric_ring else (336, 700)
-    keep_orgs = mappings_.sc_target.unique()
+    keep_orgs = mappings_.locations.unique()
+    #keep_orgs = [o for o in keep_orgs if o in cfg.ORGANELLES]
     if intensity_sampling_concentric_ring:
         shape_= (31, 256)
     else:
@@ -142,15 +177,16 @@ def get_heatmap(mappings0, cells_assigned, pc_name="PC1", pathway_group = 'Glyco
                     #imwrite(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png", intensities)
             images[org] = intensities
         # Filter for 
-        ssim_scores = correlation(images, pearsonr, mask=None) #structural_similarity)
+        #ssim_scores = correlation(images, pearsonr, mask=None) #structural_similarity)
+        ssim_scores = correlation(images, sliced_wasserstein, mask=None) #structural_similarity)
         ssim_df = pd.DataFrame(ssim_scores, columns=list(images.keys()))
         ssim_df.index = list(images.keys())
         #print(ssim_df)
         #ssim_df.to_csv(f"{avg_organelle_dir}/PC{PC}_bin{b}_pearsonr_df.csv")
         #custom_heatmap(ssim_scores, row_labels=list(images.keys()), col_labels=list(images.keys()), ax=axes[i], cmap="RdBu", vmin=-1, vmax=1)
         #axes[i].imshow(ssim_df, cmap="RdBu", vmin=-1, vmax=1)
-        #print(i)
-        sns.heatmap(ssim_df, cmap="RdBu", vmin=-1, vmax=1, ax=axes[i])
+        print(ssim_df.max(), ssim_df.min())
+        sns.heatmap(ssim_df, cmap="plasma", vmin=0, vmax = 100, ax=axes[i])
         #sns.clustermap(ssim_df.fillna(0), method="complete", cmap="RdBu", vmin=-1, vmax=1, ax=axes[i])
         
     plt.yticks(rotation=30) 
