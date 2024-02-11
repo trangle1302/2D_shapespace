@@ -354,7 +354,7 @@ def main():
                     # Save sum quantities and cell+nuclseus area, the mean quantities per compartment can be calculated afterwards
                     f.write(
                         "image_id,cell_id,cell_area,nu_area,nu_eccentricity," +
-                        "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,"+
+                        "Protein_cell_sum,Protein_nu_sum,MT_cell_sum,ER_sum,DAPI_nu_sum,"+
                         "aspect_ratio_nu,aspect_ratio_cell," +
                         "coloc_pro_nu,coloc_pro_mt,coloc_pro_er,coloc_er_mt,coloc_nu_mt,coloc_nu_er," +
                         "pearsonr_pro_nu,pearsonr_pro_mt,pearsonr_pro_er,pearsonr_er_mt,pearsonr_nu_mt,pearsonr_nu_er\n"
