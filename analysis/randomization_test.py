@@ -1,3 +1,4 @@
+import os
 import sys
 sys.path.append('..')
 import numpy as np
@@ -5,6 +6,7 @@ import pandas as pd
 import scipy.stats as st
 import matplotlib.pyplot as plt
 import configs.config as cfg
+from stats_helpers import 
 
 PERMUTATIONS = 10000
 
@@ -19,7 +21,7 @@ def log_min_max_norm(x):
     x = np.log10(x)
     return (x-np.min(x))/(np.max(x)-np.min(x))
 
-def permutation_analysis(transformed_matrix, PCs=[1,2,3]):
+def permutation_analysis(transformed_matrix, PCs=['PC1','PC2','PC3']):
     '''Permutation analysis for the moving average of the PCs
     Parameters
         transformed_matrix: pandas dataframe with transformed data, contains columns 'ab_id', 'Protein_nu_mean', 'Protein_cyt_mean', 'MT_cell_mean', 'pseudotime'
@@ -31,8 +33,7 @@ def permutation_analysis(transformed_matrix, PCs=[1,2,3]):
     feature2 = 'Protein_cyt_mean'
     mv_window = 20
     results = []
-    for pc in PCs: #range(1,11):
-        PC = f'PC{pc}'
+    for PC in PCs: #range(1,11):
         for ab_, df_ in transformed_matrix.groupby('ab_id'):
             sorted_indices = np.argsort(df_[PC])
             # Sort data along PCx
@@ -88,15 +89,42 @@ def mvavg_ci(yvals, window_size, ci = 0.95):
         min_max += [st.t.interval(ci, len(a)-1, loc=np.mean(a), scale=st.sem(a))]
     return np.array(min_max)
 
-def plot_moving_averages(df,ab, PC, feature_name, mv_window = 20):
+def remove_outliers_idx(values, n_std=5):
+    '''Returns indices of outliers to keep'''
+    max_cutoff = np.mean(values) + n_std * np.std(values)
+    min_cutoff = np.mean(values) - n_std * np.std(values)
+    return (values < max_cutoff) & (values > min_cutoff)
+    
+def remove_outliers(values, return_values):
+    '''Remove outliers on "values" and return "return_values" based on that filter'''
+    return return_values[remove_outliers_idx(values)]
+
+def plot_moving_averages(df,ab, PC, feature_name, mv_window = 20, rm_outliers=True):
     df_ = df[df.ab_id==ab]
+    # print(f'Number of cells: {df_.shape[0]}, {df_[feature_name].describe()}')
+    df_ = df_[remove_outliers_idx(df_[feature_name],5)]
+    #df_ = df_[remove_outliers_idx(df_.nu_area,2)]
+    # print(f'Number of cells after filter 5std from mean intensity: {df_.shape[0]}')
+    
     # remove 'bad' data point: when nucleus is larger than the cell
-    df_ = df_[df_[feature_name]>0]
+    #df_ = df_[df_[feature_name]>0]
     sorted_indices = np.argsort(df_[PC])
     # Sort data along PCx
     sorted_feature1 = df_[feature_name].values[sorted_indices.values]
-    sorted_pos = df_[PC].values[sorted_indices.values]
+    sorted_pos = df_[PC].values[sorted_indices.values]    
     sorted_mt = df_['MT_cell_mean'].values[sorted_indices.values]
+    sorted_speudotime = df_['pseudotime'].values[sorted_indices.values]
+    
+    if rm_outliers:        
+        # remove outliers position
+        values = sorted_pos.copy() #
+        #values = sorted_feature1.copy()
+        sorted_pos = remove_outliers(values, sorted_pos)
+        sorted_mt = remove_outliers(values, sorted_mt)
+        sorted_speudotime = remove_outliers(values, sorted_speudotime)
+        sorted_feature1 = remove_outliers(values, sorted_feature1)
+
+    # print(f'Number of cells after filter 5std from mean position: {df_.shape[0]}')
     
     # Normalize/standardize
     sorted_feature1 = log_min_max_norm(sorted_feature1)
@@ -106,6 +134,7 @@ def plot_moving_averages(df,ab, PC, feature_name, mv_window = 20):
     sorted_mt_mvavg = mvavg(sorted_mt, mv_window)
     sorted_feature1_mvavg = mvavg(sorted_feature1, mv_window)
     sorted_pc_mvavg = mvavg(sorted_pos, mv_window)
+    
     # Plots
     plt.figure()
     plt.scatter(sorted_pos, sorted_feature1, color='blue', alpha=0.1, label='protein intensity')
@@ -122,7 +151,7 @@ def plot_moving_averages(df,ab, PC, feature_name, mv_window = 20):
 
 if __name__ == "__main__":
 
-    df = pd.read_csv(f"{cfg.PROJECT_DIR}/shapemodes/{cfg.ALIGNMENT}_{cfg.MODE}_ICA_5components/transformed_matrix.csv")
+    df = pd.read_csv(f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}/transformed_matrix.csv")
     df = df.drop('Unnamed: 0', axis=1)
     df['Protein_nu_mean'] = df['Protein_nu_sum']/df['nu_area']
     df['Protein_cyt_mean'] = (df['Protein_cell_sum']- df['Protein_nu_sum'])/(df['cell_area']- df['nu_area'])
@@ -131,9 +160,39 @@ if __name__ == "__main__":
     df['MT_cell_mean'] = df['MT_cell_sum']/df['cell_area']
     #mappings = pd.read_csv(f"/mnt/c/Users/trang.le/Desktop/shapemode/S-BIAD34/experimentB-processed.txt", sep="\t")
     mappings = pd.read_csv(f"{cfg.PROJECT_DIR}/CellCycleVariationSummary.csv")
-    ifimages = pd.read_csv(f"/data/HPA-IF-Image/IF-image.csv")
+    ifimages = pd.read_csv(f"/data/HPA-IF-images/IF-image.csv")
     ifimages = ifimages[ifimages.atlas_name=='U2OS']
     ifimages = ifimages[ifimages.latest_version==23]
-    ab_loc = ifimages[['antibody','locations']].drop_duplicates()
+    ab_loc = ifimages[['antibody','locations','gene_names']].drop_duplicates()
     mappings = mappings.merge(ab_loc, left_on='antibody', right_on='antibody')
-    mappings 
+    print(mappings.columns)
+    hit_path = f"{cfg.PROJECT_DIR}/protein_expression_permutation_through_shapes.csv"
+    if not os.path.exists(hit_path):
+        results_pcs = permutation_analysis(df, PCs=['PC1','PC2','PC3','PC4','PC5', 'PC6'])
+        results_pcs.to_csv(hit_path, index=False)
+    else:
+        results_pcs = pd.read_csv(hit_path)
+
+    results_pcs = results_pcs.drop('Unnamed: 0', axis=1).drop_duplicates()
+    results_pcs = results_pcs.merge(mappings[['antibody','gene_names','locations','ccd_reason']], left_on='ab', right_on='antibody')
+    results_pcs.to_csv(hit_path.replace('.csv','ccd.csv'), index=False)
+    # Visualization
+    save_dir = f"{cfg.PROJECT_DIR}/randomization_test"
+    os.makedirs(save_dir, exist_ok=True)
+    top20_nu = results_pcs[results_pcs.locations.fillna('').str.contains('Nuc')] 
+    top20_nu = top20_nu.sort_values('mean_diff_nu', ascending=False).iloc[:20,:]
+    print(top20_nu)
+    for i, r in top20_nu.iterrows():
+        genename = mappings[mappings.antibody == r.ab].gene_names.values
+        plt.figure()
+        plot_moving_averages(df,r.ab,r.PC,'Protein_nu_mean', mv_window = 20, rm_outliers=True)
+        plt.savefig(f'{save_dir}/{r.PC}_nu_{r.ab}_{genename}.png')
+
+    top20_cyt = results_pcs[~results_pcs.fillna('').locations.str.contains('Nuc')] 
+    top20_cyt = top20_cyt.sort_values('mean_diff_cyt', ascending=False).iloc[:20,:]
+    print(top20_cyt)
+    for i, r in top20_cyt.iterrows():
+        genename = mappings[mappings.antibody == r.ab].gene_names.values
+        plt.figure()
+        plot_moving_averages(df,r.ab,r.PC,'Protein_cyt_mean', mv_window = 20, rm_outliers=True)
+        plt.savefig(f'{save_dir}/{r.PC}_cyt_{r.ab}_{genename}.png')
