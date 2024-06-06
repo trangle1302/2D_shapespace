@@ -1,3 +1,5 @@
 pyefd
-sklearn
-scikit-image 0.19.2
+scikit-learn
+scikit-image
+seaborn==0.13.0
+opencv
