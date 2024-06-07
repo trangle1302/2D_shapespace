@@ -38,18 +38,14 @@ pos_array = np.array(
 
 # parallel computation
 def create_ei(i):
-
     from_pos = pos_array[i]
     to_pos = pos_array[i + 1]
-
     # initiate DeepGraph
     g = dg.DeepGraph(v)
-
     # create edges
     g.create_edges(
         connectors=corr, step_size=step_size, from_pos=from_pos, to_pos=to_pos
     )
-
     # store edge table
     g.e.to_pickle(f"{d}/correlations/{str(i).zfill(3)}.pickle")
 
