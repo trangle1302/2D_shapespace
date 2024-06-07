@@ -66,7 +66,7 @@ ORGANELLES = ["Nucleoplasm","Nucleoli","NucleoliFC","NuclearS","NuclearB","Nucle
               "Cytosol","PlasmaM","Microtubules"]
 
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
-CELL_LINE = ["BJ", "U2OS","A-431","U-251_MG", "Hep-G2", "MCF7", "HEK_293","RT4", "HEL", "K-562"]
+CELL_LINE = ["BJ", "U2OS","A-431","U-251_MG", "MCF7", "HEK_293","RT4", "Hep-G2", "HEL", "K-562"]
 N_COEFS = 128
 N_SAMPLES = 10000
 N_CV = 1
