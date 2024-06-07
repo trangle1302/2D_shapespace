@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from skimage.filters import threshold_minimum, threshold_otsu
 from skimage.metrics import structural_similarity
+from skimage.transform import resize
 from scipy.stats import pearsonr
 import json
 from utils import helpers
@@ -14,11 +15,11 @@ import argparse
 from imageio import imread, imwrite
 import glob
 
-def correlation(value_dict, method_func, mask):
+def correlation(value_dict, method_func, mask=None):
     cor_mat = np.zeros((len(value_dict), len(value_dict)))
     for i, (k1, v1) in enumerate(value_dict.items()):
         for j, (k2, v2) in enumerate(value_dict.items()):
-            if True:
+            if mask!=None:
                 v1_ = (np.zeros_like(mask) if v1.max()==0 else v1.flatten()[mask])
                 v2_ = (np.zeros_like(mask) if v2.max()==0 else v2.flatten()[mask])
                 try:
@@ -57,9 +58,12 @@ def unmerge_label(
         else:
             mappings_df.loc[i, "sc_locations"] = r.target
             mappings_df.loc[i, "sc_target"] = r.target
+    # Shorten names
+    mappings_df.loc[mappings_df.sc_target=="Cytoplasmic bodies","sc_target"]="CytoBodies"
+    mappings_df.loc[mappings_df.sc_target=="Lipid droplets","sc_target"]="LipidDrop"
     return mappings_df
 
-def get_average_intensities_tsp(ls_): #warping
+def get_average_intensities_tsp(ls_, sampled_intensity_dir=""): #warping
     n = len(ls_)
     sample_img = imread(f"{sampled_intensity_dir}/{ls_[0]}_protein.png")
     intensities = np.zeros(sample_img.shape)
@@ -77,7 +81,7 @@ def get_average_intensities_tsp(ls_): #warping
         intensities += pilr / n
     return intensities
 
-def get_average_intensities_cr(ls_): #concentric rings
+def get_average_intensities_cr(ls_, sampled_intensity_dir=""): #concentric rings
     n = len(ls_)
     intensities = np.zeros((31,256))
     for img_id in ls_:
@@ -149,8 +153,6 @@ if __name__ == "__main__":
         mappings.to_csv(cellline_meta, index=False)
         print(mappings.sc_target.value_counts())
     #print(mappings.sc_target.value_counts())
-    mappings.loc[mappings.sc_target=="Cytoplasmic bodies","sc_target"]="CytoBodies"
-    mappings.loc[mappings.sc_target=="Lipid droplets","sc_target"]="LipidDrop"
     print(mappings.columns, mappings.sc_target.value_counts())
     f = open(f"{shape_mode_path}/cells_assigned_to_pc_bins.json", "r")
     cells_assigned = json.load(f)
@@ -176,19 +178,18 @@ if __name__ == "__main__":
                     continue
                 n0 = len(ls_)
                 lines.append([f"PC{PC}", org, bin_[0], n0])
-                #if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
-                #   continue
+                if os.path.exists(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png"):
+                   continue
                 if len(ls_) < 3:
                     print(f"{org} has less than 5 cells ({len(ls_)}) -> move on")
                     continue
                 if n0 > 500:
-                    import random
-                    ls_ = random.sample(ls_, 500)
+                    ls_ = np.random.choice(ls_, 500, replace=False)
                 if intensity_sampling_concentric_ring:
-                    intensities = get_average_intensities_cr(ls_)
+                    intensities = get_average_intensities_cr(ls_, sampled_intensity_dir=sampled_intensity_dir)
                     np.save(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.npy", intensities)
                 if intensity_warping:
-                    intensities = get_average_intensities_tsp(ls_)
+                    intensities = get_average_intensities_tsp(ls_, sampled_intensity_dir=sampled_intensity_dir)
                     intensities = (intensities*255).astype('uint8')
                     imwrite(f"{avg_organelle_dir}/PC{PC}_{org}_b{bin_[0]}.png", intensities)
                 print(f"PC{PC}_{org}_b{bin_[0]}.png {len(ls_)} cells. Accumulated: {intensities.max()}, {intensities.dtype}")
