@@ -6,7 +6,7 @@ import pandas as pd
 import scipy.stats as st
 import matplotlib.pyplot as plt
 import configs.config as cfg
-from stats_helpers import 
+from stats_helpers import *
 
 PERMUTATIONS = 10000
 
@@ -69,7 +69,7 @@ def permutation_analysis(transformed_matrix, PCs=['PC1','PC2','PC3']):
             perms = [np.random.permutation(len(df_[feature2].values)) for _ in range(PERMUTATIONS)]
             features = log_min_max_norm(df_[feature2].values)
             # Metric : mean difference from random
-            curr_rng_comp = [features[perm] for perm in perms]
+            curr_rng_comp = [f*eatures[perm] for perm in perms]
             curr_mvavg_rng_comp = [mvavg(rng_feats, mv_window) for rng_feats in curr_rng_comp]
             pervar_ = np.var(sorted_feature2_mvavg)/np.var(features)
             pervar_ordered = np.var(curr_mvavg_rng_comp,axis=1) / np.var(features)
@@ -181,6 +181,7 @@ if __name__ == "__main__":
     os.makedirs(save_dir, exist_ok=True)
     top20_nu = results_pcs[results_pcs.locations.fillna('').str.contains('Nuc')] 
     top20_nu = top20_nu.sort_values('mean_diff_nu', ascending=False).iloc[:20,:]
+    top20_nu.to_csv(f"{save_dir}/top20_nu.csv", index=False)
     print(top20_nu)
     for i, r in top20_nu.iterrows():
         genename = mappings[mappings.antibody == r.ab].gene_names.values
@@ -190,6 +191,7 @@ if __name__ == "__main__":
 
     top20_cyt = results_pcs[~results_pcs.fillna('').locations.str.contains('Nuc')] 
     top20_cyt = top20_cyt.sort_values('mean_diff_cyt', ascending=False).iloc[:20,:]
+    top20_cyt.to_csv(f"{save_dir}/top20_cyt.csv", index=False)
     print(top20_cyt)
     for i, r in top20_cyt.iterrows():
         genename = mappings[mappings.antibody == r.ab].gene_names.values

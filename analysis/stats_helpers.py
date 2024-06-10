@@ -226,7 +226,26 @@ def plot_example_images(sc_stats, antibody, save_dir = ""):
     #sub_df = sc_stats[sc_stats.gene_names==gene_name]
     nrow=5
     img_size = 300
-    groups = [sub_df[sub_df['groups'] == i]['image_path'].sample(n=nrow) if len(sub_df[sub_df['groups'] == i])>=nrow else sub_df[sub_df['groups'] == i]['image_path'] for i in [0,1,2] ]
+
+    means = sub_df.groupby('groups').agg({'Protein_nu_mean':'mean',
+                                        'Protein_cell_mean':'mean',
+                                        'Protein_cyt_mean':'mean'})
+    
+    if False:
+        # Rank cells by protein expression increasing
+        groups = [sub_df[sub_df['groups'] == 0].sort_values('Protein_nu_mean', ascending=True).image_path[:nrow],
+                sub_df[sub_df['groups'] == 1]['image_path'].sample(n=nrow) ,
+                sub_df[sub_df['groups'] == 2].sort_values('Protein_nu_mean', ascending=False).image_path[:nrow]]
+
+    if False:
+        # Rank cells by protein expression decreasing
+        groups = [sub_df[sub_df['groups'] == 0].sort_values('Protein_cyt_mean', ascending=False).image_path[:nrow],
+                sub_df[sub_df['groups'] == 1]['image_path'].sample(n=nrow) ,
+                sub_df[sub_df['groups'] == 2].sort_values('Protein_cyt_mean', ascending=True).image_path[:nrow]]
+    else: # Random
+        groups = [sub_df[sub_df['groups'] == i]['image_path'].sample(n=nrow) if len(sub_df[sub_df['groups'] == i])>=nrow else sub_df[sub_df['groups'] == i]['image_path'] for i in [0,1,2] ]
+
+
     fft_shift_path = f"{cfg.PROJECT_DIR}/fftcoefs/{cfg.ALIGNMENT}/shift_error_meta_fft128.txt"
     # Create a 3x3 grid of images for each group
     images = []
@@ -237,7 +256,7 @@ def plot_example_images(sc_stats, antibody, save_dir = ""):
                 img = cv2.imread(path.replace(".npy", "_protein.png"), cv2.IMREAD_GRAYSCALE)             
                 img = cv2.applyColorMap(img, cv2.COLORMAP_TURBO)
                 cellborders = np.load(path)
-                pattern = path.split('/')[-1] # For U2OS or other cell lines in HPA, image name is enough for identifier
+                # pattern = path.split('/')[-1] # For U2OS or other cell lines in HPA, image name is enough for identifier
                 pattern = path.split('/')[-2] + "/" + path.split('/')[-1] # For U2OS-Fucci / S-BIAD34, antibody/image name is the identifier
                 print(f"Finding {pattern} from {fft_shift_path} ")
                 fft_coefs = get_line(fft_shift_path, search_text=pattern, mode="first")
