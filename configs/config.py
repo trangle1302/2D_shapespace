@@ -92,7 +92,7 @@ ORGANELLES_FULLNAME = ["Nucleoplasm","Nucleoli","Nucleoli fibrillar center","Nuc
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
 CELL_LINE = "S-BIAD34"#"Hep-G2" #"Hep-G2"#"A-431" #"U2OS" #"HEL"#"MCF7" #"U-251 MG" # "K-562" # #"K-562"#"A-431" # #"RT4"
 N_COEFS = 128
-N_SAMPLES = -1  # 5000
+N_SAMPLES = -1 #20000 #-1  # 5000
 N_CV = 1
 MODE = "cell_nuclei"  # ["nuclei" #"cell_nuclei"]
 ALIGNMENT = "fft_cell_major_axis_polarized" #"fft_cell_major_axis_polarized"  # ["fft_nuclei_major_axis","fft_nuclei_major_axis","fft_cell_nuclei_centroid"]
@@ -101,7 +101,7 @@ N_ISOS = [10,20]
 N_LANDMARKS = 32
 
 # >>>>>>>>>>>>>>>>>>>>> COMPUTE RESOURCE + PACKAGE
-SERVER = "callisto"
+SERVER = "sherlock"
 if SERVER == "callisto":
     PROJECT_DIR = f"/data/2Dshapespace/{CELL_LINE.replace(' ','_')}"
     META_PATH = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"

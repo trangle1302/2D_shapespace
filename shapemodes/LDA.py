@@ -82,8 +82,9 @@ if __name__ == "__main__":
         cm = confusion_matrix(y_test, pred)
         print(f'Test set acc {acc}, confusion matrix: {cm}')
     else:
-        X_train = df[[f'PC{n}' for n in range(1,101,1)]]
+        X_train = df[[f'PC{n}' for n in range(1,11,1)]]
         y_train = df['GMM_cc']
+        """
         clf = LinearDiscriminantAnalysis()
         clf.fit(X_train, y_train)
         pred = clf.predict(X_train)
@@ -96,7 +97,7 @@ if __name__ == "__main__":
         c = [d[i]  for i in y_train]
         plt.scatter(df_trans[:,0],df_trans[:,1], c=c)
         plt.savefig('lda.png')
-
+        """
 
         # FDA (Fisher Discriminant Analysis), when n==2, FDA is the same as LDA
         p = 2
