@@ -3,3 +3,4 @@ scikit-learn
 scikit-image
 seaborn==0.13.0
 opencv
+more_itertools
