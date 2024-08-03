@@ -10,6 +10,7 @@ from natsort import natsorted
 import concurrent.futures
 import time
 
+
 def sharpen(image):
     image = img_as_float(image)
     p2, p98 = np.percentile(image, (2, 98))
@@ -38,15 +39,17 @@ def predict(model_path, files, plot_dir, diameter=0):
         channels = [2, 3]
 
         def read_img(f):
-            #w4 = io.imread(f)
+            # w4 = io.imread(f)
             w0 = io.imread(f.replace("C4.tif", "C0.tif"))
-            #w1 = io.imread(f.replace("C4.tif", "C1.tif"))
-            #print(f'read {w1.max(), w0.max(), w4.max()}')
+            # w1 = io.imread(f.replace("C4.tif", "C1.tif"))
+            # print(f'read {w1.max(), w0.max(), w4.max()}')
             try:
-                #if w1.max() > 0 and w0.max() > 0 and w4.max() > 0:
+                # if w1.max() > 0 and w0.max() > 0 and w4.max() > 0:
                 if w0.max() > 0:
-                    w0 = sharpen(w0) # rescale intensity
-                    img = np.stack([adaptive_hist(w0), adaptive_hist(w0), adaptive_hist(w0)])
+                    w0 = sharpen(w0)  # rescale intensity
+                    img = np.stack(
+                        [adaptive_hist(w0), adaptive_hist(w0), adaptive_hist(w0)]
+                    )
                 else:  # fail because empty channel
                     img = []
             except:  # fail because reading error
@@ -74,18 +77,23 @@ def predict(model_path, files, plot_dir, diameter=0):
             s = time.time()
             # concurrent futures increase reading images by 3x
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                futures = [executor.submit(read_img, files[i_]) for i_ in range(start_, end_)]
+                futures = [
+                    executor.submit(read_img, files[i_]) for i_ in range(start_, end_)
+                ]
                 for future in concurrent.futures.as_completed(futures):
                     img, file_name = future.result()
                     if len(img) == 0:
-                        with open("/scratch/users/tle1302/2Dshapespace/B2AI/failed_imgs_channelvalue0.txt", "a") as f:
+                        with open(
+                            "/scratch/users/tle1302/2Dshapespace/B2AI/failed_imgs_channelvalue0.txt",
+                            "a",
+                        ) as f:
                             print(f'Failed: {file_name.split("/")[-3:]}')
                             f.write(file_name + "\n")
                     else:
                         images.append(img)
                         file_names.append(file_name)
-                    
-            print(f'Loading {chunk_size} image took {(time.time() - s)/60} min')
+
+            print(f"Loading {chunk_size} image took {(time.time() - s)/60} min")
             # run model on <chunk_size> images
             masks, flows, styles = model.eval(
                 images,
@@ -100,17 +108,23 @@ def predict(model_path, files, plot_dir, diameter=0):
 
                 if True:
                     i = np.random.choice(len(images))
-                    #for i in range(1, len(images)):
+                    # for i in range(1, len(images)):
                     if True:
                         fig = plt.figure(figsize=(40, 10), facecolor="black")
                         name = os.path.basename(file_names[i]).replace(".tif", ".png")
-                        name = "_".join([file_names[i].split("/")[-3], file_names[i].split("/")[-2], name])
+                        name = "_".join(
+                            [
+                                file_names[i].split("/")[-3],
+                                file_names[i].split("/")[-2],
+                                name,
+                            ]
+                        )
                         img = images[i].copy()
                         if img.shape[0] != len(channels):
                             tmp = []
                             for ch in channels:
                                 tmp += [img[ch - 1]]
-                            img = np.stack(tmp) #* 0.3
+                            img = np.stack(tmp)  # * 0.3
                         plot.show_segmentation(
                             fig,
                             img,
@@ -119,7 +133,7 @@ def predict(model_path, files, plot_dir, diameter=0):
                             channels=channels,
                             file_name=None,
                         )
-                        print(f'savng : {plot_dir}/{name}')
+                        print(f"savng : {plot_dir}/{name}")
                         fig.savefig(f"{plot_dir}/{name}")
                         plt.close()
                     # io.imsave(f'{plot_dir}/{name[:-4]}_{model_name}mask.png',masks[i])
@@ -127,26 +141,28 @@ def predict(model_path, files, plot_dir, diameter=0):
                 io.imsave(f.replace("C4.tif", f"{model_name}mask.png"), m)
         pbar.update(end_ - start_)
 
+
 def delete_empty_lowcount(folders):
     for f in folders:
-        for ch in ['C0.tif','C1.tif','C2.tif','C3.tif','C4.tif']:
-            img = io.imread(f'{f}/{ch}')
+        for ch in ["C0.tif", "C1.tif", "C2.tif", "C3.tif", "C4.tif"]:
+            img = io.imread(f"{f}/{ch}")
             if img.max() < 100:
-                print(f'Removing {f}/{ch}')
-                os.remove(f'{f}/{ch}')
+                print(f"Removing {f}/{ch}")
+                os.remove(f"{f}/{ch}")
+
 
 if __name__ == "__main__":
     base_dir = "/scratch/users/tle1302/2Dshapespace/B2AI/MDA-MB-468/Tiffs/B2AI-2023-1/"
-    
+
     if False:
         folders = natsorted(glob(f"{base_dir}/*/*/*"))
         delete_empty_lowcount(folders)
-        
-    if True:
+
+    if False:
         files_finished = natsorted(glob(f"{base_dir}/*/*/*/*nucleimask.png"))
-        files_finished = [f.replace('nucleimask.png','C4.tif') for f in files_finished]
-        print(f'Found {len(files_finished)} FOVs with nucleimasks.png done')
-        files = natsorted(glob(f"{base_dir}/*/*/*/C4.tif")) # w4 is microtubules
+        files_finished = [f.replace("nucleimask.png", "C4.tif") for f in files_finished]
+        print(f"Found {len(files_finished)} FOVs with nucleimasks.png done")
+        files = natsorted(glob(f"{base_dir}/*/*/*/C4.tif"))  # w4 is microtubules
         files = [f for f in files if f not in files_finished]
         print(f"========== Segmenting {len(files)} fovs ==========")
 
@@ -159,11 +175,11 @@ if __name__ == "__main__":
         )
 
     if True:
-        files_finished = natsorted(glob(f"{base_dir}/*/*/*/*cytomask.png"))
-        files_finished = [f.replace('nucleimask.png','C4.tif') for f in files_finished]
+        # files_finished = natsorted(glob(f"{base_dir}/*/*/*/*cytomask.png"))
+        # files_finished = [f.replace('nucleimask.png','C4.tif') for f in files_finished]
         files = natsorted(glob(f"{base_dir}/*/*/*/nucleimask.png"))
         files = [f.replace("nucleimask.png", "C4.tif") for f in files]
-        files = [f for f in files if f not in files_finished]
+        # files = [f for f in files if f not in files_finished]
         print(f"========== Segmenting {len(files)} fovs ==========")
         print(f"==========> Segmenting cells")
         os.makedirs(f"/scratch/users/tle1302/2Dshapespace/QCs/cell", exist_ok=True)
