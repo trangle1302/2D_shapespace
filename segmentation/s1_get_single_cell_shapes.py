@@ -6,6 +6,7 @@ Created on Thu Mar 11 08:23:22 2021
 
 This code takes in images and cell masks and return single cell shapes
 """
+
 import os
 import skimage
 import imageio
@@ -15,6 +16,7 @@ import pandas as pd
 import gzip
 import time
 import sys
+
 sys.path.append("..")
 from utils.helpers import (
     read_from_json,
@@ -63,9 +65,9 @@ def get_single_cell_mask(
     cell_mask,
     nuclei_mask,
     protein,
-    ref_channels = None,
-    keep_cell_list = [1,1,2],
-    save_path = '',
+    ref_channels=None,
+    keep_cell_list=[1, 1, 2],
+    save_path="",
     rm_border=True,
     remove_size=100,
     plot=False,
@@ -112,8 +114,8 @@ def get_single_cell_mask(
         pr[mask != 1] = 0
 
         if ref_channels is not None:
-            ref = ref_channels[:,minr:maxr, minc:maxc].copy()
-            ref[:, mask !=1] = 0
+            ref = ref_channels[:, minr:maxr, minc:maxc].copy()
+            ref[:, mask != 1] = 0
             np.save(f"{save_path}{region_c.label}_ref.npy", ref)
 
         if plot:
@@ -138,8 +140,8 @@ def get_single_cell_mask(
         imageio.imwrite(f"{save_path}{region_c.label}_protein.png", pr)
         data = np.stack((mask, mask_n))
         np.save(f"{save_path}{region_c.label}.npy", data)
-        #data = np.dstack((mask, np.zeros_like(mask), mask_n)) * 255
-        #imageio.imwrite(f"{save_path}{region_c.label}.png", data)
+        # data = np.dstack((mask, np.zeros_like(mask), mask_n)) * 255
+        # imageio.imwrite(f"{save_path}{region_c.label}.png", data)
 
 
 def get_cell_nuclei_masks2(encoded_image_id, encoded_image_dir):
@@ -239,9 +241,7 @@ def get_cell_nuclei_masks_ccd(
             matched_ID += [int(highest_match)]
     assert set(np.unique(nuclei_mask)) == set(np.unique(cell_mask))
 
-    if (
-        add_cyto_nuclei
-    ):  # enable this option when having cyto mask and nuclei mask separately, adding them and smooth out to create cell masks
+    if add_cyto_nuclei:  # enable this option when having cyto mask and nuclei mask separately, adding them and smooth out to create cell masks
         cell_mask_ = (
             skimage.morphology.erosion(nuclei_mask, skimage.morphology.square(3))
             + cell_mask
@@ -321,7 +321,7 @@ def get_single_cell_mask2(
         """
 
 
-#%% Test
+# %% Test
 def pilot_U2OS_kaggle2021test():
     base_dir = "C:/Users/trang.le/Desktop/annotation-tool"
     base_url = "https://if.proteinatlas.org"
@@ -397,17 +397,11 @@ def process_img(
         protein = imageio.imread(
             f"{image_dir}/{img_id.split('_')[0]}/{img_id}_green.png"
         )
-        mt = imageio.imread(
-            f"{image_dir}/{img_id.split('_')[0]}/{img_id}_red.png"
-        )
-        er = imageio.imread(
-            f"{image_dir}/{img_id.split('_')[0]}/{img_id}_yellow.png"
-        )
-        nu = imageio.imread(
-            f"{image_dir}/{img_id.split('_')[0]}/{img_id}_blue.png"
-        )
+        mt = imageio.imread(f"{image_dir}/{img_id.split('_')[0]}/{img_id}_red.png")
+        er = imageio.imread(f"{image_dir}/{img_id.split('_')[0]}/{img_id}_yellow.png")
+        nu = imageio.imread(f"{image_dir}/{img_id.split('_')[0]}/{img_id}_blue.png")
         ref = np.stack((mt, er, nu))
-        #print(cell_mask.shape, nuclei_mask.shape, ref.shape)
+        # print(cell_mask.shape, nuclei_mask.shape, ref.shape)
         save_path = f"{save_dir}/{img_id}_"
         get_single_cell_mask(
             cell_mask,
@@ -589,7 +583,7 @@ def process_img_ccd2(
                 nuclei_mask,
                 protein,
                 keep_cell_list=cell_idx,
-                save_path = save_path,
+                save_path=save_path,
                 rm_border=True,
                 remove_size=20,
                 plot=False,
@@ -614,7 +608,7 @@ def publicHPA(cell_line="U-2 OS"):
     log_dir = f"/data/2Dshapespace/{cell_line.replace(' ','_')}/logs"
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
-    '''
+    """
     # Load
     finished_imlist = []
     if os.path.exists(f"{log_dir}/images_done.pkl"):
@@ -625,10 +619,15 @@ def publicHPA(cell_line="U-2 OS"):
                 except EOFError:
                     break
     print(f"{len(finished_imlist)} images done, processing the rest ...")
-    '''
-    #finished_imlist = []
-    finished_imlist = set([f.rsplit("_",1)[0].rsplit("_",1)[0] for f in glob.glob(f"{save_dir}/*_protein.png")])
-    
+    """
+    # finished_imlist = []
+    finished_imlist = set(
+        [
+            f.rsplit("_", 1)[0].rsplit("_", 1)[0]
+            for f in glob.glob(f"{save_dir}/*_protein.png")
+        ]
+    )
+
     num_cores = multiprocessing.cpu_count() - 10  # save 1 core for some other processes
     ifimages = pd.read_csv(f"{base_url}/IF-image.csv")
     ifimages = ifimages[ifimages.atlas_name == cell_line]
@@ -639,13 +638,13 @@ def publicHPA(cell_line="U-2 OS"):
     print(f"...Found {len(imlist)} images with masks")
     imlist = list(imlist.difference(finished_imlist))
     print(f"...Processing {len(imlist)} img each with masks in {num_cores}")
-    '''
+    """
     im_df = pd.read_csv(f"{mask_dir}.csv")
     num_cores = 20
     finished_imlist = set([f.rsplit("_",1)[0].rsplit("_",1)[0] for f in glob.glob(f"{save_dir}/*_protein.png")])
     imlist = set([f.rsplit("_",1)[0].rsplit("_",1)[0] for f in glob.glob(f"{save_dir}/*_ref.npy")])
     imlist = [os.path.basename(f) for f in imlist.intersection(finished_imlist)]
-    '''
+    """
     print(len(imlist), imlist[:3])
     inputs = tqdm(imlist)
     s = time.time()
@@ -667,15 +666,16 @@ def publicHPA(cell_line="U-2 OS"):
         pickle.dump(processed_list, f)
     print(f"Finished in {(time.time() - s)/3600}h")
 
-    sc_stats_save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics.csv'
+    sc_stats_save_path = f"{cfg.PROJECT_DIR}/single_cell_statistics.csv"
     with open(sc_stats_save_path, "a") as f:
-            # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
-            f.write(
-                "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,aspect_ratio_nu,aspect_ratio_cell\n"
-            )
+        # Save sum quantities and cell+nucleus area, the mean quantities per compartment can be calculated afterwards
+        f.write(
+            "ab_id,cell_id,cell_area,nu_area,nu_eccentricity,Protein_cell_sum,Protein_nu_sum,MT_cell_sum,GMNN_nu_sum,CDT1_nu_sum,aspect_ratio_nu,aspect_ratio_cell\n"
+        )
+
 
 def cellcycle():
-    """ 
+    """
     Function to process cell cycle data from https://www.ebi.ac.uk/biostudies/BioImages/studies/S-BIAD34
     """
     base_url = "/data/2Dshapespace/S-BIAD34/Files"
