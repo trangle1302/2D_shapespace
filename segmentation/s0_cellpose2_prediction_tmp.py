@@ -7,10 +7,8 @@ from skimage import img_as_float
 from skimage import exposure
 from tqdm import tqdm
 from natsort import natsorted
-
-# import multiprocessing
-# from joblib import Parallel, delayed
-
+import concurrent.futures
+import time
 
 def sharpen(image):
     image = img_as_float(image)
@@ -40,19 +38,20 @@ def predict(model_path, files, plot_dir, diameter=0):
         channels = [2, 3]
 
         def read_img(f):
-            w4 = io.imread(f)
+            #w4 = io.imread(f)
             w0 = io.imread(f.replace("C4.tif", "C0.tif"))
-            w1 = io.imread(f.replace("C4.tif", "C1.tif"))
+            #w1 = io.imread(f.replace("C4.tif", "C1.tif"))
             #print(f'read {w1.max(), w0.max(), w4.max()}')
             try:
-                if w1.max() > 0 and w0.max() > 0 and w4.max() > 0:
+                #if w1.max() > 0 and w0.max() > 0 and w4.max() > 0:
+                if w0.max() > 0:
                     w0 = sharpen(w0) # rescale intensity
                     img = np.stack([adaptive_hist(w0), adaptive_hist(w0), adaptive_hist(w0)])
                 else:  # fail because empty channel
                     img = []
             except:  # fail because reading error
                 img = []
-            return img
+            return img, f
 
     elif model_name == "cyto":
         flow_threshold = 0
@@ -63,7 +62,7 @@ def predict(model_path, files, plot_dir, diameter=0):
             nuclei = io.imread(f.replace("C4.tif", "nucleimask.png"))
             nuclei = nuclei / nuclei.max()
             img = np.stack([np.zeros_like(w1), sharpen(w1), nuclei])
-            return img
+            return img, f
 
     chunk_size = 64
     n = len(files)
@@ -72,18 +71,21 @@ def predict(model_path, files, plot_dir, diameter=0):
             end_ = min(start_ + chunk_size, n)
             images = []
             file_names = []
-            for i_ in range(start_, end_):
-                img = read_img(files[i_])
-                if len(img) == 0:
-                    with open(
-                        "/scratch/users/tle1302/2Dshapespace/B2AI/failed_imgs_channelvalue0.txt",
-                        "a",
-                    ) as f:
-                        print(f'Failed: {files[i_].split("/")[-3:]}')
-                        f.write(files[i_])
-                else:
-                    images += [img]
-                    file_names += [files[i_]]
+            s = time.time()
+            # concurrent futures increase reading images by 3x
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [executor.submit(read_img, files[i_]) for i_ in range(start_, end_)]
+                for future in concurrent.futures.as_completed(futures):
+                    img, file_name = future.result()
+                    if len(img) == 0:
+                        with open("/scratch/users/tle1302/2Dshapespace/B2AI/failed_imgs_channelvalue0.txt", "a") as f:
+                            print(f'Failed: {file_name.split("/")[-3:]}')
+                            f.write(file_name + "\n")
+                    else:
+                        images.append(img)
+                        file_names.append(file_name)
+                    
+            print(f'Loading {chunk_size} image took {(time.time() - s)/60} min')
             # run model on <chunk_size> images
             masks, flows, styles = model.eval(
                 images,
