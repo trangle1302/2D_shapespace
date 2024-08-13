@@ -61,10 +61,12 @@ def predict(model_path, files, plot_dir, diameter=0):
         channels = [2, 3]
 
         def read_img(f):
-            w1 = io.imread(f)
+            w4 = io.imread(f)  # C4 microtubules
+            w1 = io.imread(f.replace("C4.tif", "C1.tif"))  # C1 ER
+            w4 = w1 + w4
             nuclei = io.imread(f.replace("C4.tif", "nucleimask.png"))
             nuclei = nuclei / nuclei.max()
-            img = np.stack([np.zeros_like(w1), sharpen(w1), nuclei])
+            img = np.stack([sharpen(w1), sharpen(w4), nuclei])
             return img, f
 
     chunk_size = 64
@@ -114,6 +116,7 @@ def predict(model_path, files, plot_dir, diameter=0):
                         name = os.path.basename(file_names[i]).replace(".tif", ".png")
                         name = "_".join(
                             [
+                                file_names[i].split("/")[-4],
                                 file_names[i].split("/")[-3],
                                 file_names[i].split("/")[-2],
                                 name,
@@ -124,7 +127,7 @@ def predict(model_path, files, plot_dir, diameter=0):
                             tmp = []
                             for ch in channels:
                                 tmp += [img[ch - 1]]
-                            img = np.stack(tmp)  # * 0.3
+                            img = np.stack(tmp) * 0.3
                         plot.show_segmentation(
                             fig,
                             img,
@@ -139,7 +142,7 @@ def predict(model_path, files, plot_dir, diameter=0):
                     # io.imsave(f'{plot_dir}/{name[:-4]}_{model_name}mask.png',masks[i])
             for m, f in zip(masks, file_names):
                 io.imsave(f.replace("C4.tif", f"{model_name}mask.png"), m)
-        pbar.update(end_ - start_)
+            pbar.update(end_ - start_)
 
 
 def delete_empty_lowcount(folders):
@@ -158,7 +161,7 @@ if __name__ == "__main__":
         folders = natsorted(glob(f"{base_dir}/*/*/*"))
         delete_empty_lowcount(folders)
 
-    if False:
+    if True:
         files_finished = natsorted(glob(f"{base_dir}/*/*/*/*nucleimask.png"))
         files_finished = [f.replace("nucleimask.png", "C4.tif") for f in files_finished]
         print(f"Found {len(files_finished)} FOVs with nucleimasks.png done")
@@ -177,7 +180,7 @@ if __name__ == "__main__":
     if True:
         # files_finished = natsorted(glob(f"{base_dir}/*/*/*/*cytomask.png"))
         # files_finished = [f.replace('nucleimask.png','C4.tif') for f in files_finished]
-        files = natsorted(glob(f"{base_dir}/*/*/*/nucleimask.png"))
+        files = natsorted(glob(f"{base_dir}/*/*/z01/nucleimask.png"))
         files = [f.replace("nucleimask.png", "C4.tif") for f in files]
         # files = [f for f in files if f not in files_finished]
         print(f"========== Segmenting {len(files)} fovs ==========")
