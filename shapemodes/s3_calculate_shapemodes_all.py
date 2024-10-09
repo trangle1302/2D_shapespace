@@ -74,9 +74,9 @@ def main():
         lines = load_fft(cfg, project_dir)
 
         cell_nu_ratio = pd.read_csv(f"{project_dir}/cell_nu_ratio.txt")
-        cell_nu_ratio.columns = ["path", "name", "nu_area", "cell_area", "ratio"]
+        #cell_nu_ratio.columns = ["path", "name", "nu_area", "cell_area", "ratio"]
         if cell_line != "BJ":
-            rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].name.to_list()
+            rm_cells = cell_nu_ratio[(cell_nu_ratio.cell_nu_ratio > 8) & (cell_nu_ratio.cell_nu_ratio < 1)].image_path.to_list()
             lines = {
                 k: lines[k]
                 for k in lines.keys()
@@ -104,7 +104,7 @@ def main():
     elif cfg.MODE == "cell":
         df = df.iloc[:, : (df.shape[1] // 2)]
 
-    shape_mode_path = f"{cfg.PROJECT_DIR}/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
+    shape_mode_path = f"{cfg.PROJECT_DIR}/all_celllines/shapemode/{cfg.ALIGNMENT}_{cfg.MODE}"
     if not os.path.isdir(shape_mode_path):
         os.makedirs(shape_mode_path)
 
