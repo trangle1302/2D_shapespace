@@ -189,7 +189,7 @@ def calculate_pseudotime(log_gmnn, log_cdt1, save_dir=""):
     pol_unsort = np.argsort(pol_sort_inds_reorder)
     fucci_time = pol_sort_norm_rev[pol_unsort]
     if save_dir != "":
-        WINDOW_FUCCI_PSEUDOTIME = 100
+        WINDOW_FUCCI_PSEUDOTIME = (100 if len(fucci_time) > 100 else len(fucci_time))
         fucci = FucciCellCycle()
         plt.figure()
         WINDOW_FUCCI_PSEUDOTIMEs = np.asarray(
@@ -250,8 +250,8 @@ def draw_ellipse(position, covariance, ax=None, **kwargs):
         width, height = 2 * np.sqrt(covariance)
 
     # Draw the Ellipse
-    for nsig in range(1, 4):
-        ax.add_patch(Ellipse(position, nsig * width, nsig * height, angle, **kwargs))
+    for nsig in range(1, 3):
+        ax.add_patch(Ellipse(tuple(position), nsig * width, nsig * height, angle = angle, **kwargs))
 
 
 def plot_gmm(gmm, X, label=True, ax=None):
@@ -271,11 +271,13 @@ def plot_gmm(gmm, X, label=True, ax=None):
 
 
 def GMM_cellcycle(data):
-    gmm = GaussianMixture(n_components=3, covariance_type="tied", random_state=99).fit(data)
+    #gmm = GaussianMixture(n_components=3, covariance_type="tied", random_state=99).fit(data)
+    gmm = GaussianMixture(n_components=3, random_state=42).fit(data)
     g1 = gmm.means_[:, 0].argmin()
-    g1s = gmm.means_[:, 1].argmax()
     g2 = gmm.means_[:, 1].argmin()
-    assert g1 != g2 and g1 != g1s
+    g1s = next(i for i in range(3) if i != g1 and i != g2)
+    print(gmm.means_, g1, g1s, g2)
+    assert g1 != g2 and g1 != g1s and g2 != g1s
     labels_numeric = gmm.predict(data)
     labels_name = [
         "G2" if (i == g2) else "G1S" if (i == g1s) else "G1" for i in labels_numeric
@@ -286,48 +288,75 @@ def GMM_cellcycle(data):
 def main():
     project_dir = f"/data/2Dshapespace/S-BIAD34"
     # project_dir = "/mnt/c/Users/trang.le/Desktop/shapemode/S-BIAD34"
-    sc_stats = pd.read_csv(f"{project_dir}/single_cell_statistics.csv")
-    sc_stats["GMNN_nu_mean"] = sc_stats.GMNN_nu_sum / sc_stats.nu_area
-    sc_stats["CDT1_nu_mean"] = sc_stats.CDT1_nu_sum / sc_stats.nu_area
-    gmnn = np.log10(sc_stats.GMNN_nu_mean)
-    cdt1 = np.log10(sc_stats.CDT1_nu_mean)
+    sc_stats = pd.read_csv(f"{project_dir}/single_cell_statistics_raw.csv")
+    calculate_per_antibody = False
 
-    # >>>>> Gaussian Mixture Model
-    pseudotime = calculate_pseudotime(gmnn.copy(), cdt1.copy(), save_dir=project_dir)
-    sc_stats["GMNN_nu_mean"] = gmnn
-    sc_stats["CDT1_nu_mean"] = cdt1
-    sc_stats["pseudotime"] = pseudotime
-    colors = LinearSegmentedColormap.from_list("rg", ["r", "y", "g"])(pseudotime)
-    plt.figure()
-    plt.scatter(gmnn, cdt1, s=0.1, c=colors)
-    plt.xlabel("log10[GMNN_mean]")
-    plt.ylabel("log10[CDT1_mean]")
-    plt.savefig(f"{project_dir}/fucci_polar_pseudotime.png")
+    def process_group(antibody, group, save_dir=project_dir, plot=True):
+        group["GMNN_nu_mean"] = group.GMNN_nu_sum / group.nu_area
+        group["CDT1_nu_mean"] = group.CDT1_nu_sum / group.nu_area
+        gmnn = np.log10(group.GMNN_nu_mean)
+        cdt1 = np.log10(group.CDT1_nu_mean)
+        project_dir = f"{save_dir}/tmp"
+        
+        #antibody = group.ab_id.values[0]
+        # >>>>> Pseudotime
+        pseudotime = calculate_pseudotime(gmnn.copy(), cdt1.copy(), save_dir=project_dir)
+        group["GMNN_nu_mean"] = gmnn
+        group["CDT1_nu_mean"] = cdt1
+        group["pseudotime"] = pseudotime
+        if plot:
+            colors = LinearSegmentedColormap.from_list("rg", ["r", "y", "g"])(pseudotime)
+            plt.figure()
+            plt.scatter(gmnn, cdt1, s=0.1, c=colors)
+            plt.xlabel("log10[GMNN_mean]")
+            plt.ylabel("log10[CDT1_mean]")
+            plt.savefig(f"{project_dir}/{antibody}_fucci_polar_pseudotime.png")
 
-    # >>>>> Gaussian Mixture Model
-    data = np.column_stack([gmnn, cdt1])
-    gmm, labels_numeric, labels_name = GMM_cellcycle(data)
-    sc_stats["GMM_cc"] = labels_numeric
-    sc_stats["GMM_cc_label"] = labels_name
-    # save output
-    sc_stats.to_csv(f"{project_dir}/single_cell_statistics.csv", index=False)
+        # >>>>> Gaussian Mixture Model
+        data = np.column_stack([gmnn, cdt1])
+        gmm, labels_numeric, labels_name = GMM_cellcycle(data)
+        group["GMM_cc"] = labels_numeric
+        group["GMM_cc_label"] = labels_name
+        # save output
+        group.to_csv(f"{project_dir}/{antibody}_single_cell_statistics.csv", index=False)
 
-    # Plotting for visualization of cluster assignments
-    fig, ax = plt.subplots()
-    cdict = {0: "red", 1: "green", 2: "yellow"}
-    ax.hist2d(data[:,0], data[:,1], bins=200)
-    for g in np.unique(labels_numeric):
-        idx = np.where(labels_numeric == g)
-        ax.scatter(data[idx, 0], data[idx, 1], c=cdict[g], label=g, s=0.05, alpha=0.05)
-    ax.legend()
-    plt.xlabel("log(GMNN)")
-    plt.ylabel("log(CDT1)")
-    plt.savefig(f"{project_dir}/fucci_GMM_points.png")
-
-    plt.figure()
-    plot_gmm(gmm, data, label=True, ax=None)
-    plt.savefig(f"{project_dir}/fucci_GMM_probs.png")
-
+        if plot:
+            # Plotting for visualization of cluster assignments
+            fig, ax = plt.subplots()
+            cdict = {0: "red", 1: "green", 2: "yellow"}
+            ax.hist2d(data[:,0], data[:,1], bins=200)
+            for g in np.unique(labels_numeric):
+                idx = np.where(labels_numeric == g)
+                ax.scatter(data[idx, 0], data[idx, 1], c=cdict[g], label=g, s=0.5, alpha=0.05)
+            ax.legend()
+            plt.xlabel("log(GMNN)")
+            plt.ylabel("log(CDT1)")
+            plt.savefig(f"{project_dir}/{antibody}_fucci_GMM_points.png")
+            print(gmm, data)
+            plt.figure()
+            plot_gmm(gmm, data, label=True, ax=None)
+            plt.savefig(f"{project_dir}/{antibody}_fucci_GMM_probs.png")
+        return group
+    
+    if calculate_per_antibody:
+        #sc_stats = sc_stats.head(5000)
+        dfs = []
+        for ab, group in sc_stats.groupby('ab_id'):
+            if not os.path.exists(f"{project_dir}/tmp/{ab}_single_cell_statistics.csv"):
+                group = group.reindex()
+                print(ab, group.shape)
+                print(group)
+                df = process_group(ab, group)
+            else:
+                df = pd.read_csv(f"{project_dir}/tmp/{ab}_single_cell_statistics.csv")
+            dfs.append(df)
+            
+        print(len(dfs))
+        df = pd.concat(dfs)
+    else:
+        df = process_group("all", sc_stats, plot=False)
+    df.to_csv(f"{project_dir}/single_cell_statistics.csv", index=False)
+    print(df.shape)
 
 if __name__ == "__main__":
     main()
