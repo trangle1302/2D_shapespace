@@ -73,3 +73,7 @@ slurm-*
 
 # intermediate plots
 *.png
+
+# extra exp
+NNmodels/
+app/
