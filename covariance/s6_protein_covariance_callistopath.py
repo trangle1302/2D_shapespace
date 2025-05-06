@@ -16,7 +16,7 @@ def plot_clustermap(intensities, reduced=True, save_path="./clustermap.png"):
     if reduced:
         from sklearn.decomposition import PCA
         pca = PCA(n_components=500)
-        intensities_reduced = pca.fit_transfomred(intensities.transpose())
+        intensities_reduced = pca.fit_transform(intensities.drop('ensembl_ids', axis=1).transpose())
         print(f"Percent variance kept: {pca.explained_variance_ratio_.sum()}")
     else:
         intensities_reduced = intensities
@@ -73,6 +73,7 @@ if __name__ == "__main__":
         for i, bin_ in enumerate(merged_bins):
             if os.path.exists(f"{save_dir}/PC{PC}_{i}.csv"):
                 covar_mat = pd.read_csv(f"{save_dir}/PC{PC}_{i}.csv")
+                intensities = pd.read_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
             else:
                 if os.path.exists(f"{save_dir}/PC{PC}_{i}_intensities.csv"):
                     intensities = pd.read_csv(f"{save_dir}/PC{PC}_{i}_intensities.csv")
@@ -130,6 +131,7 @@ if __name__ == "__main__":
             if pdist.dtype == "float64":
                 pdist = pdist.astype("float32")
             linkage = spc.linkage(pdist, method="ward") #  input y may be either a 1-D condensed distance matrix or a 2-D array of observation vectors.
+            
             print(f"Assigning clusters by distance threshold { 0.3 * pdist.max()}, max distance {pdist.max()}")
             idx = spc.fcluster(linkage, 0.3 * pdist.max(), "distance")
             cluster_assignation = {
