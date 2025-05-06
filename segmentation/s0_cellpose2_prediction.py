@@ -144,14 +144,14 @@ if __name__ == "__main__":
             plot_dir=f"{base_dir}/resegmentation/QCs/nuclei",
         )
     # standardize extension to .tif
-    files =  natsorted(glob(f'{base_dir}/Files/*/*.TIF'))
+    files = natsorted(glob(f"{base_dir}/Files/*/*.TIF"))
     for f in files:
-        os.rename(f,f.replace('.TIF','.tif'))
+        os.rename(f, f.replace(".TIF", ".tif"))
 
     if True:
-        files_finished = natsorted(glob(f'{base_dir}/Files/*/*nucleimask.png'))
-        files_finished = [f.replace('nucleimask.png','w1.tif') for f in files_finished]
-        print(f'Found {len(files_finished)} FOVs with nucleimasks.png done')
+        files_finished = natsorted(glob(f"{base_dir}/Files/*/*nucleimask.png"))
+        files_finished = [f.replace("nucleimask.png", "w1.tif") for f in files_finished]
+        print(f"Found {len(files_finished)} FOVs with nucleimasks.png done")
         files = natsorted(glob(f"{base_dir}/Files/*/*w1.tif"))
         files = [f for f in files if f not in files_finished]
         print(f"========== Segmenting {len(files)} fovs ==========")
@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
     if True:
         files_finished = natsorted(glob(f"{base_dir}/Files/*/*cytomask.png"))
-        files_finished = [f.replace('cytomask.png','w1.tif') for f in files_finished]
+        files_finished = [f.replace("cytomask.png", "w1.tif") for f in files_finished]
         files = natsorted(glob(f"{base_dir}/Files/*/*nucleimask.png"))
         files = [f.replace("nucleimask.png", "w1.tif") for f in files]
         files = [f for f in files if f not in files_finished]
