@@ -7,6 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import cv2
 import configs.config as cfg
+#from randomization_test import log_min_max_norm
 
 cyto_region = ["Actin filaments", 
                "Aggresome", 
@@ -158,7 +159,10 @@ def boxplots_style2(sc_stats, antibody, value = "Protein_nu_mean", save_dir = ""
         sub_df = sc_stats[sc_stats.antibody==antibody]
         gene_name = sub_df.gene_names.unique()[0]
     print(sub_df.shape)
-    sub_df.loc[:, 'log10_Protein_value'] = np.log10(sub_df.loc[:,value] + 0.000001)
+    # sub_df.loc[:, 'log10_Protein_value'] = np.log10(sub_df.loc[:,value] + 0.000001)
+    # Normed
+    sub_df['log10_Protein_value'] = log_min_max_norm(sub_df.loc[:,value])
+    
     groups = [sub_df[sub_df['groups'] == i][value] for i in [0,1,2]]
     kw_result = kruskal(groups[0], groups[1], groups[2])
 
@@ -212,32 +216,31 @@ def resize_with_padding(img, expected_size):
 
     return padded_image
 
-def draw_contour_on_image(binary_mask, image):
+def draw_contour_on_image(binary_mask, image, color = (0, 0, 255)):
     # Find contours in the binary mask
     contours, _ = cv2.findContours(binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # Draw red contours on the image
     image_with_contour = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB) if len(image.shape) == 2 else image.copy()
-    cv2.drawContours(image_with_contour, contours, -1, (0, 0, 255), 3)
+    cv2.drawContours(image_with_contour, contours, -1, color, 3)
     return image_with_contour
 
 def plot_example_images(sc_stats, antibody, save_dir = ""):
     sub_df = sc_stats[sc_stats.antibody==antibody]
     gene_name = sub_df.gene_names.unique()[0]
     #sub_df = sc_stats[sc_stats.gene_names==gene_name]
-    nrow=5
-    img_size = 300
+    nrow=6
+    img_size = 220
 
-    means = sub_df.groupby('groups').agg({'Protein_nu_mean':'mean',
-                                        'Protein_cell_mean':'mean',
-                                        'Protein_cyt_mean':'mean'})
-    
-    if False:
+    # means = sub_df.groupby('groups').agg({'Protein_nu_mean':'mean',
+    #                                     'Protein_cell_mean':'mean',
+    #                                     'Protein_cyt_mean':'mean'})
+    means = sub_df.groupby('groups').agg({'Protein_cell_mean':'mean'}).values.tolist()
+    if means[2]>means[0]:
         # Rank cells by protein expression increasing
         groups = [sub_df[sub_df['groups'] == 0].sort_values('Protein_nu_mean', ascending=True).image_path[:nrow],
                 sub_df[sub_df['groups'] == 1]['image_path'].sample(n=nrow) ,
                 sub_df[sub_df['groups'] == 2].sort_values('Protein_nu_mean', ascending=False).image_path[:nrow]]
-
-    if False:
+    elif means[0]>means[2]:
         # Rank cells by protein expression decreasing
         groups = [sub_df[sub_df['groups'] == 0].sort_values('Protein_cyt_mean', ascending=False).image_path[:nrow],
                 sub_df[sub_df['groups'] == 1]['image_path'].sample(n=nrow) ,
