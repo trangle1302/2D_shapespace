@@ -16,7 +16,7 @@ import configs.config as cfg
 if __name__ == "__main__":
     intensity_sampling_concentric_ring = False #True
     intensity_warping = True
-    cell_line = 'U2OS' #'Hep-G2' #'U2OS' # 'S-BIAD34'
+    cell_line = 'S-BIAD34' #'U2OS' #'Hep-G2' #'U2OS' # 
 
     project_dir = os.path.join(os.path.dirname(cfg.PROJECT_DIR), cell_line)
     print('Working dir: ', project_dir)
@@ -69,6 +69,7 @@ if __name__ == "__main__":
     mappings['Protein_nu_mean'] = mappings.Protein_nu_sum / mappings.nu_area
     mappings['Protein_cytosol_mean'] = (mappings.Protein_cell_sum - mappings.Protein_nu_sum)/(mappings.cell_area_x - mappings.nu_area)
 
+    save_dir = f"{avg_organelle_dir}/metabolism"
     classes = mappings[mappings.PathwayGroup=='Glycan-biosynthesis-and-metabolism'].Pathway.unique()
     for pathwayclass in classes:
-        org_dstr = get_heatmap(mappings[mappings.PathwayGroup=='Glycan-biosynthesis-and-metabolism'], cells_assigned, pathway_group = pathwayclass)#, pathway = 'Pathway')
+        org_dstr = get_heatmap(mappings[mappings.PathwayGroup=='Glycan-biosynthesis-and-metabolism'], cells_assigned, pathway_group = pathwayclass, save_dir=f'{avg_organelle_dir}/{pathwayclass}.png')#, pathway = 'Pathway')
