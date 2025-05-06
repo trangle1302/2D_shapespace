@@ -64,11 +64,14 @@ COLORS_MAP = {
 ORGANELLES = ["Nucleoplasm","Nucleoli","NucleoliFC","NuclearS","NuclearB","NuclearM",
               "GolgiA", "IntermediateF","ActinF","Mitochondria",""
               "Cytosol","PlasmaM","Microtubules"]
-
+ORGANELLES = ['Nucleoplasm', 'Nucleoli', 'NucleoliFC', 'NuclearS', 'NuclearB',
+       'NuclearM', 'Aggresome', 'GolgiA', 'Vesicles', 'Peroxisomes',
+       'Endosomes', 'Mitochondria', 'IntermediateF', 'EndoplasmicR', 'ActinF',
+       'Cytosol', 'Microtubules', 'PlasmaM']
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
 CELL_LINE = ["BJ", "U2OS","A-431","U-251_MG", "MCF7", "HEK_293","RT4", "Hep-G2", "HEL", "K-562"]
 N_COEFS = 128
-N_SAMPLES = 10000
+N_SAMPLES = 6000
 N_CV = 1
 MODE = "cell_nuclei" 
 ALIGNMENT = "fft_cell_major_axis_polarized" 
@@ -76,7 +79,7 @@ COEF_FUNC = "fft"
 N_ISOS = [10,20]
 
 # >>>>>>>>>>>>>>>>>>>>> COMPUTE RESOURCE + PACKAGE
-SERVER = "sherlock"
+SERVER = "callisto"
 if SERVER == "callisto":
     PROJECT_DIR = f"/data/2Dshapespace/"
     META_PATH = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
