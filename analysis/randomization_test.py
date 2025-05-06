@@ -18,8 +18,11 @@ def mvavg(yvals, mv_window):
     return np.convolve(yvals, np.ones((mv_window,))/mv_window, mode='valid')
 
 def log_min_max_norm(x):
-    x = np.log10(x)
+    x = np.log10(x) + 0.000001
     return (x-np.min(x))/(np.max(x)-np.min(x))
+
+def max_norm(x):
+    return x/np.max(x)
 
 def permutation_analysis(transformed_matrix, PCs=['PC1','PC2','PC3']):
     '''Permutation analysis for the moving average of the PCs
@@ -43,10 +46,17 @@ def permutation_analysis(transformed_matrix, PCs=['PC1','PC2','PC3']):
             sorted_mt = df_['MT_cell_mean'].values[sorted_indices.values]
             #sorted_speudotime = df_['pseudotime'].values[sorted_indices.values]
 
+            # Remove outliers:
+            values = sorted_indices.copy() 
+            sorted_indices = remove_outliers(values, sorted_indices)
+            sorted_feature1 = remove_outliers(values, sorted_feature1)
+            sorted_feature2 = remove_outliers(values, sorted_feature2)
+            sorted_mt = remove_outliers(values, sorted_mt)
+
             # Normalize/standardize
-            sorted_feature1 = log_min_max_norm(sorted_feature1)
-            sorted_feature2 = log_min_max_norm(sorted_feature2)
-            sorted_mt = log_min_max_norm(sorted_mt)
+            sorted_feature1 = max_norm(sorted_feature1)
+            sorted_feature2 = max_norm(sorted_feature2)
+            sorted_mt = max_norm(sorted_mt)
 
             # Apply moving average
             #sorted_mt_mvavg = mvavg(sorted_mt, mv_window)
@@ -56,7 +66,7 @@ def permutation_analysis(transformed_matrix, PCs=['PC1','PC2','PC3']):
 
             # Permutations
             perms = [np.random.permutation(len(df_[feature1].values)) for _ in range(PERMUTATIONS)]
-            features = log_min_max_norm(df_[feature1].values)
+            features = max_norm(df_[feature1].values)
             # Metric : mean difference from random
             curr_rng_comp = [features[perm] for perm in perms]
             curr_mvavg_rng_comp = [mvavg(rng_feats, mv_window) for rng_feats in curr_rng_comp]
@@ -67,9 +77,9 @@ def permutation_analysis(transformed_matrix, PCs=['PC1','PC2','PC3']):
 
             # Permutations
             perms = [np.random.permutation(len(df_[feature2].values)) for _ in range(PERMUTATIONS)]
-            features = log_min_max_norm(df_[feature2].values)
+            features = max_norm(df_[feature2].values)
             # Metric : mean difference from random
-            curr_rng_comp = [f*eatures[perm] for perm in perms]
+            curr_rng_comp = [features[perm] for perm in perms]
             curr_mvavg_rng_comp = [mvavg(rng_feats, mv_window) for rng_feats in curr_rng_comp]
             pervar_ = np.var(sorted_feature2_mvavg)/np.var(features)
             pervar_ordered = np.var(curr_mvavg_rng_comp,axis=1) / np.var(features)
@@ -115,7 +125,7 @@ def plot_moving_averages(df,ab, PC, feature_name, mv_window = 20, rm_outliers=Tr
     sorted_mt = df_['MT_cell_mean'].values[sorted_indices.values]
     sorted_speudotime = df_['pseudotime'].values[sorted_indices.values]
     
-    if rm_outliers:        
+    if rm_outliers:
         # remove outliers position
         values = sorted_pos.copy() #
         #values = sorted_feature1.copy()
@@ -127,8 +137,8 @@ def plot_moving_averages(df,ab, PC, feature_name, mv_window = 20, rm_outliers=Tr
     # print(f'Number of cells after filter 5std from mean position: {df_.shape[0]}')
     
     # Normalize/standardize
-    sorted_feature1 = log_min_max_norm(sorted_feature1)
-    sorted_mt = log_min_max_norm(sorted_mt)
+    sorted_feature1 = max_norm(sorted_feature1) # log_min_max_norm(sorted_feature1)
+    sorted_mt = max_norm(sorted_mt) #log_min_max_norm(sorted_mt)
     
     # Apply moving average
     sorted_mt_mvavg = mvavg(sorted_mt, mv_window)
@@ -139,8 +149,8 @@ def plot_moving_averages(df,ab, PC, feature_name, mv_window = 20, rm_outliers=Tr
     plt.figure()
     plt.scatter(sorted_pos, sorted_feature1, color='blue', alpha=0.1, label='protein intensity')
     plt.plot(sorted_pc_mvavg, sorted_feature1_mvavg, c='blue')
-    plt.scatter(sorted_pos, sorted_mt, color='grey', alpha=0.1, label='MT intensity')
-    plt.plot(sorted_pc_mvavg, sorted_mt_mvavg, c='grey')
+    # plt.scatter(sorted_pos, sorted_mt, color='grey', alpha=0.1, label='MT intensity')
+    # plt.plot(sorted_pc_mvavg, sorted_mt_mvavg, c='grey')
     #plt.plot(sorted_pc_mvavg, sorted_feature2_mvavg, c='red')
     #mvavg_min = pd.Series(sorted_feature1).rolling(mv_window).min()[mv_window-1:]
     #mvavg_max = pd.Series(sorted_feature1).rolling(mv_window).max()[mv_window-1:]
@@ -173,7 +183,10 @@ if __name__ == "__main__":
     else:
         results_pcs = pd.read_csv(hit_path)
 
-    results_pcs = results_pcs.drop('Unnamed: 0', axis=1).drop_duplicates()
+    try:
+        results_pcs = results_pcs.drop('Unnamed: 0', axis=1).drop_duplicates()
+    except:
+        results_pcs = results_pcs.drop_duplicates()
     results_pcs = results_pcs.merge(mappings[['antibody','gene_names','locations','ccd_reason']], left_on='ab', right_on='antibody')
     results_pcs.to_csv(hit_path.replace('.csv','ccd.csv'), index=False)
     # Visualization
@@ -188,6 +201,12 @@ if __name__ == "__main__":
         plt.figure()
         plot_moving_averages(df,r.ab,r.PC,'Protein_nu_mean', mv_window = 20, rm_outliers=True)
         plt.savefig(f'{save_dir}/{r.PC}_nu_{r.ab}_{genename}.png')
+
+        
+        #plt.figure()
+        #plot_moving_averages(df,r.ab,'pseudotime','Protein_nu_mean', mv_window = 20, rm_outliers=True)
+        #plt.savefig(f'{save_dir}/pseudotime_nu_{r.ab}_{genename}.png')
+        #breakme
 
     top20_cyt = results_pcs[~results_pcs.fillna('').locations.str.contains('Nuc')] 
     top20_cyt = top20_cyt.sort_values('mean_diff_cyt', ascending=False).iloc[:20,:]
