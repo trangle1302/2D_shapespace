@@ -4,3 +4,5 @@ scikit-image
 seaborn==0.13.0
 opencv
 more_itertools
+tqdm
+PyWavelets
