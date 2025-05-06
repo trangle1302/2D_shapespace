@@ -159,6 +159,7 @@ def main():
     df_trans.index = df.index
     df_trans[list(set(pc_names) - set(pc_keep))] = 0
     print(matrix_of_features_transform.shape, df_trans.shape)
+    df_trans.to_csv(f"{shape_mode_path}/transformed_matrix.csv")
     
     # Cell density on major PC
     plotting.plot_pc_density(df_trans["PC1"], df_trans["PC2"], save_path=f"{shape_mode_path}/PC1vsPC2_cell_density.png")

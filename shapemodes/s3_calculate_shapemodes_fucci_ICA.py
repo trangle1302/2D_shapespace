@@ -152,7 +152,33 @@ def main():
                         continue
                     # data_dict = {data_dict[0]:data_dict[1:]}
                     lines[data_[0]] = data_[1:]
+        '''
+        try:
+            cell_nu_ratio = pd.read_csv(f"{cfg.PROJECT_DIR}/cell_nu_ratio.txt")
+            cell_nu_ratio["ratio"] = cell_nu_ratio.cell_area/cell_nu_ratio.nu_area
+        except:
+            cell_nu_ratio = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv")
+            cell_nu_ratio["ratio"] = cell_nu_ratio.cell_area/cell_nu_ratio.nu_area
+            cell_nu_ratio["image_name"] = cell_nu_ratio.cell_id
 
+        rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].image_name.to_list()
+        print(
+            f"Large cell-nu ratio cells to remove: {len(rm_cells)}"
+        )  # 6264 cells for ratio 10, and 16410 for ratio 8
+        lines = {
+            k: lines[k]
+            for k in lines.keys()
+            if os.path.basename(k).split(".")[0] not in rm_cells
+        }
+        #print(len(lines), mappings.id)
+        keep_cells = [cell_id.split("_", 1)[1] for cell_id in mappings.id]
+        print(f"Removing border cells leftover: {len(keep_cells)}")
+        lines = {
+            k: lines[k]
+            for k in lines.keys()
+            if os.path.basename(k).split(".")[0] in keep_cells
+        }
+        '''
         df = pd.DataFrame(lines).transpose()
         print(df.shape)
         if cfg.COEF_FUNC == "fft":
