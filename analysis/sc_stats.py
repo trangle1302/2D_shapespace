@@ -18,7 +18,8 @@ def check_size(image, shape, d_type="uint16", max_val=65535):
 
 def rescale_intensity(image, min_val=0, max_val=65535):
     dtype = image.dtype
-    maxmax = (65535 if dtype == "uint16" else (255 if dtype == "uint8" else 1))
+    #maxmax = (65535 if dtype == "uint16" else (255 if dtype == "uint8" else 1))
+    maxmax = 65535 if dtype == "uint16" else 255 if dtype == "uint8" else 1
     normed = (image - min_val) / (max_val - min_val)
     return (normed*maxmax).astype(dtype)
 
@@ -152,7 +153,7 @@ def get_sc_statistics(cell_mask, nuclei_mask, mt, er, nu, protein, cell_id):
                     pr_sum,
                     pr_nu_sum,  # protein total intensity in whole cell and nucleus region, pr_cytosol_mean = (pr_sum-pr_nu)/(cell_area-nu_area)
                     mt_sum, #mt_mean = mt_sum / cell_area
-                    er_sum,
+                    er_sum, # ER in the cytosol
                     nu_sum,
                     region_n.axis_minor_length/region_n.axis_major_length, #aspect_ratio_nu,
                     region_c.axis_minor_length/region_c.axis_major_length, #aspect_ratio_cell
@@ -272,7 +273,7 @@ def main():
     import configs.config as cfg
     d = cfg.PROJECT_DIR
     #save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics_rescale_intensity_well99.csv'
-    save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics.csv'
+    save_path = f'{cfg.PROJECT_DIR}/single_cell_statistics_raw.csv'
     full_FOV_masks = True
     if full_FOV_masks:
         if cfg.CELL_LINE=='S-BIAD34':
@@ -301,7 +302,7 @@ def main():
                         cell_masks = glob.glob(f"{cfg.PROJECT_DIR}/cell_masks/{antibody}/*_cellmask.png")
                         
                         #print(f"{antibody}: {len(cell_masks)} FOVs found with masks")
-                    
+
                         for cell_mask_path in cell_masks:
                             # Reading all channels and masks
                             cell_mask = imageio.imread(cell_mask_path)
@@ -312,16 +313,16 @@ def main():
                             img_id = cell_mask_path.split("/")[-1].replace("_cellmask.png", "")
                             mt = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w1.tif")
                             mt = check_size(mt, cell_mask.shape)
-                            mt = rescale_intensity(mt, max_val=max_vals['w1'])
+                            #mt = rescale_intensity(mt, max_val=max_vals['w1'])
                             gmnn = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w2.tif")
                             gmnn = check_size(gmnn, cell_mask.shape)
-                            gmnn = rescale_intensity(gmnn, max_val=max_vals['w2'])
+                            #gmnn = rescale_intensity(gmnn, max_val=max_vals['w2'])
                             cdt1 = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w3.tif")
                             cdt1 = check_size(cdt1, cell_mask.shape)
-                            cdt1 = rescale_intensity(cdt1, max_val=max_vals['w3'])
+                            #cdt1 = rescale_intensity(cdt1, max_val=max_vals['w3'])
                             protein = imageio.imread(f"{d}/Files/{ab_id}/{img_id}_w4_Rescaled.tif")
                             protein = check_size(protein, cell_mask.shape)
-                            protein = rescale_intensity(protein, max_val=max_vals['w4_Rescaled'])
+                            #protein = rescale_intensity(protein, max_val=max_vals['w4_Rescaled'])
                             lines = get_sc_statistics_fucci(
                                 cell_mask, nuclei_mask, mt, gmnn, cdt1, protein, cell_mask_path
                             )
