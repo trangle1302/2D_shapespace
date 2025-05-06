@@ -108,12 +108,15 @@ def get_cells(cells_assigned, PC="PC1", bin_=[0,1,2]):
     ls = helpers.flatten_list(ls)
     return ls
 
-def plot_image_collage(paths, n_cols=5, figsize=(20, 20)):
+def plot_image_collage(paths, n_cols=5, figsize=(20, 20), globalvmax=None):
     n_rows = len(paths) // n_cols + 1
     fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
     for i, ax in enumerate(axes.flatten()):
         if i < len(paths):
-            ax.imshow(imread(paths[i]))
+            if globalvmax:
+                ax.imshow(imread(paths[i]), cmap='inferno', vmax=globalvmax)
+            else:
+                ax.imshow(imread(paths[i]), cmap='inferno')
             ax.axis('off')
         else:
             ax.axis('off')
@@ -132,7 +135,7 @@ def plot_pilr_collage(paths, n_cols=5, figsize=(20, 20)):
     plt.tight_layout()
     plt.show()
     
-def get_heatmap(mappings0, cells_assigned, pc_name="PC1", pathway_group = 'Glycolysis'):
+def get_heatmap(mappings0, cells_assigned, pc_name="PC1", pathway_group = 'Glycolysis',save_dir = "metabolism"): 
     intensity_sampling_concentric_ring = False
     intensity_warping = True
     project_dir = cfg.PROJECT_DIR
@@ -192,5 +195,6 @@ def get_heatmap(mappings0, cells_assigned, pc_name="PC1", pathway_group = 'Glyco
     plt.yticks(rotation=30) 
     plt.tight_layout()
     fig.suptitle(f"{pc_name} - {pathway_group}")
+    plt.savefig(f"{save_dir}/{pc_name}_{pathway_group}.png")
     df = pd.DataFrame(lines[1:], columns=lines[0])
     return df
