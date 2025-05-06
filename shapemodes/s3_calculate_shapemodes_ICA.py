@@ -112,7 +112,7 @@ def main():
         }
 
         df = pd.DataFrame(lines).transpose()
-        #print(df.index[0])
+        #print(df)
         if cfg.COEF_FUNC == "fft":
             df = df.applymap(lambda s: complex(s.replace("i", "j")))
 

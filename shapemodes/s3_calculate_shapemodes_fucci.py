@@ -218,7 +218,7 @@ def main():
         )
         df_trans["matchid"] = df["matchid"] 
         # Shape modes of G1, G2/S, G2 cells:
-        sc_stats = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv")
+        sc_stats = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics_raw.csv")
         sc_stats["matchid"] = sc_stats.ab_id + "/" + sc_stats.cell_id
         print(sc_stats.matchid[:3], df.matchid[:3])
         
