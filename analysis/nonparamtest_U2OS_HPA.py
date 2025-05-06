@@ -74,8 +74,8 @@ if __name__ == "__main__":
         #boxplots_style1(sc_stats, None, value='Protein_cell_mean', save_dir = save_dir)
         #boxplots_style1(sc_stats, None, value='Protein_cyt_mean', save_dir = save_dir)
 
-        plot_example_images(sc_stats, "HPA055941", save_dir = save_dir)
-        breakme
+        # plot_example_images(sc_stats, "HPA055941", save_dir = save_dir)
+        # breakme
         if os.path.exists(f"{save_dir}/kruskal_{pc}.csv"):
             results = pd.read_csv(f"{save_dir}/kruskal_{pc}.csv")
         else:
@@ -83,13 +83,15 @@ if __name__ == "__main__":
             results.to_csv(f"{save_dir}/kruskal_{pc}.csv", index=False)
         print('results shape: ', results.shape)
         print(results)
-        group_top10 = results.sort_values(by='p', ascending=True).iloc[:10,:]
+        ccds = ["HPA002636", "HPA008873", "HPA050556", "HPA068831"]
+        group_top10 = results[results.antibody.isin(ccds)]
+        #group_top10 = results.sort_values(by='p', ascending=True).iloc[:10,:]
         for i, r in group_top10.iterrows():
             boxplots_style2(sc_stats, r.antibody, value = r.region, save_dir = save_dir)
             plot_example_images(sc_stats, r.antibody, save_dir = save_dir)
             print(r.antibody, r.gene_names, r.location, r.p)
             print('-----------------------------------')
-
+    breakme
     # Combine results and FDR
     import glob
     tests = glob.glob(f"{cfg.PROJECT_DIR}/kruskal/boxplots_*/kruskal_*")
