@@ -1,14 +1,23 @@
-# Pipeline to process shape modes
+# 2D Shapespace
+
+This repository contains the code and analysis for our paper, "Cell shapes decode molecular phenotypes in image-based spatial proteomics" (Le et al., 2025).
+
+We introduce a computational framework called Shapespace, which study interpretable shape variations, and maps single-cell protein localization and pathway activity onto a common coordinate system defined by cell and nuclear morphology. This enables robust, interpretable analysis across morphological variation, conditions, and perturbations.
+
+[notebooks/](https://github.com/trangle1302/2D_shapespace/tree/master/notebooks) and [analysis/](https://github.com/trangle1302/2D_shapespace/tree/master/analysis) – Python script or Jupyter notebooks for reproducing figures, performing downstream analysis, and exploring results. For step-by-step details, please refer to the Methods section of the manuscript.
+
+
+## Shapespace construction (Pipeline to process shape modes)
 
 pilot: U2OS cell lines
 small subsets (private images, manual segmentation and annotations): cells (1776 images)
 HPA (public images, automatic segmentation): 297108 cells (23272 images)
 
 Steps for the pipelines:
-## s0 - segmentation
+### s0 - segmentation
 Either manual segmentation, or segmentation by any DL model (in this case [HPACellSegmentator](https://github.com/CellProfiling/HPA-Cell-Segmentation) for inference; training code is currently in private repo). I've also provided here example of training and segmenting dataset by the popular [cellpose v2.0](https://github.com/MouseLand/cellpose) (credits to their starter notebook, I only wrapped them in a more comprehensible/concise manner). The training set for this part is only 9 images/FOVs.
 
-## s1 - process image masks of multiple cells to single cell masks of cell and nucleus, and into .npy
+### s1 - process image masks of multiple cells to single cell masks of cell and nucleus, and into .npy
 
 Folder: [segmentation](https://github.com/trangle1302/2D_shapespace/tree/master/segmentation) 
 
@@ -17,7 +26,7 @@ Removing cells where nucleus touching the borders. Cells where cell segmentation
 python s1_get_single_cell_shapes.py
 ```
 
-## s2 - get FFT coeficients for individua cell and nucleus shapes
+### s2 - get FFT coeficients for individua cell and nucleus shapes
 
 Folder: [coefficients](https://github.com/trangle1302/2D_shapespace/tree/master/coefficients) 
 
@@ -29,7 +38,7 @@ Folder: [coefficients](https://github.com/trangle1302/2D_shapespace/tree/master/
 python s2_calculate_fft.py
 ```
 
-## s3 - Calculate shape modes & map of single-organelle protein
+### s3 - Calculate shape modes & map of single-organelle protein
 
 Folder: [shapemodes](https://github.com/trangle1302/2D_shapespace/tree/master/shapemodes) 
 
@@ -38,7 +47,7 @@ Fit and transform PCA, calculate shapemodes (n_PCs with xx% variance) based on c
 python s3_calculate_shapemodes.py
 ```
 
-## s4 - Protein parameterization: Intepolate concentric rings in green channels and shape modes
+### s4 - Protein parameterization: Intepolate concentric rings in green channels and shape modes
 
 Folder: [warp](https://github.com/trangle1302/2D_shapespace/tree/master/warp) 
 
@@ -52,14 +61,14 @@ Protein morphing on to shape based on [thin-plate splines](https://ieeexplore.ie
 python s4_protein_image_warp.py
 ```
 
-## s5 - Organelle distribution and relation with each other
+### s5 - Organelle distribution and relation with each other
 
 ```sh
 python s5_organelle_heatmappy
 ```
 
 
-# Mislanchelous shell scripts:
+## Mislanchelous shell scripts:
 - Count number of lines in a text file:
 
 - Replace old_text with new_text in a big file 
