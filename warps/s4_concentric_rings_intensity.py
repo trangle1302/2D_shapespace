@@ -67,7 +67,7 @@ def sample_intensity(l_num, cfg, args, shift_path, data_dir, protein_dir, mappin
             n_coef=cfg.N_COEFS,
             inverse_func=inverse_func,
             fourier_algo=cfg.COEF_FUNC,
-            binarize=True,
+            binarize=False,
             n_isos=args.n_isos
         )
         print(img_id, shifts["sc_label"], intensity.sum(axis=1))
