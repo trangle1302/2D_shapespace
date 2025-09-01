@@ -1,23 +1,14 @@
 import os
 import sys
-
 sys.path.append("..")
 from shapemodes import dimreduction
 from coefficients import coefs
-from warps.parameterize import get_coordinates
-from utils import plotting, helpers
-from sklearn.decomposition import PCA, IncrementalPCA
-from pathlib import Path
+from utils import plotting
+from sklearn.decomposition import PCA
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.helpers import get_location_counts
-import glob
-import multiprocessing
-from joblib import Parallel, delayed
-from tqdm import tqdm
 import random
-from ast import literal_eval
 import json
 import resource
 

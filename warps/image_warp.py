@@ -1,7 +1,6 @@
 import sys
 
 sys.path.append("..")
-from coefficients import alignment, coefs
 import cv2
 import numpy as np
 from utils import helpers

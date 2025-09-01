@@ -12,19 +12,6 @@ import skimage
 import imageio.v2 as imageio
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
-import gzip
-import time
-import sys
-sys.path.append("..")
-from utils.helpers import (
-    read_from_json,
-    watershed_lab,
-    watershed_lab2,
-    rgb_2_gray_unique,
-    bbox_iou,
-)
-import io
 import glob
 import pickle
 from tqdm import tqdm

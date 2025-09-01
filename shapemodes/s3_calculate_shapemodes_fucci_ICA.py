@@ -1,7 +1,6 @@
 import os
 import sys
 sys.path.append("..")
-from shapemodes import dimreduction
 from coefficients import coefs
 from utils import plotting
 from sklearn.decomposition import FastICA

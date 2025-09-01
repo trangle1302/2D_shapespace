@@ -1,7 +1,6 @@
 import os
 import sys
 sys.path.append("..")
-from warps.parameterize import get_coordinates
 from coefficients import alignment, coefs
 from pathlib import Path
 import numpy as np

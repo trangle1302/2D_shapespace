@@ -3,8 +3,7 @@ from scipy import interpolate as spinterp
 import warnings
 import matplotlib.pyplot as plt
 import scipy
-from typing import Optional, List, Dict, Tuple
-from pathlib import Path
+from typing import List, Dict
 
 
 def parameterize_image_coordinates(

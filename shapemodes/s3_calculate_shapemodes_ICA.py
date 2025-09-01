@@ -5,13 +5,9 @@ from shapemodes import dimreduction
 from coefficients import coefs
 from utils import plotting
 from sklearn.decomposition import FastICA
-from pathlib import Path
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from utils.helpers import get_location_counts
 import glob
-from tqdm import tqdm
 import random
 import json
 import resource
