@@ -63,11 +63,10 @@ def main():
                     lines[data_[0]] = data_[1:]
         try:
             cell_nu_ratio = pd.read_csv(f"{cfg.PROJECT_DIR}/cell_nu_ratio.txt")
-            cell_nu_ratio.columns = ["path", "name", "nu_area", "cell_area", "ratio"]
         except:
             cell_nu_ratio = pd.read_csv(f"{cfg.PROJECT_DIR}/single_cell_statistics.csv")
 
-        rm_cells = cell_nu_ratio[cell_nu_ratio.ratio > 8].name.to_list()
+        rm_cells = cell_nu_ratio[cell_nu_ratio.cell_nu_ratio > 8].image_path.to_list()
         print(
             f"Large cell-nu ratio cells to remove: {len(rm_cells)}"
         )  # 6264 cells for ratio 10, and 16410 for ratio 8
