@@ -149,6 +149,10 @@ if __name__ == "__main__":
     s_t = time.time()
     import configs.config as cfg
 
+    log_dir = f"{cfg.PROJECT_DIR}/logs"
+    if not os.path.isdir(log_dir):
+        os.makedirs(log_dir)
+        
     if cfg.COEF_FUNC == "fft":
         get_coef_fun = coefs.fourier_coeffs
         inverse_func = coefs.inverse_fft

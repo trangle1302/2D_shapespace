@@ -47,9 +47,9 @@ wget https://ell-vault.stanford.edu/dav/trangle/www/K-562.zip
 unzip K-562.zip -d K-562
 
 python -m coefficients.s2_calculate_fft
-python -m coefficients.s3_calculate_shapemodes
-python -m coefficients.s4_concentric_rings_intensity # check cfg.N_ISOS and cfg.LANDMARKS
-python -m coefficients.s4_protein_image_warp # check cfg.LANDMARKS
+python -m shapemodes.s3_calculate_shapemodes
+python -m warp.s4_concentric_rings_intensity # check cfg.N_ISOS and cfg.LANDMARKS
+python -m warp.s4_protein_image_warp # check cfg.LANDMARKS
 ```
 For large datasets or when analyzing multiple cell lines, consider using a workflow manager such as **Snakemake**, or submitting separate jobs to a compute cluster using **SLURM**. Example workflow files and job scripts can be found inside each folder. 
 
