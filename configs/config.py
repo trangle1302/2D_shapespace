@@ -90,21 +90,24 @@ ORGANELLES_FULLNAME = ["Nucleoplasm","Nucleoli","Nucleoli fibrillar center","Nuc
               "Cytosol","Microtubules","Plasma membrane"]
 
 # >>>>>>>>>>>>>>>>>>>>> PARAM CONFIGS
-CELL_LINE = "B2AI" # "S-BIAD34" #"U2OS"#"S-BIAD34"#"Hep-G2" #"Hep-G2"#"A-431" #"U2OS" #"HEL"#"MCF7" #"U-251 MG" # "K-562" # #"K-562"#"A-431" # #"RT4"
-N_COEFS = 128
-N_SAMPLES = -1 #20000 #-1  # 5000
+CELL_LINE =  "K-562" #"B2AI", "S-BIAD34", "U2OS", "S-BIAD34", "Hep-G2", "Hep-G2", "A-431", "HEL", "MCF7", "U-251 MG", "A-431", "RT4"
+N_COEFS = 128 # number of fft coefficients for nucleus and cell contours
+N_SAMPLES = -1 # -1 for all cells, or specify a number like 10000
 N_CV = 1
-MODE = "cell_nuclei"  # ["nuclei" #"cell_nuclei"]
-ALIGNMENT = "fft_cell_major_axis_polarized" #"fft_cell_major_axis_polarized"  # ["fft_nuclei_major_axis","fft_nuclei_major_axis","fft_cell_nuclei_centroid"]
+MODE = "cell_nuclei"  # ["nuclei", "cell_nuclei"]
+ALIGNMENT = "fft_cell_major_axis_polarized" # ["fft_nuclei_major_axis","fft_nuclei_major_axis","fft_cell_nuclei_centroid"]
 COEF_FUNC = "fft" # ["efd", "wavelet"]
-N_ISOS = [10,20]
-N_LANDMARKS = 32
+N_ISOS = [10,20] # number of concentric rings for nucleus and cytosolic regions
+N_LANDMARKS = 32 # number of landmarks for each nucleus and cell contour
 
 # >>>>>>>>>>>>>>>>>>>>> COMPUTE RESOURCE + PACKAGE
-SERVER = "callisto"
+SERVER = "local"
 if SERVER == "callisto":
     PROJECT_DIR = f"/data/2Dshapespace/{CELL_LINE.replace(' ','_')}"
     META_PATH = "/data/kaggle-dataset/publicHPA_umap/results/webapp/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
 elif SERVER == "sherlock":
     PROJECT_DIR = f"/scratch/groups/emmalu/2Dshapespace/{CELL_LINE.replace(' ','_')}"
     META_PATH = "/scratch/groups/emmalu/sl_pHPA_15_0.05_euclidean_100000_rmoutliers_ilsc_3d_bbox_rm_border.csv"
+else:
+    PROJECT_DIR = f"./{CELL_LINE.replace(' ','_')}"
+    META_PATH = "" # your own metadata to perform downstream analysis
