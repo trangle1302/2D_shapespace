@@ -111,8 +111,14 @@ def main():
         mappings = pd.read_csv('/data/HPA-IF-images/IF-image.csv')
         mappings = mappings[mappings.atlas_name=='U2OS']
     else:
-        cellline_meta = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
-        mappings = pd.read_csv(cellline_meta)
+        cellline_meta_path = os.path.join(project_dir, os.path.basename(cfg.META_PATH).replace(".csv", "_splitVesiclesPCP.csv"))
+        if os.path.exists(cellline_meta_path):
+            mappings = pd.read_csv(cellline_meta_path)
+        else:
+            mappings = pd.read_csv(cfg.META_PATH)
+            mappings["cell_idx"] = [idx.split("_", 1)[1] for idx in mappings.id]
+            from warps.avg_organelle import unmerge_label
+            mappings = unmerge_label(mappings)
     #mappings = mappings[~mappings.sc_target.isin(["Negative","Multi-Location"])]
     print(mappings.columns)
     #print(mappings.sc_target.value_counts(), mappings.cell_idx)

@@ -40,16 +40,17 @@ Before running the analysis, you need to:
 
 - Follow the workflow steps, which are described in detail in the manuscript and summarized below in the [Shapespace construction](## Shapespace construction) section.
 
-We also provide a test dataset (single-cell crops and masks) which allows you to quickly test shape parameterization, constructing shapespace and map protein intensity to the average cell shape.
+We also provide a test dataset (single-cell crops and masks) which allows you to quickly test shape parameterization, constructing shapespace and map protein intensity to the average cell shape. NOTE: This dataset is intentionally small for testing and may not preserve the true average shape representation of the cell line. The number of samples/organelles is also limited, so it will not recover the true organelle map.
 
 ```bash
 wget https://ell-vault.stanford.edu/dav/trangle/www/K-562.zip
 unzip K-562.zip -d K-562
 
 python -m coefficients.s2_calculate_fft
+python -m analysis.cell_nucleus_ratio
 python -m shapemodes.s3_calculate_shapemodes
-python -m warp.s4_concentric_rings_intensity # check cfg.N_ISOS and cfg.LANDMARKS
-python -m warp.s4_protein_image_warp # check cfg.LANDMARKS
+python -m warps.s4_concentric_rings_intensity --cell_line K-562  --n_isos 10 20 # check cfg.N_ISOS and cfg.LANDMARKS
+python -m warps.s4_tsp --cell_line K-562 # check cfg.LANDMARKS
 ```
 For large datasets or when analyzing multiple cell lines, consider using a workflow manager such as **Snakemake**, or submitting separate jobs to a compute cluster using **SLURM**. Example workflow files and job scripts can be found inside each folder. 
 
