@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append("..")
 from coefficients import alignment, coefs
 from shapemodes import dimreduction
 from warps.parameterize import get_coordinates
