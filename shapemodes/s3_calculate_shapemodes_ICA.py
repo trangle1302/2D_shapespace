@@ -11,6 +11,7 @@ import glob
 import random
 import json
 import resource
+from utils.mem_limit import memory_limit
 
 def memory_limit():
     soft, hard = resource.getrlimit(resource.RLIMIT_AS)
